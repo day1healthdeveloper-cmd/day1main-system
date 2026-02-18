@@ -258,7 +258,7 @@ export class LeadService {
    * Requirements: 21.6
    */
   async getConversionStatistics(startDate?: Date, endDate?: Date) {
-    let query = this.supabase.getClient().from('leads').select('*', { count: 'exact' });
+    let query = this.supabase.from('leads').select('*', { count: 'exact' });
 
     if (startDate) {
       query = query.gte('created_at', startDate.toISOString());

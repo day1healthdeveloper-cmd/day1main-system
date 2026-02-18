@@ -50,14 +50,14 @@ export class MembersService {
     if (error) throw new BadRequestException('Failed to create member')
 
     // Create contacts
-    await this.supabase.getClient().from('member_contacts').insert([
+    await this.supabase.from('member_contacts').insert([
       { member_id: member.id, contact_type: 'email', contact_value: dto.email, is_primary: true },
       { member_id: member.id, contact_type: 'mobile', contact_value: dto.phone, is_primary: true },
     ])
 
     // Create address if provided
     if (dto.address) {
-      await this.supabase.getClient().from('member_addresses').insert({
+      await this.supabase.from('member_addresses').insert({
         member_id: member.id,
         address_type: 'residential',
         line1: dto.address.line1,
@@ -71,7 +71,7 @@ export class MembersService {
     }
 
     // Create status history
-    await this.supabase.getClient().from('member_status_history').insert({
+    await this.supabase.from('member_status_history').insert({
       member_id: member.id,
       status: 'active',
       reason: 'Initial registration',
@@ -148,10 +148,10 @@ export class MembersService {
 
     // Fetch related data
     const [contacts, addresses, dependants, consents] = await Promise.all([
-      this.supabase.getClient().from('member_contacts').select('*').eq('member_id', memberId),
-      this.supabase.getClient().from('member_addresses').select('*').eq('member_id', memberId),
-      this.supabase.getClient().from('member_dependants').select('*').eq('member_id', memberId),
-      this.supabase.getClient().from('member_consents').select('*').eq('member_id', memberId).is('revoked_at', null),
+      this.supabase.from('member_contacts').select('*').eq('member_id', memberId),
+      this.supabase.from('member_addresses').select('*').eq('member_id', memberId),
+      this.supabase.from('member_dependants').select('*').eq('member_id', memberId),
+      this.supabase.from('member_consents').select('*').eq('member_id', memberId).is('revoked_at', null),
     ])
 
     return { ...member, contacts: contacts.data, addresses: addresses.data, dependants: dependants.data, consents: consents.data }
@@ -161,7 +161,7 @@ export class MembersService {
    * Add a dependant to a member
    */
   async addDependant(memberId: string, dto: AddDependantDto, userId: string) {
-    const { data: member } = await this.supabase.getClient().from('members').select('id').eq('id', memberId).single()
+    const { data: member } = await this.supabase.from('members').select('id').eq('id', memberId).single()
 
     if (!member) {
       throw new NotFoundException('Member not found')
@@ -203,7 +203,7 @@ export class MembersService {
    * Capture consent (POPIA compliance)
    */
   async captureConsent(memberId: string, dto: CaptureConsentDto, userId: string) {
-    const { data: member } = await this.supabase.getClient().from('members').select('id').eq('id', memberId).single()
+    const { data: member } = await this.supabase.from('members').select('id').eq('id', memberId).single()
 
     if (!member) {
       throw new NotFoundException('Member not found')
@@ -240,7 +240,7 @@ export class MembersService {
    * Revoke consent
    */
   async revokeConsent(consentId: string, userId: string) {
-    const { data: consent } = await this.supabase.getClient().from('member_consents').select('*').eq('id', consentId).single()
+    const { data: consent } = await this.supabase.from('member_consents').select('*').eq('id', consentId).single()
 
     if (!consent) {
       throw new NotFoundException('Consent not found')

@@ -69,7 +69,7 @@ export class FailedPaymentController {
   async retryFailedPayment(
     @Param('id') id: string,
     @Body('notes') notes: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.failedPaymentService.retryFailedPayment(id, req.user.id, notes);
   }
@@ -80,7 +80,7 @@ export class FailedPaymentController {
    */
   @Post('suspend-member')
   @RequirePermissions('members:update')
-  async suspendMember(@Body() dto: SuspendMemberDto, @Request() req) {
+  async suspendMember(@Body() dto: SuspendMemberDto, @Request() req: any) {
     return this.failedPaymentService.suspendMember(dto, req.user.id);
   }
 
@@ -93,7 +93,7 @@ export class FailedPaymentController {
   async escalateFailedPayment(
     @Param('id') id: string,
     @Body() dto: Omit<EscalateFailedPaymentDto, 'transactionId'>,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.failedPaymentService.escalateFailedPayment(
       { ...dto, transactionId: id },
@@ -107,7 +107,7 @@ export class FailedPaymentController {
    */
   @Post('notify-member')
   @RequirePermissions('members:update')
-  async notifyMember(@Body() dto: NotifyMemberDto, @Request() req) {
+  async notifyMember(@Body() dto: NotifyMemberDto, @Request() req: any) {
     return this.failedPaymentService.notifyMember(dto, req.user.id);
   }
 }

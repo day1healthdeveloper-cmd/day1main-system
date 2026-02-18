@@ -223,7 +223,7 @@ export class NetcashService {
    * Validate member data
    */
   private validateMembers(members: any[]): any[] {
-    const errors = [];
+    const errors: any[] = [];
 
     members.forEach((member, index) => {
       const memberErrors = [];
@@ -769,7 +769,7 @@ export class NetcashService {
           message: uploadResult.message,
         };
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Error submitting batch to Netcash:', error);
 
       // Update run status

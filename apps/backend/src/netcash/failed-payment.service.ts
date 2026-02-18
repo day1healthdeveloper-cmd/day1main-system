@@ -122,7 +122,7 @@ export class FailedPaymentService {
             });
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         results.errors.push(`Transaction ${transaction.id}: ${error.message}`);
       }
     }
@@ -325,7 +325,7 @@ export class FailedPaymentService {
     let filteredTransactions = transactions || [];
     if (filters?.brokerGroup) {
       filteredTransactions = filteredTransactions.filter(
-        (txn) => txn.member?.broker_group === filters.brokerGroup
+        (txn: any) => txn.member?.broker_group === filters.brokerGroup
       );
     }
 
@@ -349,7 +349,7 @@ export class FailedPaymentService {
       
       const retryCount = txn.retry_count || 0;
       if (retryCount <= 3) {
-        stats.byRetryCount[retryCount]++;
+        (stats.byRetryCount as any)[retryCount]++;
       }
 
       if (retryCount >= 3) {
