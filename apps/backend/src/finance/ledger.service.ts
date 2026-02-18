@@ -206,7 +206,7 @@ export class LedgerService {
         journalNumber,
         totalDebits,
         totalCredits,
-        entryCount: entries.length,
+        entryCount: (entries || []).length,
       },
     });
 

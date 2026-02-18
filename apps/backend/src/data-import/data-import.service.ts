@@ -375,7 +375,7 @@ export class DataImportService {
   }
 
   async getTemplate(type: string) {
-    const templates = {
+    const templates: Record<string, string[]> = {
       members: [
         'Member Number', 'ID Number', 'First Name', 'Last Name', 'Date of Birth',
         'Gender', 'Email', 'Phone', 'Mobile', 'Address Line 1', 'Address Line 2',
@@ -433,7 +433,7 @@ export class DataImportService {
   }
 
   private validateColumns(type: string, columns: string[]): { valid: boolean; errors: string[] } {
-    const requiredColumns = {
+    const requiredColumns: Record<string, string[]> = {
       members: ['ID Number', 'First Name', 'Last Name', 'Email'],
       policies: ['Policy Number', 'Member ID'],
       claims: ['Claim Number', 'Policy Number', 'Amount Claimed'],
@@ -444,11 +444,11 @@ export class DataImportService {
     };
 
     const required = requiredColumns[type] || [];
-    const missing = required.filter(col => !columns.includes(col));
+    const missing = required.filter((col: string) => !columns.includes(col));
 
     return {
       valid: missing.length === 0,
-      errors: missing.map(col => `Missing required column: ${col}`),
+      errors: missing.map((col: string) => `Missing required column: ${col}`),
     };
   }
 }

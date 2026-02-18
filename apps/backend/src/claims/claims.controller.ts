@@ -10,6 +10,13 @@ import { PermissionsGuard } from '../rbac/guards/permissions.guard'
 import { RequirePermissions } from '../rbac/decorators/require-permissions.decorator'
 import { SubmitClaimDto } from './dto'
 
+interface AuthRequest extends Request {
+  user: {
+    userId: string;
+    email: string;
+  };
+}
+
 @Controller('api/v1/claims')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ClaimsController {
@@ -270,37 +277,38 @@ export class ClaimsController {
   /**
    * Request more info for pre-auth
    */
-  @Post('preauth/:preauthId/request-info')
-  @RequirePermissions('claims:adjudicate')
-  async requestMoreInfo(
-    @Param('preauthId') preauthId: string,
-    @Body() body: { required_info: string[] },
-    @Request() req: AuthRequest,
-  ) {
-    return this.preauthService.requestMoreInfo(preauthId, body.required_info, req.user.userId)
-  }
+  // TODO: Implement requestMoreInfo, getPreAuthUtilisation, validateClaimPreAuth in PreAuthService
+  // @Post('preauth/:preauthId/request-info')
+  // @RequirePermissions('claims:adjudicate')
+  // async requestMoreInfo(
+  //   @Param('preauthId') preauthId: string,
+  //   @Body() body: { required_info: string[] },
+  //   @Request() req: AuthRequest,
+  // ) {
+  //   return this.preauthService.requestMoreInfo(preauthId, body.required_info, req.user.userId)
+  // }
 
-  /**
-   * Get pre-auth utilisation
-   */
-  @Get('preauth/:preauthId/utilisation')
-  @RequirePermissions('claims:read')
-  async getPreAuthUtilisation(@Param('preauthId') preauthId: string) {
-    return this.preauthService.getPreAuthUtilisation(preauthId)
-  }
+  // /**
+  //  * Get pre-auth utilisation
+  //  */
+  // @Get('preauth/:preauthId/utilisation')
+  // @RequirePermissions('claims:read')
+  // async getPreAuthUtilisation(@Param('preauthId') preauthId: string) {
+  //   return this.preauthService.getPreAuthUtilisation(preauthId)
+  // }
 
-  /**
-   * Validate claim against pre-auth
-   */
-  @Post('preauth/:preauthId/validate-claim/:claimId')
-  @RequirePermissions('claims:read')
-  async validateClaimPreAuth(
-    @Param('preauthId') preauthId: string,
-    @Param('claimId') claimId: string,
-  ) {
-    const isValid = await this.preauthService.validateClaimPreAuth(claimId, preauthId)
-    return { valid: isValid }
-  }
+  // /**
+  //  * Validate claim against pre-auth
+  //  */
+  // @Post('preauth/:preauthId/validate-claim/:claimId')
+  // @RequirePermissions('claims:read')
+  // async validateClaimPreAuth(
+  //   @Param('preauthId') preauthId: string,
+  //   @Param('claimId') claimId: string,
+  // ) {
+  //   const isValid = await this.preauthService.validateClaimPreAuth(claimId, preauthId)
+  //   return { valid: isValid }
+  // }
 
   /**
    * Submit an appeal for a rejected claim

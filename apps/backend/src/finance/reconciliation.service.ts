@@ -194,7 +194,7 @@ export class ReconciliationService {
       if ((paymentsByAmount || []).length === 1) {
         results.push({
           statementLineId: line.id,
-          paymentId: paymentsByAmount[0].id,
+          paymentId: (paymentsByAmount || [])[0].id,
           matchConfidence: 'probable',
           matchReason: 'Amount and date match',
         });
