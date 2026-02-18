@@ -90,9 +90,9 @@ export class KycController {
    * Perform enhanced due diligence (EDD)
    * POST /api/v1/kyc/members/:memberId/edd
    */
-  @Post('members/:memberId/edd')
-  @RequirePermissions('member:kyc')
-  async performEnhancedDueDiligence(@Param('memberId') memberId: string, @Request() req: any) {
-    return this.kycService.performEnhancedDueDiligence(memberId, req.user.userId)
-  }
+  // @Post('members/:memberId/edd')
+  // @RequirePermissions('member:kyc')
+  // async performEnhancedDueDiligence(@Param('memberId') memberId: string, @Request() req: any) {
+  //   return this.kycService.performEnhancedDueDiligence(memberId, req.user.userId)
+  // }
 }

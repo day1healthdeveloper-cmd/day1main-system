@@ -59,14 +59,14 @@ export class PopiaService {
     userId: string,
   ): Promise<boolean> {
     // Get active consent for the purpose
-    const consent = await this.supabase.getClient().memberConsent.findFirst({
-      where: {
-        member_id: memberId,
-        purpose: purpose,
-        is_granted: true,
-        revoked_at: null,
-      },
-    })
+    const { data: consent } = await this.supabase.getClient()
+      .from('member_consents')
+      .select('*')
+      .eq('member_id', memberId)
+      .eq('purpose', purpose)
+      .eq('is_granted', true)
+      .is('revoked_at', null)
+      .single();
 
     if (!consent) {
       // Log the consent violation
@@ -96,26 +96,24 @@ export class PopiaService {
     requiredPermission: string,
   ): Promise<boolean> {
     // Get user's permissions
-    const userRoles = await this.supabase.getClient().userRole.findMany({
-      where: { user_id: userId },
-      include: {
-        role: {
-          include: {
-            role_permissions: {
-              include: {
-                permission: true,
-              },
-            },
-          },
-        },
-      },
-    })
+    const { data: userRoles } = await this.supabase.getClient()
+      .from('user_roles')
+      .select(`
+        role:roles(
+          role_permissions(
+            permission:permissions(name)
+          )
+        )
+      `)
+      .eq('user_id', userId);
 
-    const permissions = userRoles.flatMap((ur) =>
-      ur.role.role_permissions.map((rp) => rp.permission.name),
-    )
+    if (!userRoles) return false;
 
-    return permissions.includes(requiredPermission)
+    const permissions = userRoles.flatMap((ur: any) =>
+      (ur.role?.role_permissions || []).map((rp: any) => rp.permission?.name),
+    ).filter(Boolean);
+
+    return permissions.includes(requiredPermission);
   }
 
   /**
@@ -293,29 +291,29 @@ export class PopiaService {
    */
   async getDataProcessingReport(memberId: string) {
     // Get all consents
-    const consents = await this.supabase.getClient().memberConsent.findMany({
-      where: { member_id: memberId },
-      orderBy: { granted_at: 'desc' },
-    })
+    const { data: consents } = await this.supabase.getClient()
+      .from('member_consents')
+      .select('*')
+      .eq('member_id', memberId)
+      .order('granted_at', { ascending: false });
 
     // Get all audit events related to this member
-    const auditEvents = await this.supabase.getClient().auditEvent.findMany({
-      where: {
-        entity_type: 'member',
-        entity_id: memberId,
-      },
-      orderBy: { timestamp: 'desc' },
-      take: 100, // Last 100 events
-    })
+    const { data: auditEvents } = await this.supabase.getClient()
+      .from('audit_events')
+      .select('*')
+      .eq('entity_type', 'member')
+      .eq('entity_id', memberId)
+      .order('timestamp', { ascending: false })
+      .limit(100);
 
     // Get sensitive data access events
-    const sensitiveDataAccess = auditEvents.filter(
-      (event) => event.action.includes('sensitive_data') || event.event_type === 'popia',
-    )
+    const sensitiveDataAccess = (auditEvents || []).filter(
+      (event: any) => event.action?.includes('sensitive_data') || event.event_type === 'popia',
+    );
 
     return {
       member_id: memberId,
-      consents: consents.map((c) => ({
+      consents: (consents || []).map((c: any) => ({
         purpose: c.purpose,
         is_granted: c.is_granted,
         granted_at: c.granted_at,

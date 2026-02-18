@@ -195,7 +195,7 @@ export class LandingPageService {
       .eq('landing_page_id', id);
 
     // Calculate conversion rate
-    const conversionRate = visits > 0 ? ((leads / visits) * 100).toFixed(1) : '0.0';
+    const conversionRate = (visits || 0) > 0 ? (((leads || 0) / (visits || 0)) * 100).toFixed(1) : '0.0';
 
     // Get bounce rate (visits with duration < 10 seconds)
     const { count: bounces } = await client
@@ -204,7 +204,7 @@ export class LandingPageService {
       .eq('landing_page_id', id)
       .lt('duration', 10);
 
-    const bounceRate = visits > 0 ? ((bounces / visits) * 100).toFixed(1) : '0.0';
+    const bounceRate = (visits || 0) > 0 ? (((bounces || 0) / (visits || 0)) * 100).toFixed(1) : '0.0';
 
     // Get average time on page
     const { data: avgData } = await client
