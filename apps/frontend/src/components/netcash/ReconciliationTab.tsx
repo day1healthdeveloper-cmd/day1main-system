@@ -31,7 +31,7 @@ export function ReconciliationTab() {
       if (filters.status) params.append('status', filters.status);
       params.append('limit', '50');
 
-      const data = await apiClient.get(`/netcash/reconciliation?${params}`);
+      const data = await apiClient.get(`/netcash/reconciliation?${params}`) as any;
       setReconciliations(data.reconciliations || []);
     } catch (error) {
       console.error('Error fetching reconciliations:', error);
