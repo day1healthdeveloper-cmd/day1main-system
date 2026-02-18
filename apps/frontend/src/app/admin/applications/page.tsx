@@ -62,6 +62,8 @@ interface Application {
   marketing_consent: boolean
   review_notes: string
   rejection_reason: string
+  voice_recording_url?: string
+  terms_accepted_at?: string
 }
 
 interface Stats {
