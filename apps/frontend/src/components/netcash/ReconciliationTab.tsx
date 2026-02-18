@@ -91,7 +91,7 @@ export function ReconciliationTab() {
 
     setProcessing(true);
     try {
-      const result = await apiClient.post('/netcash/reconciliation/auto');
+      const result = await apiClient.post('/netcash/reconciliation/auto') as any;
       alert(result.message);
       fetchReconciliations();
       fetchStats();
