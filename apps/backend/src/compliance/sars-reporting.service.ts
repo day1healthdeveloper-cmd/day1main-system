@@ -58,19 +58,17 @@ export class SARSReportingService {
     const submissionNumber = await this.generateSubmissionNumber();
 
     // Store submission record
-    const submission = await this.supabase.getClient().sarsSubmission.create({
-      data: {
-        submission_number: submissionNumber,
-        tax_year: dto.tax_year,
-        submission_type: dto.submission_type,
-        file_path: `sars/${submissionNumber}.csv`,
-        file_hash: fileHash,
-        record_count: records.length,
-        status: 'generated',
-        submitted_at: new Date(),
-        submitted_by: userId,
-      },
-    });
+    const { data: submission, error } = await this.supabase.getClient().from('sars_submissions').insert({
+      submission_number: submissionNumber,
+      tax_year: dto.tax_year,
+      submission_type: dto.submission_type,
+      file_path: `sars/${submissionNumber}.csv`,
+      file_hash: fileHash,
+      record_count: records.length,
+      status: 'generated',
+      submitted_at: new Date().toISOString(),
+      submitted_by: userId,
+    }).select().single();
 
     // Log to audit trail
     await this.auditService.logEvent({
@@ -117,49 +115,31 @@ export class SARSReportingService {
     const endDate = new Date(`${taxYear + 1}-02-28`);
 
     // Get all payments for members with policies in the specified regime
-    const payments = await this.supabase.getClient().payment.findMany({
-      where: {
-        status: 'completed',
-        created_at: {
-          gte: startDate,
-          lte: endDate,
-        },
-        invoice: {
-          policy: {
-            plan: {
-              product: {
-                regime: submissionType,
-              },
-            },
-          },
-        },
-      },
-      include: {
-        invoice: {
-          include: {
-            policy: {
-              include: {
-                plan: {
-                  include: {
-                    product: true,
-                  },
-                },
-                policy_members: {
-                  include: {
-                    member: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        created_at: 'asc',
-      },
-    });
+    const { data: payments } = await this.supabase.getClient()
+      .from('payments')
+      .select(`
+        *,
+        invoice:invoices(
+          *,
+          policy:policies(
+            *,
+            plan:plans(
+              *,
+              product:products(*)
+            ),
+            policy_members(
+              *,
+              member:members(*)
+            )
+          )
+        )
+      `)
+      .eq('status', 'completed')
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString())
+      .order('created_at', { ascending: true });
 
-    return payments;
+    return payments || [];
   }
 
   private async generateSARSRecords(
@@ -244,37 +224,41 @@ export class SARSReportingService {
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
     const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-    const count = await this.supabase.getClient().sarsSubmission.count({
-      where: {
-        created_at: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-      },
-    });
+    const { count } = await this.supabase.getClient()
+      .from('sars_submissions')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', startOfDay.toISOString())
+      .lte('created_at', endOfDay.toISOString());
 
-    const sequence = (count + 1).toString().padStart(6, '0');
+    const sequence = ((count || 0) + 1).toString().padStart(6, '0');
     return `SARS-${dateStr}-${sequence}`;
   }
 
   async getSubmissionByNumber(submissionNumber: string): Promise<any> {
-    return this.supabase.getClient().sarsSubmission.findUnique({
-      where: { submission_number: submissionNumber },
-    });
+    const { data, error } = await this.supabase.getClient()
+      .from('sars_submissions')
+      .select('*')
+      .eq('submission_number', submissionNumber)
+      .single();
+    return data;
   }
 
   async getSubmissionsByTaxYear(taxYear: number): Promise<any[]> {
-    return this.supabase.getClient().sarsSubmission.findMany({
-      where: { tax_year: taxYear },
-      orderBy: { created_at: 'desc' },
-    });
+    const { data } = await this.supabase.getClient()
+      .from('sars_submissions')
+      .select('*')
+      .eq('tax_year', taxYear)
+      .order('created_at', { ascending: false });
+    return data || [];
   }
 
   async getSubmissionsByType(submissionType: string): Promise<any[]> {
-    return this.supabase.getClient().sarsSubmission.findMany({
-      where: { submission_type: submissionType },
-      orderBy: { created_at: 'desc' },
-    });
+    const { data } = await this.supabase.getClient()
+      .from('sars_submissions')
+      .select('*')
+      .eq('submission_type', submissionType)
+      .order('created_at', { ascending: false });
+    return data || [];
   }
 
   async markSubmissionAsSubmitted(submissionNumber: string, userId: string): Promise<any> {
@@ -284,12 +268,12 @@ export class SARSReportingService {
       throw new Error('Submission not found');
     }
 
-    const updated = await this.supabase.getClient().sarsSubmission.update({
-      where: { submission_number: submissionNumber },
-      data: {
-        status: 'submitted',
-      },
-    });
+    const { data: updated, error } = await this.supabase.getClient()
+      .from('sars_submissions')
+      .update({ status: 'submitted' })
+      .eq('submission_number', submissionNumber)
+      .select()
+      .single();
 
     await this.auditService.logEvent({
       event_type: 'sars_submission_submitted',
@@ -313,28 +297,29 @@ export class SARSReportingService {
     by_type: Record<string, number>;
     by_status: Record<string, number>;
   }> {
-    const total = await this.supabase.getClient().sarsSubmission.count();
+    const { count: total } = await this.supabase.getClient()
+      .from('sars_submissions')
+      .select('*', { count: 'exact', head: true });
 
-    const byTaxYear = await this.supabase.getClient().sarsSubmission.groupBy({
-      by: ['tax_year'],
-      _count: true,
-    });
+    const { data: allSubmissions } = await this.supabase.getClient()
+      .from('sars_submissions')
+      .select('tax_year, submission_type, status');
 
-    const byType = await this.supabase.getClient().sarsSubmission.groupBy({
-      by: ['submission_type'],
-      _count: true,
-    });
+    const byTaxYear: Record<string, number> = {};
+    const byType: Record<string, number> = {};
+    const byStatus: Record<string, number> = {};
 
-    const byStatus = await this.supabase.getClient().sarsSubmission.groupBy({
-      by: ['status'],
-      _count: true,
+    (allSubmissions || []).forEach(s => {
+      byTaxYear[s.tax_year.toString()] = (byTaxYear[s.tax_year.toString()] || 0) + 1;
+      byType[s.submission_type] = (byType[s.submission_type] || 0) + 1;
+      byStatus[s.status] = (byStatus[s.status] || 0) + 1;
     });
 
     return {
-      total,
-      by_tax_year: Object.fromEntries(byTaxYear.map((item) => [item.tax_year.toString(), item._count])),
-      by_type: Object.fromEntries(byType.map((item) => [item.submission_type, item._count])),
-      by_status: Object.fromEntries(byStatus.map((item) => [item.status, item._count])),
+      total: total || 0,
+      by_tax_year: byTaxYear,
+      by_type: byType,
+      by_status: byStatus,
     };
   }
 }

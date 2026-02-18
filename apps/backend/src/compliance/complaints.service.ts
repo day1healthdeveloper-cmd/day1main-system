@@ -54,16 +54,17 @@ export class ComplaintsService {
     const slaDueDate = new Date();
     slaDueDate.setDate(slaDueDate.getDate() + slaTimer);
 
-    const complaint = await this.supabase.getClient().complaint.create({
-      data: {
-        complaint_number: complaintNumber,
-        complaint_type: dto.complaint_type,
-        description: dto.description,
-        member_id: dto.member_id,
-        status: 'open',
-        sla_due_date: slaDueDate,
-      },
-    });
+    const { data: complaint, error } = await this.supabase.getClient().from('complaints').insert({
+      complaint_number: complaintNumber,
+      complaint_type: dto.complaint_type,
+      description: dto.description,
+      member_id: dto.member_id,
+      policy_id: dto.policy_id,
+      claim_id: dto.claim_id,
+      provider_id: dto.provider_id,
+      status: 'open',
+      sla_due_date: slaDueDate.toISOString(),
+    }).select().single();
 
     await this.auditService.logEvent({
       event_type: 'complaint_created',
@@ -92,25 +93,20 @@ export class ComplaintsService {
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
     const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-    const count = await this.supabase.getClient().complaint.count({
-      where: {
-        submitted_at: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-      },
-    });
+    const { count } = await this.supabase.getClient()
+      .from('complaints')
+      .select('*', { count: 'exact', head: true })
+      .gte('submitted_at', startOfDay.toISOString())
+      .lte('submitted_at', endOfDay.toISOString());
 
-    const sequence = (count + 1).toString().padStart(6, '0');
+    const sequence = ((count || 0) + 1).toString().padStart(6, '0');
     return `CMP-${dateStr}-${sequence}`;
   }
 
   async getComplaintById(complaintId: string): Promise<any> {
-    const complaint = await this.supabase.getClient().complaint.findUnique({
-      where: { id: complaintId },
-    });
+    const { data: complaint, error } = await this.supabase.getClient().from('complaints').select('*').eq('id', complaintId).single();
 
-    if (!complaint) {
+    if (error || !complaint) {
       throw new NotFoundException('Complaint not found');
     }
 
@@ -118,67 +114,44 @@ export class ComplaintsService {
   }
 
   async getComplaintByNumber(complaintNumber: string): Promise<any> {
-    const complaint = await this.supabase.getClient().complaint.findUnique({
-      where: { complaint_number: complaintNumber },
-    });
+    const { data: complaint, error } = await this.supabase.getClient().from('complaints').select('*').eq('complaint_number', complaintNumber).single();
 
-    if (!complaint) {
+    if (error || !complaint) {
       throw new NotFoundException('Complaint not found');
     }
 
     return complaint;
   }
-
   async getAllComplaints(status?: string): Promise<any[]> {
-    return this.supabase.getClient().complaint.findMany({
-      where: status ? { status } : undefined,
-      orderBy: {
-        submitted_at: 'desc',
-      },
-    });
+    let query = this.supabase.getClient().from('complaints').select('*').order('submitted_at', { ascending: false });
+    if (status) query = query.eq('status', status);
+    const { data } = await query;
+    return data || [];
   }
 
   async getOverdueSLAComplaints(): Promise<any[]> {
-    const now = new Date();
+    const now = new Date().toISOString();
 
-    const complaints = await this.supabase.getClient().complaint.findMany({
-      where: {
-        status: {
-          in: ['open', 'investigating'],
-        },
-        sla_due_date: {
-          lt: now,
-        },
-      },
-      orderBy: {
-        sla_due_date: 'asc',
-      },
-    });
+    const { data: complaints } = await this.supabase.getClient().from('complaints').select('*')
+      .in('status', ['open', 'investigating'])
+      .lt('sla_due_date', now)
+      .order('sla_due_date', { ascending: true });
 
-    return complaints;
+    return complaints || [];
   }
 
   async getApproachingSLAComplaints(daysThreshold: number = 3): Promise<any[]> {
-    const now = new Date();
+    const now = new Date().toISOString();
     const thresholdDate = new Date();
     thresholdDate.setDate(thresholdDate.getDate() + daysThreshold);
 
-    const complaints = await this.supabase.getClient().complaint.findMany({
-      where: {
-        status: {
-          in: ['open', 'investigating'],
-        },
-        sla_due_date: {
-          gte: now,
-          lte: thresholdDate,
-        },
-      },
-      orderBy: {
-        sla_due_date: 'asc',
-      },
-    });
+    const { data: complaints } = await this.supabase.getClient().from('complaints').select('*')
+      .in('status', ['open', 'investigating'])
+      .gte('sla_due_date', now)
+      .lte('sla_due_date', thresholdDate.toISOString())
+      .order('sla_due_date', { ascending: true });
 
-    return complaints;
+    return complaints || [];
   }
 
   async escalateComplaint(complaintId: string, escalatedBy: string, reason: string): Promise<any> {
@@ -213,15 +186,14 @@ export class ComplaintsService {
     
     // Check audit log to see which ones are already escalated
     for (const complaint of overdueComplaints) {
-      const escalationEvents = await this.supabase.getClient().auditEvent.findMany({
-        where: {
-          entity_type: 'complaint',
-          entity_id: complaint.id,
-          event_type: 'complaint_escalated',
-        },
-      });
+      const { data: escalationEvents } = await this.supabase.getClient()
+        .from('audit_events')
+        .select('*')
+        .eq('entity_type', 'complaint')
+        .eq('entity_id', complaint.id)
+        .eq('event_type', 'complaint_escalated');
 
-      if (escalationEvents.length === 0) {
+      if (!escalationEvents || escalationEvents.length === 0) {
         await this.escalateComplaint(
           complaint.id,
           userId,
@@ -240,13 +212,10 @@ export class ComplaintsService {
   ): Promise<any> {
     const complaint = await this.getComplaintById(complaintId);
 
-    const updated = await this.supabase.getClient().complaint.update({
-      where: { id: complaintId },
-      data: {
-        assigned_to: assignedTo,
-        status: 'investigating',
-      },
-    });
+    const { data: updated, error } = await this.supabase.getClient().from('complaints').update({
+      assigned_to: assignedTo,
+      status: 'investigating',
+    }).eq('id', complaintId).select().single();
 
     await this.auditService.logEvent({
       event_type: 'complaint_assigned',
@@ -273,18 +242,15 @@ export class ComplaintsService {
     }
 
     const resolutionTime = Math.floor(
-      (new Date().getTime() - complaint.submitted_at.getTime()) / (1000 * 60 * 60 * 24),
+      (new Date().getTime() - new Date(complaint.submitted_at).getTime()) / (1000 * 60 * 60 * 24),
     );
 
-    const updated = await this.supabase.getClient().complaint.update({
-      where: { id: dto.complaint_id },
-      data: {
-        status: 'resolved',
-        resolution: dto.resolution,
-        root_cause_tags: dto.root_cause_tags,
-        resolved_at: new Date(),
-      },
-    });
+    const { data: updated, error } = await this.supabase.getClient().from('complaints').update({
+      status: 'resolved',
+      resolution: dto.resolution,
+      root_cause_tags: dto.root_cause_tags,
+      resolved_at: new Date().toISOString(),
+    }).eq('id', dto.complaint_id).select().single();
 
     await this.auditService.logEvent({
       event_type: 'complaint_resolved',
@@ -311,12 +277,9 @@ export class ComplaintsService {
       throw new BadRequestException('Complaint must be resolved before closing');
     }
 
-    const updated = await this.supabase.getClient().complaint.update({
-      where: { id: complaintId },
-      data: {
-        status: 'closed',
-      },
-    });
+    const { data: updated, error } = await this.supabase.getClient().from('complaints').update({
+      status: 'closed',
+    }).eq('id', complaintId).select().single();
 
     await this.auditService.logEvent({
       event_type: 'complaint_closed',
@@ -336,17 +299,14 @@ export class ComplaintsService {
     const complaint = await this.getComplaintById(complaintId);
 
     // Get audit trail for timeline
-    const auditEvents = await this.supabase.getClient().auditEvent.findMany({
-      where: {
-        entity_type: 'complaint',
-        entity_id: complaintId,
-      },
-      orderBy: {
-        timestamp: 'asc',
-      },
-    });
+    const { data: auditEvents } = await this.supabase.getClient()
+      .from('audit_events')
+      .select('*')
+      .eq('entity_type', 'complaint')
+      .eq('entity_id', complaintId)
+      .order('timestamp', { ascending: true });
 
-    const timeline = auditEvents.map((event) => ({
+    const timeline = (auditEvents || []).map((event) => ({
       date: event.timestamp,
       event_type: event.event_type,
       user_id: event.user_id,
@@ -401,103 +361,84 @@ export class ComplaintsService {
     by_type: Record<string, number>;
     sla_compliance_rate: number;
   }> {
-    const total = await this.supabase.getClient().complaint.count();
-    const open = await this.supabase.getClient().complaint.count({ where: { status: 'open' } });
-    const investigating = await this.supabase.getClient().complaint.count({ where: { status: 'investigating' } });
-    const resolved = await this.supabase.getClient().complaint.count({ where: { status: 'resolved' } });
-    const closed = await this.supabase.getClient().complaint.count({ where: { status: 'closed' } });
+    const { count: total } = await this.supabase.getClient().from('complaints').select('*', { count: 'exact', head: true });
+    const { count: open } = await this.supabase.getClient().from('complaints').select('*', { count: 'exact', head: true }).eq('status', 'open');
+    const { count: investigating } = await this.supabase.getClient().from('complaints').select('*', { count: 'exact', head: true }).eq('status', 'investigating');
+    const { count: resolved } = await this.supabase.getClient().from('complaints').select('*', { count: 'exact', head: true }).eq('status', 'resolved');
+    const { count: closed } = await this.supabase.getClient().from('complaints').select('*', { count: 'exact', head: true }).eq('status', 'closed');
 
     // Count escalated complaints from audit log
-    const escalationEvents = await this.supabase.getClient().auditEvent.findMany({
-      where: {
-        entity_type: 'complaint',
-        event_type: 'complaint_escalated',
-      },
-      select: {
-        entity_id: true,
-      },
-      distinct: ['entity_id'],
-    });
-    const escalated = escalationEvents.length;
+    const { data: escalationEvents } = await this.supabase.getClient()
+      .from('audit_events')
+      .select('entity_id')
+      .eq('entity_type', 'complaint')
+      .eq('event_type', 'complaint_escalated');
+    
+    const uniqueEscalated = new Set((escalationEvents || []).map(e => e.entity_id));
+    const escalated = uniqueEscalated.size;
 
-    const now = new Date();
-    const overdueSla = await this.supabase.getClient().complaint.count({
-      where: {
-        status: {
-          in: ['open', 'investigating'],
-        },
-        sla_due_date: {
-          lt: now,
-        },
-      },
-    });
+    const now = new Date().toISOString();
+    const { count: overdueSla } = await this.supabase.getClient()
+      .from('complaints')
+      .select('*', { count: 'exact', head: true })
+      .in('status', ['open', 'investigating'])
+      .lt('sla_due_date', now);
 
-    const resolvedComplaints = await this.supabase.getClient().complaint.findMany({
-      where: {
-        status: {
-          in: ['resolved', 'closed'],
-        },
-      },
-      select: {
-        submitted_at: true,
-        resolved_at: true,
-        sla_due_date: true,
-      },
-    });
+    const { data: resolvedComplaints } = await this.supabase.getClient()
+      .from('complaints')
+      .select('submitted_at, resolved_at, sla_due_date')
+      .in('status', ['resolved', 'closed']);
 
+    const complaints = resolvedComplaints || [];
     const avgResolutionDays =
-      resolvedComplaints.length > 0
-        ? resolvedComplaints.reduce((sum, c) => {
+      complaints.length > 0
+        ? complaints.reduce((sum, c) => {
             if (c.resolved_at) {
               const days = Math.floor(
-                (c.resolved_at.getTime() - c.submitted_at.getTime()) / (1000 * 60 * 60 * 24),
+                (new Date(c.resolved_at).getTime() - new Date(c.submitted_at).getTime()) / (1000 * 60 * 60 * 24),
               );
               return sum + days;
             }
             return sum;
-          }, 0) / resolvedComplaints.length
+          }, 0) / complaints.length
         : 0;
 
-    const withinSla = resolvedComplaints.filter(
-      (c) => c.resolved_at && c.resolved_at <= c.sla_due_date,
+    const withinSla = complaints.filter(
+      (c) => c.resolved_at && new Date(c.resolved_at) <= new Date(c.sla_due_date),
     ).length;
     const slaComplianceRate =
-      resolvedComplaints.length > 0 ? (withinSla / resolvedComplaints.length) * 100 : 0;
+      complaints.length > 0 ? (withinSla / complaints.length) * 100 : 0;
 
-    const byType = await this.supabase.getClient().complaint.groupBy({
-      by: ['complaint_type'],
-      _count: true,
+    const { data: allComplaints } = await this.supabase.getClient().from('complaints').select('complaint_type');
+    const byType: Record<string, number> = {};
+    (allComplaints || []).forEach(c => {
+      byType[c.complaint_type] = (byType[c.complaint_type] || 0) + 1;
     });
 
     return {
-      total,
-      open,
-      investigating,
-      resolved,
-      closed,
+      total: total || 0,
+      open: open || 0,
+      investigating: investigating || 0,
+      resolved: resolved || 0,
+      closed: closed || 0,
       escalated,
-      overdue_sla: overdueSla,
+      overdue_sla: overdueSla || 0,
       avg_resolution_days: Math.round(avgResolutionDays * 10) / 10,
-      by_type: Object.fromEntries(byType.map((item) => [item.complaint_type, item._count])),
+      by_type: byType,
       sla_compliance_rate: Math.round(slaComplianceRate * 10) / 10,
     };
   }
 
   async getComplaintsByRootCause(rootCauseTag: string): Promise<any[]> {
     // Since root_cause_tags is JSON, we need to filter in application code
-    const allComplaints = await this.supabase.getClient().complaint.findMany({
-      where: {
-        status: {
-          in: ['resolved', 'closed'],
-        },
-      },
-      orderBy: {
-        resolved_at: 'desc',
-      },
-    });
+    const { data: allComplaints } = await this.supabase.getClient()
+      .from('complaints')
+      .select('*')
+      .in('status', ['resolved', 'closed'])
+      .order('resolved_at', { ascending: false });
 
     // Filter by root cause tag
-    return allComplaints.filter((c) => {
+    return (allComplaints || []).filter((c) => {
       const tags = c.root_cause_tags as any;
       return Array.isArray(tags) && tags.includes(rootCauseTag);
     });
