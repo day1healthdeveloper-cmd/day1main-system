@@ -43,37 +43,46 @@ export class ReconciliationService {
 
   async importBankStatement(dto: ImportBankStatementDto, userId: string) {
     // Check for duplicate statement number
-    const existing = await this.supabase.getClient().bankStatement.findUnique({
-      where: { statement_number: dto.statementNumber },
-    });
+    const { data: existing } = await this.supabase.getClient()
+      .from('bank_statements')
+      .select('*')
+      .eq('statement_number', dto.statementNumber)
+      .single();
 
     if (existing) {
       throw new BadRequestException('Bank statement with this number already exists');
     }
 
-    const statement = await this.supabase.getClient().bankStatement.create({
-      data: {
+    const { data: statement, error } = await this.supabase.getClient()
+      .from('bank_statements')
+      .insert({
         statement_number: dto.statementNumber,
         bank_account: dto.bankAccount,
-        statement_date: dto.statementDate,
-        opening_balance: new Decimal(dto.openingBalance),
-        closing_balance: new Decimal(dto.closingBalance),
+        statement_date: dto.statementDate.toISOString(),
+        opening_balance: dto.openingBalance,
+        closing_balance: dto.closingBalance,
         imported_by: userId,
-        lines: {
-          create: dto.lines.map(line => ({
-            transaction_date: line.transactionDate,
-            description: line.description,
-            reference: line.reference,
-            amount: new Decimal(line.amount),
-            transaction_type: line.transactionType,
-            balance: new Decimal(line.balance),
-          })),
-        },
-      },
-      include: {
-        lines: true,
-      },
-    });
+      })
+      .select()
+      .single();
+
+    // Insert statement lines
+    const lineInserts = dto.lines.map(line => ({
+      statement_id: statement.id,
+      transaction_date: line.transactionDate.toISOString(),
+      description: line.description,
+      reference: line.reference,
+      amount: line.amount,
+      transaction_type: line.transactionType,
+      balance: line.balance,
+    }));
+
+    const { data: lines } = await this.supabase.getClient()
+      .from('bank_statement_lines')
+      .insert(lineInserts)
+      .select();
+
+    const statementWithLines = { ...statement, lines: lines || [] };
 
     await this.auditService.logEvent({
       event_type: 'bank_statement_imported',
@@ -91,20 +100,21 @@ export class ReconciliationService {
       },
     });
 
-    return statement;
+    return statementWithLines;
   }
 
   async getBankStatementById(statementId: string) {
-    const statement = await this.supabase.getClient().bankStatement.findUnique({
-      where: { id: statementId },
-      include: {
-        lines: {
-          include: {
-            allocations: true,
-          },
-        },
-      },
-    });
+    const { data: statement, error } = await this.supabase.getClient()
+      .from('bank_statements')
+      .select(`
+        *,
+        lines:bank_statement_lines(
+          *,
+          allocations:allocations(*)
+        )
+      `)
+      .eq('id', statementId)
+      .single();
 
     if (!statement) {
       throw new NotFoundException('Bank statement not found');
@@ -137,15 +147,16 @@ export class ReconciliationService {
 
       // Try to find matching payment by reference
       if (line.reference) {
-        const paymentByRef = await this.supabase.getClient().payment.findFirst({
-          where: {
-            payment_reference: line.reference,
-            status: 'completed',
-          },
-        });
+        const { data: paymentByRef } = await this.supabase.getClient()
+          .from('payments')
+          .select('*')
+          .eq('payment_reference', line.reference)
+          .eq('status', 'completed')
+          .limit(1)
+          .single();
 
         if (paymentByRef) {
-          const paymentAmount = paymentByRef.amount.toNumber();
+          const paymentAmount = Number(paymentByRef.amount);
           if (Math.abs(paymentAmount - lineAmount) < 0.01) {
             results.push({
               statementLineId: line.id,
@@ -172,29 +183,26 @@ export class ReconciliationService {
       const endOfDay = new Date(line.transaction_date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      const paymentsByAmount = await this.supabase.getClient().payment.findMany({
-        where: {
-          amount: new Decimal(lineAmount),
-          status: 'completed',
-          processed_at: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-      });
+      const { data: paymentsByAmount } = await this.supabase.getClient()
+        .from('payments')
+        .select('*')
+        .eq('amount', lineAmount)
+        .eq('status', 'completed')
+        .gte('processed_at', startOfDay.toISOString())
+        .lte('processed_at', endOfDay.toISOString());
 
-      if (paymentsByAmount.length === 1) {
+      if ((paymentsByAmount || []).length === 1) {
         results.push({
           statementLineId: line.id,
           paymentId: paymentsByAmount[0].id,
           matchConfidence: 'probable',
           matchReason: 'Amount and date match',
         });
-      } else if (paymentsByAmount.length > 1) {
+      } else if ((paymentsByAmount || []).length > 1) {
         results.push({
           statementLineId: line.id,
           matchConfidence: 'possible',
-          matchReason: `Multiple payments (${paymentsByAmount.length}) with same amount on same date`,
+          matchReason: `Multiple payments (${(paymentsByAmount || []).length}) with same amount on same date`,
         });
       } else {
         results.push({
@@ -210,10 +218,14 @@ export class ReconciliationService {
 
   async allocatePayment(dto: AllocatePaymentDto, userId: string) {
     // Validate statement line exists
-    const statementLine = await this.supabase.getClient().bankStatementLine.findUnique({
-      where: { id: dto.statementLineId },
-      include: { allocations: true },
-    });
+    const { data: statementLine, error: lineError } = await this.supabase.getClient()
+      .from('bank_statement_lines')
+      .select(`
+        *,
+        allocations:allocations(*)
+      `)
+      .eq('id', dto.statementLineId)
+      .single();
 
     if (!statementLine) {
       throw new NotFoundException('Bank statement line not found');
@@ -221,9 +233,11 @@ export class ReconciliationService {
 
     // Check if payment exists
     if (dto.paymentId) {
-      const payment = await this.supabase.getClient().payment.findUnique({
-        where: { id: dto.paymentId },
-      });
+      const { data: payment } = await this.supabase.getClient()
+        .from('payments')
+        .select('*')
+        .eq('id', dto.paymentId)
+        .single();
 
       if (!payment) {
         throw new NotFoundException('Payment not found');
@@ -236,9 +250,11 @@ export class ReconciliationService {
 
     // Check if invoice exists
     if (dto.invoiceId) {
-      const invoice = await this.supabase.getClient().invoice.findUnique({
-        where: { id: dto.invoiceId },
-      });
+      const { data: invoice } = await this.supabase.getClient()
+        .from('invoices')
+        .select('*')
+        .eq('id', dto.invoiceId)
+        .single();
 
       if (!invoice) {
         throw new NotFoundException('Invoice not found');
@@ -246,27 +262,29 @@ export class ReconciliationService {
     }
 
     // Check total allocated amount doesn't exceed line amount
-    const totalAllocated = statementLine.allocations.reduce(
-      (sum, alloc) => sum + alloc.amount.toNumber(),
+    const totalAllocated = (statementLine.allocations || []).reduce(
+      (sum: number, alloc: any) => sum + Number(alloc.amount),
       0,
     );
 
-    const lineAmount = statementLine.amount.toNumber();
+    const lineAmount = Number(statementLine.amount);
     if (totalAllocated + dto.amount > lineAmount + 0.01) {
       throw new BadRequestException(
         `Total allocation (${totalAllocated + dto.amount}) exceeds line amount (${lineAmount})`,
       );
     }
 
-    const allocation = await this.supabase.getClient().allocation.create({
-      data: {
+    const { data: allocation, error: allocError } = await this.supabase.getClient()
+      .from('allocations')
+      .insert({
         statement_line_id: dto.statementLineId,
         payment_id: dto.paymentId,
         invoice_id: dto.invoiceId,
-        amount: new Decimal(dto.amount),
+        amount: dto.amount,
         allocated_by: userId,
-      },
-    });
+      })
+      .select()
+      .single();
 
     await this.auditService.logEvent({
       event_type: 'payment_allocated',
@@ -287,36 +305,32 @@ export class ReconciliationService {
 
   async getUnallocatedPayments() {
     // Get completed payments that don't have allocations
-    const payments = await this.supabase.getClient().payment.findMany({
-      where: {
-        status: 'completed',
-      },
-      include: {
-        invoice: true,
-      },
-    });
+    const { data: payments } = await this.supabase.getClient()
+      .from('payments')
+      .select(`
+        *,
+        invoice:invoices(*)
+      `)
+      .eq('status', 'completed');
 
-    const allocations = await this.supabase.getClient().allocation.findMany({
-      where: {
-        payment_id: {
-          in: payments.map(p => p.id),
-        },
-      },
-    });
+    const { data: allocations } = await this.supabase.getClient()
+      .from('allocations')
+      .select('payment_id')
+      .in('payment_id', (payments || []).map(p => p.id));
 
-    const allocatedPaymentIds = new Set(allocations.map(a => a.payment_id));
-    return payments.filter(p => !allocatedPaymentIds.has(p.id));
+    const allocatedPaymentIds = new Set((allocations || []).map(a => a.payment_id));
+    return (payments || []).filter(p => !allocatedPaymentIds.has(p.id));
   }
 
   async getUnallocatedStatementLines(statementId: string) {
     const statement = await this.getBankStatementById(statementId);
 
-    return statement.lines.filter(line => {
-      const totalAllocated = line.allocations.reduce(
-        (sum, alloc) => sum + alloc.amount.toNumber(),
+    return (statement.lines || []).filter((line: any) => {
+      const totalAllocated = (line.allocations || []).reduce(
+        (sum: number, alloc: any) => sum + Number(alloc.amount),
         0,
       );
-      const lineAmount = line.amount.toNumber();
+      const lineAmount = Number(line.amount);
       return Math.abs(totalAllocated - lineAmount) > 0.01;
     });
   }
@@ -328,23 +342,19 @@ export class ReconciliationService {
     const endOfDay = new Date(reconciliationDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const statements = await this.supabase.getClient().bankStatement.findMany({
-      where: {
-        statement_date: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-      },
-      include: {
-        lines: {
-          include: {
-            allocations: true,
-          },
-        },
-      },
-    });
+    const { data: statements } = await this.supabase.getClient()
+      .from('bank_statements')
+      .select(`
+        *,
+        lines:bank_statement_lines(
+          *,
+          allocations:allocations(*)
+        )
+      `)
+      .gte('statement_date', startOfDay.toISOString())
+      .lte('statement_date', endOfDay.toISOString());
 
-    if (statements.length === 0) {
+    if (!statements || statements.length === 0) {
       throw new BadRequestException('No bank statements found for this date');
     }
 
@@ -352,40 +362,39 @@ export class ReconciliationService {
 
     for (const statement of statements) {
       // Calculate total expected (from payments)
-      const payments = await this.supabase.getClient().payment.findMany({
-        where: {
-          status: 'completed',
-          processed_at: {
-            gte: startOfDay,
-            lte: endOfDay,
-          },
-        },
-      });
+      const { data: payments } = await this.supabase.getClient()
+        .from('payments')
+        .select('*')
+        .eq('status', 'completed')
+        .gte('processed_at', startOfDay.toISOString())
+        .lte('processed_at', endOfDay.toISOString());
 
-      const totalExpected = payments.reduce(
-        (sum, p) => sum + p.amount.toNumber(),
+      const totalExpected = (payments || []).reduce(
+        (sum, p) => sum + Number(p.amount),
         0,
       );
 
       // Calculate total received (from statement lines - credits only)
-      const totalReceived = statement.lines
-        .filter(line => line.transaction_type === 'credit')
-        .reduce((sum, line) => sum + line.amount.toNumber(), 0);
+      const totalReceived = (statement.lines || [])
+        .filter((line: any) => line.transaction_type === 'credit')
+        .reduce((sum: number, line: any) => sum + Number(line.amount), 0);
 
       const discrepancy = totalReceived - totalExpected;
 
-      const reconciliation = await this.supabase.getClient().reconciliation.create({
-        data: {
-          reconciliation_date: reconciliationDate,
+      const { data: reconciliation, error } = await this.supabase.getClient()
+        .from('reconciliations')
+        .insert({
+          reconciliation_date: reconciliationDate.toISOString(),
           bank_statement_id: statement.id,
-          total_expected: new Decimal(totalExpected),
-          total_received: new Decimal(totalReceived),
-          discrepancy: new Decimal(discrepancy),
+          total_expected: totalExpected,
+          total_received: totalReceived,
+          discrepancy: discrepancy,
           status: Math.abs(discrepancy) < 0.01 ? 'reconciled' : 'pending',
-          reconciled_at: Math.abs(discrepancy) < 0.01 ? new Date() : null,
+          reconciled_at: Math.abs(discrepancy) < 0.01 ? new Date().toISOString() : null,
           reconciled_by: Math.abs(discrepancy) < 0.01 ? userId : null,
-        },
-      });
+        })
+        .select()
+        .single();
 
       reconciliations.push(reconciliation);
 
@@ -410,9 +419,11 @@ export class ReconciliationService {
   }
 
   async getReconciliationById(reconciliationId: string) {
-    const reconciliation = await this.supabase.getClient().reconciliation.findUnique({
-      where: { id: reconciliationId },
-    });
+    const { data: reconciliation, error } = await this.supabase.getClient()
+      .from('reconciliations')
+      .select('*')
+      .eq('id', reconciliationId)
+      .single();
 
     if (!reconciliation) {
       throw new NotFoundException('Reconciliation not found');
@@ -422,57 +433,50 @@ export class ReconciliationService {
   }
 
   async getReconciliationsByDateRange(startDate: Date, endDate: Date) {
-    return this.supabase.getClient().reconciliation.findMany({
-      where: {
-        reconciliation_date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      orderBy: {
-        reconciliation_date: 'desc',
-      },
-    });
+    const { data } = await this.supabase.getClient()
+      .from('reconciliations')
+      .select('*')
+      .gte('reconciliation_date', startDate.toISOString())
+      .lte('reconciliation_date', endDate.toISOString())
+      .order('reconciliation_date', { ascending: false });
+    return data || [];
   }
 
   async getDiscrepancies() {
-    return this.supabase.getClient().reconciliation.findMany({
-      where: {
-        status: 'pending',
-        discrepancy: {
-          not: new Decimal(0),
-        },
-      },
-      orderBy: {
-        reconciliation_date: 'desc',
-      },
-    });
+    const { data } = await this.supabase.getClient()
+      .from('reconciliations')
+      .select('*')
+      .eq('status', 'pending')
+      .neq('discrepancy', 0)
+      .order('reconciliation_date', { ascending: false });
+    return data || [];
   }
 
   async generateReconciliationReport(reconciliationId: string) {
     const reconciliation = await this.getReconciliationById(reconciliationId);
 
-    const statement = await this.supabase.getClient().bankStatement.findUnique({
-      where: { id: reconciliation.bank_statement_id },
-      include: {
-        lines: {
-          include: {
-            allocations: true,
-          },
-        },
-      },
-    });
+    const { data: statement } = await this.supabase.getClient()
+      .from('bank_statements')
+      .select(`
+        *,
+        lines:bank_statement_lines(
+          *,
+          allocations:allocations(*)
+        )
+      `)
+      .eq('id', reconciliation.bank_statement_id)
+      .single();
 
     if (!statement) {
       throw new NotFoundException('Bank statement not found');
     }
 
-    const unallocatedLines = statement.lines.filter(line => {
-      const totalAllocated = line.allocations.reduce(
-        (sum, alloc) => sum + alloc.amount.toNumber(),
+    const unallocatedLines = (statement.lines || []).filter((line: any) => {
+      const totalAllocated = (line.allocations || []).reduce(
+        (sum: number, alloc: any) => sum + Number(alloc.amount),
         0,
       );
-      const lineAmount = line.amount.toNumber();
+      const lineAmount = Number(line.amount);
       return Math.abs(totalAllocated - lineAmount) > 0.01;
     });
 
@@ -484,9 +488,9 @@ export class ReconciliationService {
       unallocatedLines,
       unallocatedPayments,
       summary: {
-        totalExpected: reconciliation.total_expected.toNumber(),
-        totalReceived: reconciliation.total_received.toNumber(),
-        discrepancy: reconciliation.discrepancy.toNumber(),
+        totalExpected: Number(reconciliation.total_expected),
+        totalReceived: Number(reconciliation.total_received),
+        discrepancy: Number(reconciliation.discrepancy),
         unallocatedLineCount: unallocatedLines.length,
         unallocatedPaymentCount: unallocatedPayments.length,
       },

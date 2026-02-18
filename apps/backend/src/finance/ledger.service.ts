@@ -41,9 +41,11 @@ export class LedgerService {
    */
   async createGlAccount(dto: CreateGlAccountDto, userId: string) {
     // Check if account number already exists
-    const existing = await this.supabase.getClient().glAccount.findUnique({
-      where: { account_number: dto.accountNumber },
-    });
+    const { data: existing } = await this.supabase.getClient()
+      .from('gl_accounts')
+      .select('*')
+      .eq('account_number', dto.accountNumber)
+      .single();
 
     if (existing) {
       throw new BadRequestException(`Account number ${dto.accountNumber} already exists`);
@@ -51,24 +53,28 @@ export class LedgerService {
 
     // Validate parent account if provided
     if (dto.parentAccountId) {
-      const parent = await this.supabase.getClient().glAccount.findUnique({
-        where: { id: dto.parentAccountId },
-      });
+      const { data: parent } = await this.supabase.getClient()
+        .from('gl_accounts')
+        .select('*')
+        .eq('id', dto.parentAccountId)
+        .single();
 
       if (!parent) {
         throw new NotFoundException(`Parent account ${dto.parentAccountId} not found`);
       }
     }
 
-    const account = await this.supabase.getClient().glAccount.create({
-      data: {
+    const { data: account, error } = await this.supabase.getClient()
+      .from('gl_accounts')
+      .insert({
         account_number: dto.accountNumber,
         account_name: dto.accountName,
         account_type: dto.accountType,
         parent_account_id: dto.parentAccountId,
         is_active: true,
-      },
-    });
+      })
+      .select()
+      .single();
 
     // Audit log
     await this.auditService.logEvent({
@@ -91,9 +97,11 @@ export class LedgerService {
    * Get GL account by ID
    */
   async getGlAccountById(accountId: string) {
-    const account = await this.supabase.getClient().glAccount.findUnique({
-      where: { id: accountId },
-    });
+    const { data: account, error } = await this.supabase.getClient()
+      .from('gl_accounts')
+      .select('*')
+      .eq('id', accountId)
+      .single();
 
     if (!account) {
       throw new NotFoundException(`GL account ${accountId} not found`);
@@ -106,9 +114,11 @@ export class LedgerService {
    * Get GL account by account number
    */
   async getGlAccountByNumber(accountNumber: string) {
-    const account = await this.supabase.getClient().glAccount.findUnique({
-      where: { account_number: accountNumber },
-    });
+    const { data: account, error } = await this.supabase.getClient()
+      .from('gl_accounts')
+      .select('*')
+      .eq('account_number', accountNumber)
+      .single();
 
     if (!account) {
       throw new NotFoundException(`GL account ${accountNumber} not found`);
@@ -121,10 +131,12 @@ export class LedgerService {
    * Get all GL accounts
    */
   async getAllGlAccounts() {
-    return this.supabase.getClient().glAccount.findMany({
-      where: { is_active: true },
-      orderBy: { account_number: 'asc' },
-    });
+    const { data } = await this.supabase.getClient()
+      .from('gl_accounts')
+      .select('*')
+      .eq('is_active', true)
+      .order('account_number', { ascending: true });
+    return data || [];
   }
 
   /**
@@ -155,32 +167,33 @@ export class LedgerService {
     const journalNumber = this.generateJournalNumber();
 
     // Create journal
-    const journal = await this.supabase.getClient().glJournal.create({
-      data: {
+    const { data: journal, error: journalError } = await this.supabase.getClient()
+      .from('gl_journals')
+      .insert({
         journal_number: journalNumber,
-        journal_date: dto.journalDate,
+        journal_date: dto.journalDate.toISOString(),
         description: dto.description,
         reference: dto.reference,
         status: 'posted',
         created_by: userId,
-      },
-    });
+      })
+      .select()
+      .single();
 
     // Create journal entries
-    const entries = await Promise.all(
-      dto.entries.map(entry =>
-        this.supabase.getClient().glEntry.create({
-          data: {
-            journal_id: journal.id,
-            account_id: entry.accountId,
-            entry_type: entry.entryType,
-            amount: entry.amount,
-            cost_centre_id: entry.costCentreId,
-            description: entry.description,
-          },
-        }),
-      ),
-    );
+    const entryInserts = dto.entries.map(entry => ({
+      journal_id: journal.id,
+      account_id: entry.accountId,
+      entry_type: entry.entryType,
+      amount: entry.amount,
+      cost_centre_id: entry.costCentreId,
+      description: entry.description,
+    }));
+
+    const { data: entries, error: entriesError } = await this.supabase.getClient()
+      .from('gl_entries')
+      .insert(entryInserts)
+      .select();
 
     // Audit log
     await this.auditService.logEvent({
@@ -207,17 +220,18 @@ export class LedgerService {
    * Get journal entry by ID
    */
   async getJournalById(journalId: string) {
-    const journal = await this.supabase.getClient().glJournal.findUnique({
-      where: { id: journalId },
-      include: {
-        entries: {
-          include: {
-            account: true,
-            cost_centre: true,
-          },
-        },
-      },
-    });
+    const { data: journal, error } = await this.supabase.getClient()
+      .from('gl_journals')
+      .select(`
+        *,
+        entries:gl_entries(
+          *,
+          account:gl_accounts(*),
+          cost_centre:cost_centres(*)
+        )
+      `)
+      .eq('id', journalId)
+      .single();
 
     if (!journal) {
       throw new NotFoundException(`Journal ${journalId} not found`);
@@ -230,17 +244,18 @@ export class LedgerService {
    * Get journal entry by journal number
    */
   async getJournalByNumber(journalNumber: string) {
-    const journal = await this.supabase.getClient().glJournal.findUnique({
-      where: { journal_number: journalNumber },
-      include: {
-        entries: {
-          include: {
-            account: true,
-            cost_centre: true,
-          },
-        },
-      },
-    });
+    const { data: journal, error } = await this.supabase.getClient()
+      .from('gl_journals')
+      .select(`
+        *,
+        entries:gl_entries(
+          *,
+          account:gl_accounts(*),
+          cost_centre:cost_centres(*)
+        )
+      `)
+      .eq('journal_number', journalNumber)
+      .single();
 
     if (!journal) {
       throw new NotFoundException(`Journal ${journalNumber} not found`);
@@ -253,22 +268,19 @@ export class LedgerService {
    * Get journals by date range
    */
   async getJournalsByDateRange(startDate: Date, endDate: Date) {
-    return this.supabase.getClient().glJournal.findMany({
-      where: {
-        journal_date: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-      include: {
-        entries: {
-          include: {
-            account: true,
-          },
-        },
-      },
-      orderBy: { journal_date: 'desc' },
-    });
+    const { data } = await this.supabase.getClient()
+      .from('gl_journals')
+      .select(`
+        *,
+        entries:gl_entries(
+          *,
+          account:gl_accounts(*)
+        )
+      `)
+      .gte('journal_date', startDate.toISOString())
+      .lte('journal_date', endDate.toISOString())
+      .order('journal_date', { ascending: false });
+    return data || [];
   }
 
   /**
@@ -280,23 +292,20 @@ export class LedgerService {
     const asOfDate = dto.asOfDate || new Date();
 
     // Get all entries for this account up to the specified date
-    const entries = await this.supabase.getClient().glEntry.findMany({
-      where: {
-        account_id: dto.accountId,
-        journal: {
-          journal_date: { lte: asOfDate },
-          status: 'posted',
-        },
-      },
-      include: {
-        journal: true,
-      },
-    });
+    const { data: entries } = await this.supabase.getClient()
+      .from('gl_entries')
+      .select(`
+        *,
+        journal:gl_journals(*)
+      `)
+      .eq('account_id', dto.accountId)
+      .lte('journal.journal_date', asOfDate.toISOString())
+      .eq('journal.status', 'posted');
 
     // Calculate balance based on account type
     let balance = 0;
 
-    for (const entry of entries) {
+    for (const entry of (entries || [])) {
       const amount = Number(entry.amount);
 
       // For asset and expense accounts: debit increases, credit decreases
@@ -315,7 +324,7 @@ export class LedgerService {
       accountType: account.account_type,
       balance,
       asOfDate,
-      entryCount: entries.length,
+      entryCount: (entries || []).length,
     };
   }
 
@@ -362,22 +371,26 @@ export class LedgerService {
     description: string,
     userId: string,
   ) {
-    const existing = await this.supabase.getClient().costCentre.findUnique({
-      where: { code },
-    });
+    const { data: existing } = await this.supabase.getClient()
+      .from('cost_centres')
+      .select('*')
+      .eq('code', code)
+      .single();
 
     if (existing) {
       throw new BadRequestException(`Cost centre ${code} already exists`);
     }
 
-    const costCentre = await this.supabase.getClient().costCentre.create({
-      data: {
+    const { data: costCentre, error } = await this.supabase.getClient()
+      .from('cost_centres')
+      .insert({
         code,
         name,
         description,
         is_active: true,
-      },
-    });
+      })
+      .select()
+      .single();
 
     // Audit log
     await this.auditService.logEvent({
@@ -399,10 +412,12 @@ export class LedgerService {
    * Get all cost centres
    */
   async getAllCostCentres() {
-    return this.supabase.getClient().costCentre.findMany({
-      where: { is_active: true },
-      orderBy: { code: 'asc' },
-    });
+    const { data } = await this.supabase.getClient()
+      .from('cost_centres')
+      .select('*')
+      .eq('is_active', true)
+      .order('code', { ascending: true });
+    return data || [];
   }
 
   /**
