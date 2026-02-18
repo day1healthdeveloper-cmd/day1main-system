@@ -185,14 +185,16 @@ export class BreachIncidentService {
       throw new BadRequestException('Incident is already closed');
     }
 
-    const updated = await this.supabase.getClient().breachIncident.update({
-      where: { id: dto.incidentId },
-      data: {
+    const { data: updated, error } = await this.supabase.getClient()
+      .from('breach_incidents')
+      .update({
         status: 'closed',
         resolution: dto.resolution,
-        closed_at: new Date(),
-      },
-    });
+        closed_at: new Date().toISOString(),
+      })
+      .eq('id', dto.incidentId)
+      .select()
+      .single();
 
     await this.auditService.logEvent({
       event_type: 'breach_incident_closed',
@@ -204,9 +206,9 @@ export class BreachIncidentService {
         incident_number: incident.incident_number,
         resolution: dto.resolution,
         previous_status: incident.status,
-        closed_at: updated.closed_at?.toISOString(),
+        closed_at: updated.closed_at,
         time_to_resolution_days: Math.floor(
-          ((updated.closed_at?.getTime() || 0) - incident.discovered_at.getTime()) /
+          (new Date(updated.closed_at).getTime() - new Date(incident.discovered_at).getTime()) /
             (1000 * 60 * 60 * 24),
         ),
       },
@@ -241,10 +243,6 @@ export class BreachIncidentService {
         : 0;
 
     return {
-      total,
-      open,
-      investigating,
-    return {
       total: total || 0,
       open: open || 0,
       investigating: investigating || 0,
@@ -261,14 +259,7 @@ export class BreachIncidentService {
   }
 
   async getUnreportedCriticalIncidents() {
-    const { data } = await this.supabase.getClient().from('breach_incidents').select('*').eq('severity', 'critical').is('reported_to_regulator', null).order('discovered_at', { ascending: false });
+    const { data } = await this.supabase.getClient().from('breach_incidents').select('*').eq('severity', 'critical').eq('reported_to_regulator', false).order('discovered_at', { ascending: false });
     return data || [];
-  }
-        reported_to_regulator: false,
-      },
-      orderBy: {
-        discovered_at: 'asc',
-      },
-    });
   }
 }
