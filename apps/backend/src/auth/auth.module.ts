@@ -8,7 +8,6 @@ import { JwtStrategy } from './strategies/jwt.strategy'
 import { MfaService } from './mfa/mfa.service'
 import { MfaController } from './mfa/mfa.controller'
 import { SupabaseModule } from '../supabase/supabase.module'
-import { SupabaseModule } from '../supabase/supabase.module'
 
 @Module({
   imports: [

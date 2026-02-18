@@ -12,11 +12,13 @@ export class MfaService {
     const secret = authenticator.generateSecret()
 
     // Get user email for QR code
-    const user = await this.supabase.getClient().from('users').select('*').eq({
-      where: { id: userId },
-    })
+    const { data: user, error } = await this.supabase.getClient()
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-    if (!user) {
+    if (error || !user) {
       throw new BadRequestException('User not found')
     }
 
@@ -27,16 +29,22 @@ export class MfaService {
     const qrCode = await toDataURL(otpauthUrl)
 
     // Create MFA device (unverified)
-    const device = await this.supabase.getClient().mfaDevice.create({
-      data: {
+    const { data: device, error: deviceError } = await this.supabase.getClient()
+      .from('mfa_devices')
+      .insert({
         user_id: userId,
         device_type: 'totp',
         device_name: deviceName || 'Authenticator App',
         secret,
         is_verified: false,
         is_active: false,
-      },
-    })
+      })
+      .select()
+      .single();
+
+    if (deviceError) {
+      throw new BadRequestException('Failed to create MFA device')
+    }
 
     return {
       device_id: device.id,
@@ -48,16 +56,16 @@ export class MfaService {
 
   async verifyTotpSetup(userId: string, deviceId: string, code: string) {
     // Get device
-    const device = await this.supabase.getClient().mfaDevice.findFirst({
-      where: {
-        id: deviceId,
-        user_id: userId,
-        device_type: 'totp',
-        is_verified: false,
-      },
-    })
+    const { data: device, error } = await this.supabase.getClient()
+      .from('mfa_devices')
+      .select('*')
+      .eq('id', deviceId)
+      .eq('user_id', userId)
+      .eq('device_type', 'totp')
+      .eq('is_verified', false)
+      .single();
 
-    if (!device || !device.secret) {
+    if (error || !device || !device.secret) {
       throw new BadRequestException('Invalid device or already verified')
     }
 
@@ -72,18 +80,19 @@ export class MfaService {
     }
 
     // Mark device as verified and active
-    await this.supabase.getClient().mfaDevice.update({
-      where: { id: device.id },
-      data: {
+    await this.supabase.getClient()
+      .from('mfa_devices')
+      .update({
         is_verified: true,
         is_active: true,
-        last_used_at: new Date(),
-      },
-    })
+        last_used_at: new Date().toISOString(),
+      })
+      .eq('id', device.id);
 
     // Log audit event
-    await this.supabase.getClient().auditEvent.create({
-      data: {
+    await this.supabase.getClient()
+      .from('audit_events')
+      .insert({
         event_type: 'mfa',
         entity_type: 'mfa_device',
         entity_id: device.id,
@@ -92,24 +101,23 @@ export class MfaService {
         metadata: {
           device_type: 'totp',
         },
-      },
-    })
+      });
 
     return { message: 'MFA device verified successfully' }
   }
 
   async verifyTotp(userId: string, code: string) {
     // Get active TOTP device
-    const device = await this.supabase.getClient().mfaDevice.findFirst({
-      where: {
-        user_id: userId,
-        device_type: 'totp',
-        is_verified: true,
-        is_active: true,
-      },
-    })
+    const { data: device, error } = await this.supabase.getClient()
+      .from('mfa_devices')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('device_type', 'totp')
+      .eq('is_verified', true)
+      .eq('is_active', true)
+      .single();
 
-    if (!device || !device.secret) {
+    if (error || !device || !device.secret) {
       throw new UnauthorizedException('MFA device not found')
     }
 
@@ -124,59 +132,51 @@ export class MfaService {
     }
 
     // Update last used
-    await this.supabase.getClient().mfaDevice.update({
-      where: { id: device.id },
-      data: {
-        last_used_at: new Date(),
-      },
-    })
+    await this.supabase.getClient()
+      .from('mfa_devices')
+      .update({
+        last_used_at: new Date().toISOString(),
+      })
+      .eq('id', device.id);
 
     return true
   }
 
   async getUserMfaDevices(userId: string) {
-    const devices = await this.supabase.getClient().mfaDevice.findMany({
-      where: {
-        user_id: userId,
-        is_active: true,
-      },
-      select: {
-        id: true,
-        device_type: true,
-        device_name: true,
-        is_verified: true,
-        last_used_at: true,
-        created_at: true,
-      },
-    })
+    const { data: devices } = await this.supabase.getClient()
+      .from('mfa_devices')
+      .select('id, device_type, device_name, is_verified, last_used_at, created_at')
+      .eq('user_id', userId)
+      .eq('is_active', true);
 
-    return devices
+    return devices || []
   }
 
   async removeMfaDevice(userId: string, deviceId: string) {
     // Verify device belongs to user
-    const device = await this.supabase.getClient().mfaDevice.findFirst({
-      where: {
-        id: deviceId,
-        user_id: userId,
-      },
-    })
+    const { data: device, error } = await this.supabase.getClient()
+      .from('mfa_devices')
+      .select('*')
+      .eq('id', deviceId)
+      .eq('user_id', userId)
+      .single();
 
-    if (!device) {
+    if (error || !device) {
       throw new BadRequestException('Device not found')
     }
 
     // Deactivate device
-    await this.supabase.getClient().mfaDevice.update({
-      where: { id: deviceId },
-      data: {
+    await this.supabase.getClient()
+      .from('mfa_devices')
+      .update({
         is_active: false,
-      },
-    })
+      })
+      .eq('id', deviceId);
 
     // Log audit event
-    await this.supabase.getClient().auditEvent.create({
-      data: {
+    await this.supabase.getClient()
+      .from('audit_events')
+      .insert({
         event_type: 'mfa',
         entity_type: 'mfa_device',
         entity_id: deviceId,
@@ -185,21 +185,19 @@ export class MfaService {
         metadata: {
           device_type: device.device_type,
         },
-      },
-    })
+      });
 
     return { message: 'MFA device removed successfully' }
   }
 
   async isMfaEnabled(userId: string): Promise<boolean> {
-    const count = await this.supabase.getClient().mfaDevice.count({
-      where: {
-        user_id: userId,
-        is_verified: true,
-        is_active: true,
-      },
-    })
+    const { count } = await this.supabase.getClient()
+      .from('mfa_devices')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_verified', true)
+      .eq('is_active', true);
 
-    return count > 0
+    return (count || 0) > 0
   }
 }
