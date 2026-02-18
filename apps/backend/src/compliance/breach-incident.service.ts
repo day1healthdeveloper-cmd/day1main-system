@@ -218,10 +218,7 @@ export class BreachIncidentService {
   async getIncidentStatistics() {
     const { count: total } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true });
     const { count: open } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true }).eq('status', 'open');
-      where: { status: 'open' },
-    });
-    const investigating = await this.supabase.getClient().breachIncident.count({
-      where: { status: 'investigating' },
+    const { count: investigating } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true }).eq('status', 'investigating');
     const { count: closed } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true }).eq('status', 'closed');
     const { count: critical } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true }).eq('severity', 'critical');
     const { count: reportedToRegulator } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true }).eq('reported_to_regulator', true);
@@ -250,6 +247,7 @@ export class BreachIncidentService {
     return {
       total: total || 0,
       open: open || 0,
+      investigating: investigating || 0,
       closed: closed || 0,
       critical: critical || 0,
       reportedToRegulator: reportedToRegulator || 0,
