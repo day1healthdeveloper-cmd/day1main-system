@@ -84,7 +84,7 @@ export class AuthService {
       console.log('✅ Session created');
 
       // Log audit event
-      await this.supabase.from('audit_events').insert({
+      await this.supabase.getClient().from('audit_events').insert({
         event_type: 'auth',
         entity_type: 'user',
         entity_id: user.id,
@@ -146,7 +146,7 @@ export class AuthService {
     }
 
     // Create profile
-    await this.supabase.from('profiles').insert({
+    await this.supabase.getClient().from('profiles').insert({
       user_id: user.id,
       first_name: dto.first_name,
       last_name: dto.last_name,
@@ -161,7 +161,7 @@ export class AuthService {
       .single();
 
     if (memberRole) {
-      await this.supabase.from('user_roles').insert({
+      await this.supabase.getClient().from('user_roles').insert({
         user_id: user.id,
         role_id: memberRole.id,
       });
@@ -191,7 +191,7 @@ export class AuthService {
       .eq('token', token);
 
     // Log audit event
-    await this.supabase.from('audit_events').insert({
+    await this.supabase.getClient().from('audit_events').insert({
       event_type: 'auth',
       entity_type: 'user',
       entity_id: userId,
@@ -265,7 +265,7 @@ export class AuthService {
   ) {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    await this.supabase.from('sessions').insert({
+    await this.supabase.getClient().from('sessions').insert({
       user_id: userId,
       token,
       refresh_token: refreshToken,

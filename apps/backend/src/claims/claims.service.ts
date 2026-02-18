@@ -13,10 +13,10 @@ export class ClaimsService {
   ) {}
 
   async submitClaim(dto: SubmitClaimDto, userId: string) {
-    const { data: member } = await this.supabase.from('members').select('id').eq('id', dto.member_id).single()
+    const { data: member } = await this.supabase.getClient().from('members').select('id').eq('id', dto.member_id).single()
     if (!member) throw new NotFoundException('Member not found')
 
-    const { data: provider } = await this.supabase.from('providers').select('id').eq('id', dto.provider_id).single()
+    const { data: provider } = await this.supabase.getClient().from('providers').select('id').eq('id', dto.provider_id).single()
     if (!provider) throw new NotFoundException('Provider not found')
 
     await this.validateMemberEligibility(dto.member_id, dto.service_date)
@@ -44,7 +44,7 @@ export class ClaimsService {
 
     // Create claim lines
     for (const line of dto.claim_lines) {
-      await this.supabase.from('claim_lines').insert({
+      await this.supabase.getClient().from('claim_lines').insert({
         claim_id: claim.id,
         icd10_code: dto.diagnosis_code,
         procedure_code: line.procedure_code,
@@ -55,7 +55,7 @@ export class ClaimsService {
     }
 
     // Create status history
-    await this.supabase.from('claim_status_history').insert({
+    await this.supabase.getClient().from('claim_status_history').insert({
       claim_id: claim.id,
       status: 'submitted',
       reason: 'Claim submitted',
@@ -197,15 +197,15 @@ export class ClaimsService {
 
 
   async getClaimById(claimId: string) {
-    const { data: claim, error } = await this.supabase.from('claims').select('*').eq('id', claimId).single()
+    const { data: claim, error } = await this.supabase.getClient().from('claims').select('*').eq('id', claimId).single()
     if (error || !claim) throw new NotFoundException('Claim not found')
 
     const [memberRes, providerRes, policyRes, linesRes, historyRes] = await Promise.all([
-      this.supabase.from('members').select('*').eq('id', claim.member_id).single(),
-      this.supabase.from('providers').select('*').eq('id', claim.provider_id).single(),
-      this.supabase.from('policies').select('*').eq('id', claim.policy_id).single(),
-      this.supabase.from('claim_lines').select('*').eq('claim_id', claimId),
-      this.supabase.from('claim_status_history').select('*').eq('claim_id', claimId).order('changed_at', { ascending: false }),
+      this.supabase.getClient().from('members').select('*').eq('id', claim.member_id).single(),
+      this.supabase.getClient().from('providers').select('*').eq('id', claim.provider_id).single(),
+      this.supabase.getClient().from('policies').select('*').eq('id', claim.policy_id).single(),
+      this.supabase.getClient().from('claim_lines').select('*').eq('claim_id', claimId),
+      this.supabase.getClient().from('claim_status_history').select('*').eq('claim_id', claimId).order('changed_at', { ascending: false }),
     ])
 
     return { ...claim, member: memberRes.data, provider: providerRes.data, policy: policyRes.data, claim_lines: linesRes.data, status_history: historyRes.data }
@@ -242,7 +242,7 @@ export class ClaimsService {
   }
 
   async getClaimStatusHistory(claimId: string) {
-    const { data: claim } = await this.supabase.from('claims').select('id').eq('id', claimId).single()
+    const { data: claim } = await this.supabase.getClient().from('claims').select('id').eq('id', claimId).single()
     if (!claim) throw new NotFoundException('Claim not found')
 
     const { data } = await this.supabase

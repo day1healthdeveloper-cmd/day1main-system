@@ -66,7 +66,7 @@ export class PoliciesService {
     // Create policy members
     for (const memberDto of dto.members) {
       const coverStartDate = this.calculateCoverStartDate(new Date(memberDto.cover_start_date), plan.waiting_period_days)
-      await this.supabase.from('policy_members').insert({
+      await this.supabase.getClient().from('policy_members').insert({
         policy_id: newPolicy.id,
         member_id: memberDto.member_id,
         relationship: memberDto.relationship,
@@ -76,7 +76,7 @@ export class PoliciesService {
     }
 
     // Create initial status history
-    await this.supabase.from('policy_status_history').insert({
+    await this.supabase.getClient().from('policy_status_history').insert({
       policy_id: newPolicy.id,
       status: 'pending',
       reason: 'Policy created',
@@ -110,10 +110,10 @@ export class PoliciesService {
     }
 
     const [planRes, membersRes, historyRes, endorsementsRes] = await Promise.all([
-      this.supabase.from('plans').select('*, product:products(*)').eq('id', policy.plan_id).single(),
-      this.supabase.from('policy_members').select('*, member:members(*)').eq('policy_id', policyId),
-      this.supabase.from('policy_status_history').select('*').eq('policy_id', policyId).order('changed_at', { ascending: false }),
-      this.supabase.from('endorsements').select('*').eq('policy_id', policyId).order('effective_date', { ascending: false }),
+      this.supabase.getClient().from('plans').select('*, product:products(*)').eq('id', policy.plan_id).single(),
+      this.supabase.getClient().from('policy_members').select('*, member:members(*)').eq('policy_id', policyId),
+      this.supabase.getClient().from('policy_status_history').select('*').eq('policy_id', policyId).order('changed_at', { ascending: false }),
+      this.supabase.getClient().from('endorsements').select('*').eq('policy_id', policyId).order('effective_date', { ascending: false }),
     ])
 
     return { ...policy, plan: planRes.data, policy_members: membersRes.data, status_history: historyRes.data, endorsements: endorsementsRes.data }
@@ -123,7 +123,7 @@ export class PoliciesService {
    * Update policy status
    */
   async updatePolicyStatus(policyId: string, dto: UpdatePolicyStatusDto, userId: string) {
-    const { data: policy, error } = await this.supabase.from('policies').select('*').eq('id', policyId).single()
+    const { data: policy, error } = await this.supabase.getClient().from('policies').select('*').eq('id', policyId).single()
 
     if (error || !policy) {
       throw new NotFoundException('Policy not found')
@@ -140,7 +140,7 @@ export class PoliciesService {
 
     if (updateError) throw new BadRequestException('Failed to update policy status')
 
-    await this.supabase.from('policy_status_history').insert({
+    await this.supabase.getClient().from('policy_status_history').insert({
       policy_id: policyId,
       status: dto.status,
       reason: dto.reason,
@@ -166,7 +166,7 @@ export class PoliciesService {
    * Create policy endorsement
    */
   async createEndorsement(policyId: string, dto: CreateEndorsementDto, userId: string) {
-    const { data: policy, error } = await this.supabase.from('policies').select('*').eq('id', policyId).single()
+    const { data: policy, error } = await this.supabase.getClient().from('policies').select('*').eq('id', policyId).single()
 
     if (error || !policy) {
       throw new NotFoundException('Policy not found')
@@ -189,7 +189,7 @@ export class PoliciesService {
 
     if (dto.premium_change) {
       const newPremium = Number(policy.premium) + dto.premium_change
-      await this.supabase.from('policies').update({ premium: newPremium }).eq('id', policyId)
+      await this.supabase.getClient().from('policies').update({ premium: newPremium }).eq('id', policyId)
     }
 
     await this.auditService.logEvent({
@@ -208,7 +208,7 @@ export class PoliciesService {
    * Get policy status history
    */
   async getPolicyStatusHistory(policyId: string) {
-    const { data: policy } = await this.supabase.from('policies').select('id').eq('id', policyId).single()
+    const { data: policy } = await this.supabase.getClient().from('policies').select('id').eq('id', policyId).single()
 
     if (!policy) {
       throw new NotFoundException('Policy not found')

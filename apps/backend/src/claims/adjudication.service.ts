@@ -33,8 +33,8 @@ export class AdjudicationService {
     if (error || !claim) throw new NotFoundException('Claim not found')
     if (claim.status !== 'submitted') throw new BadRequestException('Claim has already been adjudicated')
 
-    const { data: claimLines } = await this.supabase.from('claim_lines').select('*').eq('claim_id', claimId)
-    const { data: policy } = await this.supabase.from('policies').select('*, plan:plans(*)').eq('id', claim.policy_id).single()
+    const { data: claimLines } = await this.supabase.getClient().from('claim_lines').select('*').eq('claim_id', claimId)
+    const { data: policy } = await this.supabase.getClient().from('policies').select('*, plan:plans(*)').eq('id', claim.policy_id).single()
 
     const pmbCheck = await this.checkPmbProtection(claim, policy)
 
@@ -47,9 +47,9 @@ export class AdjudicationService {
     const status = this.determineClaimStatus(lineAdjudications, pmbCheck.is_protected)
     const requiresDocuments = this.checkDocumentRequirements(claim, lineAdjudications)
 
-    await this.supabase.from('claims').update({ status, total_approved: totalApproved }).eq('id', claimId)
+    await this.supabase.getClient().from('claims').update({ status, total_approved: totalApproved }).eq('id', claimId)
 
-    await this.supabase.from('claim_status_history').insert({
+    await this.supabase.getClient().from('claim_status_history').insert({
       claim_id: claimId,
       status,
       reason: this.generateStatusReason(status, allReasonCodes),
@@ -57,7 +57,7 @@ export class AdjudicationService {
     })
 
     for (const adj of lineAdjudications) {
-      await this.supabase.from('claim_lines').update({
+      await this.supabase.getClient().from('claim_lines').update({
         amount_approved: adj.approved_amount,
         rejection_reason: adj.rejection_reason,
       }).eq('id', adj.line_id)
@@ -94,7 +94,7 @@ export class AdjudicationService {
 
     if (!product || product.regime !== 'medical_scheme') return { is_protected: false }
 
-    const { data: claimLines } = await this.supabase.from('claim_lines').select('icd10_code, procedure_code').eq('claim_id', claim.id).limit(1)
+    const { data: claimLines } = await this.supabase.getClient().from('claim_lines').select('icd10_code, procedure_code').eq('claim_id', claim.id).limit(1)
     const diagnosisCode = claimLines?.[0]?.icd10_code
     const procedureCode = claimLines?.[0]?.procedure_code
 
@@ -111,7 +111,7 @@ export class AdjudicationService {
       return { line_id: line.id, approved_amount: claimedAmount, reason_codes: ['PMB_PROTECTED'], rejection_reason: undefined }
     }
 
-    const { data: benefits } = await this.supabase.from('plan_benefits').select('*').eq('plan_id', policy?.plan_id)
+    const { data: benefits } = await this.supabase.getClient().from('plan_benefits').select('*').eq('plan_id', policy?.plan_id)
     const benefit = (benefits || []).find((b: any) => b.benefit_code === line.procedure_code || b.benefit_code === 'ALL')
 
     if (!benefit) {
@@ -155,11 +155,11 @@ export class AdjudicationService {
   }
 
   async updateClaimStatus(claimId: string, status: 'approved' | 'pended' | 'rejected', reason: string, userId: string): Promise<void> {
-    const { data: claim } = await this.supabase.from('claims').select('id').eq('id', claimId).single()
+    const { data: claim } = await this.supabase.getClient().from('claims').select('id').eq('id', claimId).single()
     if (!claim) throw new NotFoundException('Claim not found')
 
-    await this.supabase.from('claims').update({ status }).eq('id', claimId)
-    await this.supabase.from('claim_status_history').insert({ claim_id: claimId, status, reason, changed_by: userId })
+    await this.supabase.getClient().from('claims').update({ status }).eq('id', claimId)
+    await this.supabase.getClient().from('claim_status_history').insert({ claim_id: claimId, status, reason, changed_by: userId })
 
     await this.auditService.logEvent({
       event_type: 'claim',

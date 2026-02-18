@@ -183,8 +183,8 @@ export class ReferralService {
    * Get referral statistics
    */
   async getReferralStatistics(memberId?: string) {
-    let totalQuery = this.supabase.from('referrals').select('*', { count: 'exact' });
-    let convertedQuery = this.supabase.from('referrals').select('*', { count: 'exact' }).eq('status', 'converted');
+    let totalQuery = this.supabase.getClient().from('referrals').select('*', { count: 'exact' });
+    let convertedQuery = this.supabase.getClient().from('referrals').select('*', { count: 'exact' }).eq('status', 'converted');
 
     if (memberId) {
       totalQuery = totalQuery.eq('referrer_member_id', memberId);
