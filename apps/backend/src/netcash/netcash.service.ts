@@ -319,7 +319,13 @@ export class NetcashService {
     }
 
     // Group by broker and status
-    const summary = {
+    const summary: {
+      total: number;
+      totalPremium: number;
+      totalArrears: number;
+      byBroker: Record<string, { count: number; premium: number; arrears: number }>;
+      byStatus: Record<string, { count: number; premium: number; arrears: number }>;
+    } = {
       total: members.length,
       totalPremium: members.reduce((sum, m) => sum + (m.monthly_premium || 0), 0),
       totalArrears: members.reduce((sum, m) => sum + (m.total_arrears || 0), 0),
@@ -471,7 +477,10 @@ export class NetcashService {
           batchGroups.set(strikeDateKey, []);
         }
         
-        batchGroups.get(strikeDateKey).push(member);
+        const group = batchGroups.get(strikeDateKey);
+        if (group) {
+          group.push(member);
+        }
       }
     });
 
@@ -500,7 +509,7 @@ export class NetcashService {
    */
   async getSubmissionSchedule(daysAhead = 30): Promise<any[]> {
     const today = new Date();
-    const schedule = [];
+    const schedule: any[] = [];
     
     // Fetch all active members
     const { data: members, error } = await this.supabase.getClient()
@@ -556,7 +565,7 @@ export class NetcashService {
 
     // Convert to array and sort
     submissionMap.forEach((dayData, submissionDate) => {
-      const batches = Array.from(dayData.batches.values()).map(batch => ({
+      const batches = Array.from(dayData.batches.values()).map((batch: any) => ({
         strikeDate: batch.strikeDate,
         memberCount: batch.members.length,
         totalAmount: batch.totalAmount,
@@ -817,11 +826,11 @@ export class NetcashService {
       }
 
       return statusResult;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Error checking Netcash batch status:', error);
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error',
       };
     }
   }
@@ -833,11 +842,11 @@ export class NetcashService {
     try {
       // Netcash returns batch status which includes results
       return this.checkNetcashBatchStatus(runId);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Error getting Netcash batch results:', error);
       return {
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error',
       };
     }
   }
