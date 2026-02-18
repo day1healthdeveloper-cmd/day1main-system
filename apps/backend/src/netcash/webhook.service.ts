@@ -46,7 +46,7 @@ export class WebhookService {
         message: 'Webhook processed successfully',
       };
     } catch (error) {
-      await this.updateWebhookLog(webhookLog.id, false, error.message);
+      await this.updateWebhookLog(webhookLog.id, false, error instanceof Error ? error.message : 'Unknown error');
       throw error;
     }
   }
@@ -278,7 +278,7 @@ export class WebhookService {
       successRate: 0,
     };
 
-    logs?.forEach((log) => {
+    logs?.forEach((log: any) => {
       if (log.processed) {
         if (log.error_message) {
           stats.failed++;

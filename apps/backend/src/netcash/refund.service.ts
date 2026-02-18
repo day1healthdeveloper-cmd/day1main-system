@@ -217,7 +217,7 @@ export class RefundService {
       // Update refund as failed
       await this.updateRefundStatus(refundId, {
         status: 'failed',
-        errorMessage: error.message,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
 
       throw error;
@@ -333,8 +333,8 @@ export class RefundService {
       },
     };
 
-    data.forEach(refund => {
-      const status = refund.status;
+    data.forEach((refund: any) => {
+      const status = refund.status as keyof typeof stats.byStatus;
       const amount = parseFloat(refund.refund_amount);
       
       stats.byStatus[status]++;

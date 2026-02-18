@@ -6,8 +6,6 @@ import { RolesGuard } from '../rbac/guards/roles.guard';
 import { PermissionsGuard } from '../rbac/guards/permissions.guard';
 import { RequirePermissions } from '../rbac/decorators/require-permissions.decorator';
 
-export { FailedPaymentsController };
-
 @Controller('netcash/transactions')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 export class TransactionController {
@@ -47,7 +45,7 @@ export class TransactionController {
 
   @Post(':id/retry')
   @RequirePermissions('debit_orders:update')
-  async retryTransaction(@Param('id') id: string, @Request() req) {
+  async retryTransaction(@Param('id') id: string, @Request() req: any) {
     return this.transactionService.retryTransaction(id, req.user.id);
   }
 }

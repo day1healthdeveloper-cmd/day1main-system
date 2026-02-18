@@ -17,7 +17,7 @@ export class RefundController {
    */
   @Post()
   @RequirePermissions('refunds:create')
-  async createRefund(@Body() dto: CreateRefundDto, @Request() req) {
+  async createRefund(@Body() dto: CreateRefundDto, @Request() req: any) {
     return this.refundService.createRefundRequest(dto, req.user.id);
   }
 
@@ -57,7 +57,7 @@ export class RefundController {
    */
   @Post(':id/process')
   @RequirePermissions('refunds:process')
-  async processRefund(@Param('id') id: string, @Request() req) {
+  async processRefund(@Param('id') id: string, @Request() req: any) {
     return this.refundService.processRefund(id, req.user.id);
   }
 

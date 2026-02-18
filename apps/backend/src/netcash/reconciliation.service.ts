@@ -323,8 +323,9 @@ export class ReconciliationService {
 
     let totalMatchRate = 0;
 
-    reconciliations?.forEach((rec) => {
-      stats.byStatus[rec.status]++;
+    reconciliations?.forEach((rec: any) => {
+      const status = rec.status as keyof typeof stats.byStatus;
+      stats.byStatus[status]++;
       stats.totals.expected += rec.total_expected;
       stats.totals.received += rec.total_received;
       stats.totals.discrepancy += rec.discrepancy_amount;
