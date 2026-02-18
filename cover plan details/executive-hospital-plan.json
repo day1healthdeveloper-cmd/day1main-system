@@ -1,0 +1,93 @@
+{
+  "planName": "Executive Hospital Plan",
+  "planCode": "executive",
+  "year": 2025,
+  "ageRange": "All ages",
+  "pricing": {
+    "memberOnly": 640,
+    "memberPlus1Child": 896,
+    "memberPlus2Children": 1152,
+    "memberPlus3Children": 1408,
+    "memberPlus4Children": 1664,
+    "couple": 1152,
+    "couplePlus1Child": 1408,
+    "couplePlus2Children": 1664,
+    "couplePlus3Children": 1920,
+    "couplePlus4Children": 2176
+  },
+  "benefits": {
+    "inHospitalIllness": {
+      "title": "In-Hospital Illness Benefit",
+      "coverage": "Covers up to R10,000 after the first 24 hours in hospital, up to R10,000 for the second day in hospital, up to R10,000 for the third day in hospital. Thereafter R2,000.00 per day up to a maximum of 21 days.",
+      "waitingPeriod": "3 months",
+      "preExistingConditionsExclusion": "12 months",
+      "amounts": {
+        "firstDay": 10000,
+        "secondDay": 10000,
+        "thirdDay": 10000,
+        "thereafter": 2000,
+        "maxDays": 21
+      }
+    },
+    "illnessTopUp": {
+      "title": "Illness Top-Up",
+      "coverage": "Up to R25,000 per insured person per year subject to an overall limit of 2 events per family policy per annum.",
+      "amount": 25000,
+      "maxEvents": 2,
+      "waitingPeriod": "3 months"
+    },
+    "accidentTrauma": {
+      "title": "Accident/Trauma Benefit",
+      "singleMember": 250000,
+      "familyIncident": 500000,
+      "immediateCover": true
+    },
+    "maternity": {
+      "title": "Maternity Benefit",
+      "amount": 20000,
+      "coverage": "Covers up to R20,000 for the birth of a child in hospital.",
+      "waitingPeriod": "12 months",
+      "eligibility": "Benefit only available to plan members (14 years and older)",
+      "benefitOnly": true
+    },
+    "criticalIllness": {
+      "title": "Critical Illness Benefit",
+      "coverage": "Includes cancer, family member organ donor, heart attack, stroke, kidney failure.",
+      "amount": 50000,
+      "maxAmount": 50000,
+      "note": "Limited to R50,000 unless the insured person applies to a short medical questionnaire about past medical history.",
+      "waitingPeriod": "3 months"
+    },
+    "accidentalPermanentDisability": {
+      "title": "Accidental Permanent Disability Benefit",
+      "amount": 250000,
+      "eligibility": "Principal Member only",
+      "singleEventOnly": true,
+      "immediateCover": true
+    },
+    "funeral": {
+      "title": "Funeral Benefit",
+      "principalMember": 30000,
+      "spouse": 30000,
+      "childOver14": 10000,
+      "childOver6": 5000,
+      "childOver0": 2500,
+      "stillborn28Weeks": 1250,
+      "waitingPeriod": "3 months",
+      "benefitOnly": true,
+      "eligibility": "Benefit only available to Plan members"
+    },
+    "emergencyServices": {
+      "title": "24 Hour Emergency Services Ambulance & Pre-Authorisation",
+      "description": "24 Hour emergency services and pre-authorisation provided by Africa Assist, including 24 hour medical advice and access to unlimited Pay-as-you-Go Virtual Doctor Consultations.",
+      "immediateCover": true
+    }
+  },
+  "partners": [
+    "Life Healthcare",
+    "Mediclinic",
+    "Africa Health Care",
+    "Clinix",
+    "Africa Assist"
+  ]
+}

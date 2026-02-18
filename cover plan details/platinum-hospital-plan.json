@@ -1,0 +1,87 @@
+{
+  "planName": "Platinum Hospital Plan",
+  "planCode": "platinum",
+  "year": 2025,
+  "ageRange": "All ages",
+  "pricing": {
+    "memberOnly": 560,
+    "memberPlus1Child": 784,
+    "memberPlus2Children": 1008,
+    "memberPlus3Children": 1232,
+    "memberPlus4Children": 1456,
+    "couple": 1008,
+    "couplePlus1Child": 1232,
+    "couplePlus2Children": 1456,
+    "couplePlus3Children": 1680,
+    "couplePlus4Children": 1904
+  },
+  "benefits": {
+    "inHospitalIllness": {
+      "title": "In-Hospital Illness Benefit",
+      "coverage": "Covers up to R10,000 after the first 24 hours in hospital, up to R10,000 for the second day in hospital, up to R10,000 for the third day in hospital. Thereafter R1,500 per day up to a maximum of 21 days.",
+      "waitingPeriod": "3 months",
+      "preExistingConditionsExclusion": "12 months",
+      "amounts": {
+        "firstDay": 10000,
+        "secondDay": 10000,
+        "thirdDay": 10000,
+        "thereafter": 1500,
+        "maxDays": 21
+      }
+    },
+    "accidentTrauma": {
+      "title": "Accident/Trauma Benefit",
+      "singleMember": 150000,
+      "familyIncident": 300000,
+      "immediateCover": true
+    },
+    "maternity": {
+      "title": "Maternity Benefit",
+      "amount": 20000,
+      "coverage": "Covers up to R20,000 for the birth of a child in hospital.",
+      "waitingPeriod": "12 months",
+      "eligibility": "Benefit only available to plan members (16 years and older)",
+      "benefitOnly": true
+    },
+    "criticalIllness": {
+      "title": "Critical Illness Benefit",
+      "coverage": "1 incident per family per annum. Critical illness up to R250,000, however the benefit is limited to R50,000 unless the insured person accedes to a short medical examination (at their own cost) to be arranged by Day1 Health.",
+      "amount": 250000,
+      "limitedAmount": 50000,
+      "maxIncidents": 1,
+      "waitingPeriod": "3 months",
+      "note": "The underwriter's decision is final."
+    },
+    "accidentalPermanentDisability": {
+      "title": "Accidental Permanent Disability Benefit",
+      "amount": 250000,
+      "eligibility": "Principal Member only",
+      "singleEventOnly": true,
+      "immediateCover": true
+    },
+    "funeral": {
+      "title": "Funeral Benefit",
+      "principalMember": 20000,
+      "spouse": 20000,
+      "childOver14": 10000,
+      "childOver6": 5000,
+      "childOver0": 2500,
+      "stillborn28Weeks": 1250,
+      "waitingPeriod": "3 months",
+      "benefitOnly": true,
+      "eligibility": "Benefit only available to Plan members"
+    },
+    "emergencyServices": {
+      "title": "24 Hour Emergency Services Ambulance & Pre-Authorisation",
+      "description": "24 Hour emergency services and pre-authorisation provided by Africa Assist, including 24 hour medical advice and access to unlimited Pay-as-you-Go Virtual Doctor Consultations.",
+      "immediateCover": true
+    }
+  },
+  "partners": [
+    "Life Healthcare",
+    "Mediclinic",
+    "Africa Health Care",
+    "Clinix",
+    "Africa Assist"
+  ]
+}

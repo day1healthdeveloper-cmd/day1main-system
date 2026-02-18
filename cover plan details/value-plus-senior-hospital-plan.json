@@ -1,0 +1,59 @@
+{
+  "planName": "Value Plus Hospital Plan - Senior",
+  "planCode": "value-plus-senior",
+  "year": 2025,
+  "ageRange": "65 years & older",
+  "pricing": {
+    "seniorMember": 580,
+    "seniorCouple": 1160
+  },
+  "generalExclusions": [
+    "Sports Injuries",
+    "Maternity Benefits"
+  ],
+  "benefits": {
+    "inHospitalIllness": {
+      "title": "In-Hospital Illness Benefit",
+      "coverage": "Covers up to R10,000 after the first 24 Hours in hospital, up to R10,000 for the second day in hospital, up to R10,000 for the third day in hospital. Thereafter R1,500 per day up to a maximum of 21 days.",
+      "waitingPeriod": "3 months",
+      "preExistingConditionsExclusion": "12 months",
+      "exclusions": ["Maternity Benefits"],
+      "amounts": {
+        "firstDay": 10000,
+        "secondDay": 10000,
+        "thirdDay": 10000,
+        "thereafter": 1500,
+        "maxDays": 21
+      }
+    },
+    "accidentTrauma": {
+      "title": "Accident/Trauma Benefit",
+      "singleMember": 75000,
+      "familyIncident": 150000,
+      "maxEvents": 2,
+      "waitingPeriod": "1 month",
+      "exclusions": ["Sports Injuries"],
+      "immediateCover": false
+    },
+    "funeral": {
+      "title": "Funeral Benefit",
+      "principalMember": 5000,
+      "spouse": 5000,
+      "waitingPeriod": "3 months",
+      "benefitOnly": true,
+      "eligibility": "Benefit only available to Plan members"
+    },
+    "emergencyServices": {
+      "title": "24 Hour Emergency Services Ambulance & Pre-Authorisation",
+      "description": "24 Hour emergency services and pre-authorisation provided by Africa Assist, including 24 hour medical advice and access to unlimited Pay-as-you-Go Virtual Doctor Consultations.",
+      "immediateCover": true
+    }
+  },
+  "partners": [
+    "Life Healthcare",
+    "Mediclinic",
+    "Africa Health Care",
+    "Clinix",
+    "Africa Assist"
+  ]
+}

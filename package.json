@@ -1,0 +1,40 @@
+{
+  "name": "day1main",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Day1Main - South African Medical Insurer Operating System",
+  "scripts": {
+    "predev": "node kill-duplicate-ports.js",
+    "dev": "pnpm --parallel -r dev",
+    "dev:clean": "node kill-duplicate-ports.js && pnpm --parallel -r dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "pnpm -r typecheck",
+    "kill-ports": "node kill-duplicate-ports.js"
+  },
+  "keywords": [
+    "medical-insurer",
+    "health-insurance",
+    "south-africa",
+    "compliance"
+  ],
+  "author": "Day1Main Team",
+  "license": "PROPRIETARY",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "axios": "^1.13.5",
+    "dotenv": "^17.2.4",
+    "form-data": "^4.0.5",
+    "pg": "^8.18.0"
+  }
+}

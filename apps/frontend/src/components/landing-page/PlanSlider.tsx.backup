@@ -1,0 +1,450 @@
+"use client";
+
+import { useState } from 'react';
+
+const slides = [
+  {
+    name: "Ultra Value Plus Starter",
+    price: 189,
+    ageRange: "Ages 18-40",
+    bgImage: "/img1.JPG",
+    sliderName: 'starter',
+    pricing: { spouse: 140, child: 70, maxMembers: 4 },
+    benefits: [
+      {
+        icon: "🚗",
+        title: "Accident Cover",
+        details: ["R50,000 cover first 3 months", "R100,000 after 3 months", "Cover per incident", "Immediate Cover"]
+      },
+      {
+        icon: "🏥",
+        title: "Hospital Cover",
+        details: ["Private In-Hospital Illness", "R10,000 per 24-hour day", "Up to 3 days", "1 incident per annum"]
+      },
+      {
+        icon: "🚑",
+        title: "Ambulance Assist",
+        details: ["24 Hour service", "Pre-authorization required", "Immediate Cover"]
+      },
+      {
+        icon: "👨‍⚕️",
+        title: "Virtual Doctor",
+        details: ["Pay-as-you-go consultations", "Available when needed", "Immediate Cover"]
+      },
+      {
+        icon: "⚰️",
+        title: "Funeral Cover",
+        details: ["R10,000 Funeral benefit", "Immediate family covered", "3 month waiting period"]
+      },
+      {
+        icon: "👶",
+        title: "Maternity Cover",
+        details: ["Prenatal care included", "Delivery costs covered", "12 month waiting period"]
+      },
+      {
+        icon: "♿",
+        title: "Disability Cover",
+        details: ["Permanent disability benefit", "Monthly income support", "Comprehensive coverage"]
+      },
+      {
+        icon: "❤️",
+        title: "Critical Illness",
+        details: ["Cancer cover included", "Heart attack & stroke", "Lump sum payment"]
+      }
+    ]
+  },
+  {
+    name: "Ultra Value Plus Priority",
+    price: 249,
+    ageRange: "Ages 18-64",
+    bgImage: "/img2.JPG",
+    sliderName: 'priority',
+    pricing: { spouse: 199, child: 99, maxMembers: 4 },
+    benefits: [
+      {
+        icon: "🚗",
+        title: "Accident Cover",
+        details: ["R50,000 cover first 3 months", "R100,000 after 3 months", "Cover per incident", "Immediate Cover"]
+      },
+      {
+        icon: "🏥",
+        title: "Hospital Cover",
+        details: ["Private In-Hospital", "R10,000 per day", "Up to 3 days", "3 month waiting period"]
+      },
+      {
+        icon: "🚑",
+        title: "Ambulance Assist",
+        details: ["24 Hour service", "Pre-authorization required", "Immediate Cover"]
+      },
+      {
+        icon: "⚰️",
+        title: "Funeral Cover",
+        details: ["R20,000 Funeral Cover", "3-day Car Hire", "Airtime & Electricity"]
+      },
+      {
+        icon: "�‍⚕️",
+        title: "Virtual Doctor",
+        details: ["Unlimited consultations", "Available 24/7", "Immediate Cover"]
+      },
+      {
+        icon: "�",
+        title: "Maternity Cover",
+        details: ["Full maternity benefits", "Prenatal & postnatal care", "12 month waiting period"]
+      },
+      {
+        icon: "♿",
+        title: "Disability Cover",
+        details: ["Permanent disability", "Income replacement", "Family support"]
+      },
+      {
+        icon: "❤️",
+        title: "Critical Illness",
+        details: ["Major illness cover", "Cancer, heart, stroke", "Financial support"]
+      }
+    ]
+  },
+  {
+    name: "Value Plus Hospital",
+    price: 390,
+    ageRange: "Ages 18-64",
+    bgImage: "/img1.JPG",
+    sliderName: 'valueplus',
+    pricing: { spouse: 312, child: 156, maxMembers: 4 },
+    benefits: [
+      {
+        icon: "♾️",
+        title: "Unlimited Events",
+        details: ["Unlimited Accident & Illness", "No annual caps", "Comprehensive coverage"]
+      },
+      {
+        icon: "🏥",
+        title: "Hospital Cover",
+        details: ["Private In-Hospital", "Enhanced daily benefits", "Multiple incidents covered"]
+      },
+      {
+        icon: "🚑",
+        title: "Ambulance Assist",
+        details: ["24 Hour service", "Pre-authorization required", "Immediate Cover"]
+      },
+      {
+        icon: "👨‍⚕️",
+        title: "Virtual Doctor",
+        details: ["Pay-as-you-go consultations", "Available when needed", "Immediate Cover"]
+      },
+      {
+        icon: "⚰️",
+        title: "Funeral Cover",
+        details: ["R25,000 Funeral benefit", "Extended family coverage", "Immediate cover"]
+      },
+      {
+        icon: "👶",
+        title: "Maternity Cover",
+        details: ["Premium maternity care", "Hospital delivery costs", "Newborn care included"]
+      },
+      {
+        icon: "♿",
+        title: "Disability Cover",
+        details: ["Enhanced disability benefits", "Long-term income support", "Rehabilitation costs"]
+      },
+      {
+        icon: "❤️",
+        title: "Critical Illness",
+        details: ["Comprehensive illness cover", "Multiple conditions", "Enhanced payouts"]
+      }
+    ]
+  },
+  {
+    name: "Executive Hospital",
+    price: 640,
+    ageRange: "Premium Coverage",
+    bgImage: "/img2.JPG",
+    sliderName: 'executive',
+    pricing: { spouse: 512, child: 256, maxMembers: 4 },
+    benefits: [
+      {
+        icon: "⭐",
+        title: "Maximum Cover",
+        details: ["Highest accident cover", "Critical Illness included", "Permanent Disability cover"]
+      },
+      {
+        icon: "🏥",
+        title: "Hospital Cover",
+        details: ["Premium In-Hospital", "Illness top-up benefit", "Unlimited events"]
+      },
+      {
+        icon: "💎",
+        title: "Enhanced Benefits",
+        details: ["Enhanced funeral benefits", "24/7 Ambulance", "Priority service"]
+      },
+      {
+        icon: "👨‍⚕️",
+        title: "Virtual Doctor",
+        details: ["Unlimited consultations", "Available 24/7", "Immediate Cover"]
+      },
+      {
+        icon: "⚰️",
+        title: "Premium Funeral",
+        details: ["R50,000 Funeral cover", "Extended family included", "Premium services"]
+      },
+      {
+        icon: "👶",
+        title: "Premium Maternity",
+        details: ["VIP maternity care", "Private hospital delivery", "Comprehensive newborn care"]
+      },
+      {
+        icon: "♿",
+        title: "Premium Disability",
+        details: ["Maximum disability benefits", "Lifetime income support", "Full rehabilitation"]
+      },
+      {
+        icon: "❤️",
+        title: "Premium Critical Illness",
+        details: ["All major illnesses covered", "Maximum payouts", "Ongoing treatment support"]
+      }
+    ]
+  },
+];
+
+export function PlanSlider({ initialSlide = 0 }: { initialSlide?: number }) {
+  const [fullName, setFullName] = useState('');
+  const [familyOption, setFamilyOption] = useState<'single' | 'couple' | 'family'>('single');
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(initialSlide);
+
+  const calculateTotalPrice = (basePrice: number, spousePrice: number, childPrice: number) => {
+    let total = basePrice;
+    
+    if (familyOption === 'couple') {
+      total = basePrice + spousePrice;
+    } else if (familyOption === 'family') {
+      total = basePrice + (adults - 1) * spousePrice + children * childPrice;
+    }
+    
+    return total;
+  };
+
+  const handleAdultsChange = (delta: number, maxMembers: number) => {
+    const newValue = Math.max(1, Math.min(maxMembers, adults + delta));
+    setAdults(newValue);
+  };
+
+  const handleChildrenChange = (delta: number, maxMembers: number) => {
+    const maxChildren = Math.max(0, maxMembers - adults);
+    const newValue = Math.max(0, Math.min(maxChildren, children + delta));
+    setChildren(newValue);
+  };
+
+  const handleFamilyOptionChange = (option: 'single' | 'couple' | 'family') => {
+    setFamilyOption(option);
+    if (option === 'single') {
+      setAdults(1);
+      setChildren(0);
+    } else if (option === 'couple') {
+      setAdults(2);
+      setChildren(0);
+    } else {
+      setAdults(2);
+      setChildren(0);
+    }
+  };
+
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleSignup = (planName: string) => {
+    if (!fullName.trim()) {
+      alert('Please enter your full name');
+      return;
+    }
+    alert(`Signing up for ${planName} with name: ${fullName}`);
+    // TODO: Implement actual signup logic
+  };
+
+  return (
+    <section className="relative overflow-hidden bg-slate-50 h-screen">
+      <div className="relative flex items-center justify-center h-full py-2 px-4">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${slides[currentSlide].bgImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+        
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-white/70" />
+
+        {/* Navigation Arrows */}
+        <button
+          onClick={handlePrevSlide}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md shadow-lg hover:bg-white transition-all flex items-center justify-center text-xl text-gray-700 hover:scale-110"
+        >
+          ←
+        </button>
+        
+        <button
+          onClick={handleNextSlide}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md shadow-lg hover:bg-white transition-all flex items-center justify-center text-xl text-gray-700 hover:scale-110"
+        >
+          →
+        </button>
+
+        {/* Single Centered Glassmorphism Card */}
+        <div className="relative z-10 w-full max-w-6xl h-full flex items-center">
+          <div className="bg-white/60 backdrop-blur-lg rounded-2xl p-3 shadow-2xl border-2 border-white/40 w-full max-h-[95vh] overflow-auto">
+            {/* Header Row */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <img src="/Logo.jpg" alt="Day1Health" className="h-12 w-auto" />
+                <div>
+                  <h2 className="text-2xl font-bold text-navy-900">{slides[currentSlide].name}</h2>
+                  <p className="text-xs text-slate-600">{slides[currentSlide].ageRange}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content Grid - Benefits and Signup side by side */}
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Left: Benefits Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                {slides[currentSlide].benefits.map((benefit, idx) => (
+                          <div key={idx} className="flex gap-2 bg-white/60 rounded-lg p-3">
+                            <div className="w-12 h-12 bg-yellow-400 rounded-lg flex-shrink-0 flex items-center justify-center">
+                              <span className="text-2xl">{benefit.icon}</span>
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-navy-900 mb-1 text-sm">{benefit.title}</h4>
+                              <ul className="space-y-0.5">
+                                {benefit.details.map((detail, i) => (
+                                  <li key={i} className="flex items-start gap-1">
+                                    <span className="text-navy-900 text-xs mt-0.5">•</span>
+                                    <span className="text-xs text-slate-700 leading-tight">{detail}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Right: Signup Form */}
+                      <div className="bg-white/80 rounded-xl p-6 shadow-lg">
+                        {/* Price Banner */}
+                        <div className="relative bg-gradient-to-r from-green-600 to-green-700 rounded-lg px-6 py-2 text-center shadow-lg mb-4">
+                          <div 
+                            className="absolute inset-0 opacity-30 mix-blend-overlay rounded-lg"
+                            style={{
+                              backgroundImage: 'url(/bg-pattern.webp)',
+                              backgroundRepeat: 'repeat',
+                              backgroundSize: 'auto',
+                            }}
+                          />
+                          <div className="relative z-10 flex items-center justify-center gap-3">
+                            <p className="text-white text-xs font-semibold">Only</p>
+                            <p className="text-yellow-300 text-3xl font-bold">R{slides[currentSlide].price}</p>
+                            <p className="text-white text-xs">per month</p>
+                            <p className="text-white/80 text-xs ml-2">Terms & Conditions</p>
+                          </div>
+                        </div>
+
+                        {/* Family Configuration */}
+                        <div className="mb-2 space-y-1.5">
+                          {/* Plan Label */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-slate-500 text-[9px]">Plan</p>
+                              <p className="text-navy-900 text-xs font-bold">{slides[currentSlide].name}</p>
+                            </div>
+                            <p className="text-green-600 text-base font-bold">R{calculateTotalPrice(slides[currentSlide].price, slides[currentSlide].pricing.spouse, slides[currentSlide].pricing.child)}</p>
+                          </div>
+
+                          {/* Options Dropdown */}
+                          <div>
+                            <label className="block text-slate-600 text-[9px] mb-0.5">Options</label>
+                            <select 
+                              value={familyOption}
+                              onChange={(e) => handleFamilyOptionChange(e.target.value as 'single' | 'couple' | 'family')}
+                              className="w-full px-2 py-1 rounded-lg border border-slate-300 bg-white text-navy-900 text-xs focus:border-green-600 outline-none"
+                            >
+                              <option value="single">Single</option>
+                              <option value="couple">Couple</option>
+                              <option value="family">Family</option>
+                            </select>
+                          </div>
+
+                          {/* Adults Counter */}
+                          <div>
+                            <label className="block text-slate-600 text-[9px] mb-0.5">Adults 18+</label>
+                            <div className="flex items-center gap-1.5">
+                              <button 
+                                onClick={() => handleAdultsChange(-1, slides[currentSlide].pricing.maxMembers)}
+                                className="w-7 h-7 rounded-lg border border-slate-300 bg-white text-slate-600 text-base hover:bg-slate-50"
+                              >-</button>
+                              <div className="w-12 h-7 rounded-lg border border-green-400 bg-green-50 flex items-center justify-center text-green-600 text-base font-semibold">{adults}</div>
+                              <button 
+                                onClick={() => handleAdultsChange(1, slides[currentSlide].pricing.maxMembers)}
+                                className="w-7 h-7 rounded-lg border border-slate-300 bg-white text-slate-600 text-base hover:bg-slate-50"
+                              >+</button>
+                            </div>
+                          </div>
+
+                          {/* Children Counter */}
+                          <div>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <label className="text-slate-600 text-[9px]">Children 0-21</label>
+                              <span className="text-slate-400 text-[8px]">0-{slides[currentSlide].pricing.maxMembers - adults}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <button 
+                                onClick={() => handleChildrenChange(-1, slides[currentSlide].pricing.maxMembers)}
+                                className="w-7 h-7 rounded-lg border border-slate-300 bg-white text-slate-600 text-base hover:bg-slate-50"
+                              >-</button>
+                              <div className="w-12 h-7 rounded-lg border border-green-400 bg-green-50 flex items-center justify-center text-green-600 text-base font-semibold">{children}</div>
+                              <button 
+                                onClick={() => handleChildrenChange(1, slides[currentSlide].pricing.maxMembers)}
+                                className="w-7 h-7 rounded-lg border border-slate-300 bg-white text-slate-600 text-base hover:bg-slate-50"
+                              >+</button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <h3 className="text-sm font-bold text-navy-900 mb-2 text-center">Sign Up Now</h3>
+                        
+                        <div className="mb-2">
+                          <label className="block text-[9px] font-semibold text-slate-700 mb-0.5">Full Name</label>
+                          <input 
+                            type="text" 
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="w-full px-2 py-1.5 rounded-lg border border-slate-300 focus:border-green-600 outline-none transition-all text-xs"
+                            placeholder="Enter your full name"
+                          />
+                        </div>
+
+                        <button 
+                          onClick={() => handleSignup(slides[currentSlide].name)}
+                          className="w-full py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-sm transition-all shadow-lg"
+                        >
+                          1 Min Signup
+                        </button>
+
+                        <p className="text-[8px] text-slate-600 text-center mt-1.5 leading-tight">
+                          By clicking you agree to our <span className="text-green-600 font-semibold">Terms & Conditions</span> and <span className="text-green-600 font-semibold">Privacy Policy</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          );
+        }
+

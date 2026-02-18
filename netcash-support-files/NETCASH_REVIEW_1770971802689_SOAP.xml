@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <BatchFileUpload xmlns="http://tempuri.org/">
+      <ServiceKey>657eb988-5345-45f7-a5e5-07a1a586155f</ServiceKey>
+      <File>SAk2NTdlYjk4OC01MzQ1LTQ1ZjctYTVlNS0wN2ExYTU4NjE1NWYJMQlUd29EYXkJTkVUQ0FTSF9SRVZJRVdfMTc3MDk3MTgwMjY4OQkyMDI1MDIyMAkyNGFkZTczYy05OGNmLTQ3YjMtOTliZS1jYzdiODY3YjMwODANCksJMTAxCTEwMgkxMzEJMTMyCTEzMwkxMzQJMTM1CTEzNgkxMzcJMTYyCTIwMQkzMDEJMzAyCTMwMw0KVAl0ZXN0eTEJVGVzdCBBY2NvdW50CTEJVGVzdCBBY2NvdW50CTIJNjMyMDA1CTAJMTIzNDU2Nzg5CQk1MDAwMAl0ZXN0QGV4YW1wbGUuY29tCUQxQk9VCUJPVTEwMDAxCTIwMjUtMDItMjANCkYJMQk1MDAwMAk5OTk5</File>
+    </BatchFileUpload>
+  </soap:Body>
+</soap:Envelope>

@@ -1,0 +1,10 @@
+# Supabase local development files
+.temp/
+.branches/
+.env
+
+# Local Supabase instance data (if using Docker)
+volumes/
+
+# CLI cache
+.cache/

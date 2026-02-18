@@ -1,0 +1,65 @@
+{
+  "planName": "Value Plus Hospital Plan",
+  "planCode": "value-plus",
+  "year": 2025,
+  "ageRange": "Under 65 years",
+  "pricing": {
+    "singleMember": 390,
+    "memberPlus1Child": 546,
+    "memberPlus2Children": 702,
+    "memberPlus3Children": 858,
+    "memberPlus4Children": 1014,
+    "couple": 702,
+    "couplePlus1Child": 858,
+    "couplePlus2Children": 1014,
+    "couplePlus3Children": 1170,
+    "couplePlus4Children": 1326
+  },
+  "benefits": {
+    "inHospitalIllness": {
+      "title": "In-Hospital Illness Benefit",
+      "coverage": "Covers up to R10,000 after the first 24 hours in hospital, up to R10,000 for the second day and R1,500 for the third day in hospital. Thereafter R1,500 per day up to a maximum of 21 days.",
+      "waitingPeriod": "3 months",
+      "preExistingConditionsExclusion": "12 months",
+      "exclusions": ["Maternity Benefit"],
+      "amounts": {
+        "firstDay": 10000,
+        "secondDay": 10000,
+        "thirdDay": 1500,
+        "thereafter": 1500,
+        "maxDays": 21
+      }
+    },
+    "accidentTrauma": {
+      "title": "Accident/Trauma Benefit",
+      "singleMember": 150000,
+      "familyIncident": 300000,
+      "waitingPeriod": "1 month",
+      "exclusions": ["Sports Injuries"],
+      "immediateCover": false
+    },
+    "funeral": {
+      "title": "Funeral Benefit",
+      "principalMember": 20000,
+      "spouse": 20000,
+      "childOver14": 10000,
+      "childOver6": 5000,
+      "childOver0": 2500,
+      "stillborn28Weeks": 1250,
+      "waitingPeriod": "3 months",
+      "benefitOnly": true
+    },
+    "emergencyServices": {
+      "title": "24 Hour Emergency Services Ambulance & Pre-Authorisation",
+      "description": "24 Hour emergency services and pre-authorisation provided by Africa Assist, including 24 hour medical advice and access to unlimited Pay-as-you-Go Virtual Doctor Consultations.",
+      "immediateCover": true
+    }
+  },
+  "partners": [
+    "Life Healthcare",
+    "Mediclinic",
+    "Africa Health Care",
+    "Clinix",
+    "Africa Assist"
+  ]
+}
