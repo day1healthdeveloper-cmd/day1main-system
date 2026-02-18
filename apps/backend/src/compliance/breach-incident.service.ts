@@ -35,19 +35,18 @@ export class BreachIncidentService {
   async createIncident(dto: CreateBreachIncidentDto, discoveredBy: string) {
     // Generate incident number
     const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const count = await this.supabase.getClient().breachIncident.count();
-    const incidentNumber = `BRH-${dateStr}-${String(count + 1).padStart(6, '0')}`;
+    const { count } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true });
+    const incidentNumber = `BRH-${dateStr}-${String((count || 0) + 1).padStart(6, '0')}`;
 
-    const incident = await this.supabase.getClient().breachIncident.create({
-      data: {
-        incident_number: incidentNumber,
-        incident_type: dto.incidentType,
-        severity: dto.severity,
-        description: dto.description,
-        affected_records: dto.affectedRecords,
-        discovered_at: dto.discoveredAt,
-        discovered_by: discoveredBy,
-        status: 'open',
+    const { data: incident, error } = await this.supabase.getClient().from('breach_incidents').insert({
+      incident_number: incidentNumber,
+      incident_type: dto.incidentType,
+      severity: dto.severity,
+      description: dto.description,
+      affected_records: dto.affectedRecords,
+      discovered_at: dto.discoveredAt,
+      discovered_by: discoveredBy,
+      status: 'open',
       },
     });
 
@@ -85,9 +84,7 @@ export class BreachIncidentService {
   }
 
   async getIncidentById(incidentId: string) {
-    const incident = await this.supabase.getClient().breachIncident.findUnique({
-      where: { id: incidentId },
-    });
+    const { data: incident, error } = await this.supabase.getClient().from('breach_incidents').select('*').eq('id', incidentId).single();
 
     if (!incident) {
       throw new NotFoundException('Breach incident not found');
@@ -97,9 +94,7 @@ export class BreachIncidentService {
   }
 
   async getIncidentByNumber(incidentNumber: string) {
-    const incident = await this.supabase.getClient().breachIncident.findUnique({
-      where: { incident_number: incidentNumber },
-    });
+    const { data: incident, error } = await this.supabase.getClient().from('breach_incidents').select('*').eq('incident_number', incidentNumber).single();
 
     if (!incident) {
       throw new NotFoundException('Breach incident not found');
@@ -109,12 +104,10 @@ export class BreachIncidentService {
   }
 
   async getAllIncidents(status?: string) {
-    return this.supabase.getClient().breachIncident.findMany({
-      where: status ? { status } : undefined,
-      orderBy: {
-        discovered_at: 'desc',
-      },
-    });
+    let query = this.supabase.getClient().from('breach_incidents').select('*').order('discovered_at', { ascending: false });
+    if (status) query = query.eq('status', status);
+    const { data } = await query;
+    return data || [];
   }
 
   async getOpenIncidents() {
@@ -263,13 +256,7 @@ export class BreachIncidentService {
     });
 
     // Calculate average time to resolution for closed incidents
-    const closedIncidents = await this.supabase.getClient().breachIncident.findMany({
-      where: { status: 'closed' },
-      select: {
-        discovered_at: true,
-        closed_at: true,
-      },
-    });
+    const { data: closedIncidents } = await this.supabase.getClient().from('breach_incidents').select('discovered_at, closed_at').eq('status', 'closed');
 
     const avgResolutionDays =
       closedIncidents.length > 0
@@ -297,18 +284,14 @@ export class BreachIncidentService {
   }
 
   async getIncidentsBySeverity(severity: string) {
-    return this.supabase.getClient().breachIncident.findMany({
-      where: { severity },
-      orderBy: {
-        discovered_at: 'desc',
-      },
-    });
+    const { data } = await this.supabase.getClient().from('breach_incidents').select('*').eq('severity', severity).order('discovered_at', { ascending: false });
+    return data || [];
   }
 
   async getUnreportedCriticalIncidents() {
-    return this.supabase.getClient().breachIncident.findMany({
-      where: {
-        severity: 'critical',
+    const { data } = await this.supabase.getClient().from('breach_incidents').select('*').eq('severity', 'critical').is('reported_to_regulator', null).order('discovered_at', { ascending: false });
+    return data || [];
+  }
         reported_to_regulator: false,
       },
       orderBy: {
