@@ -32,7 +32,7 @@ export default function ApplyPage() {
     postalCode: '',
     planId: planId || undefined,
     planName: planName || undefined,
-    planConfig: planConfig || undefined,
+    planConfig: (planConfig as 'single' | 'couple' | 'family') || undefined,
     monthlyPrice: monthlyPrice ? parseFloat(monthlyPrice) : undefined,
   })
 
