@@ -34,12 +34,14 @@ export class CollectionsService {
    */
   async scheduleDebitOrder(dto: ScheduleDebitOrderDto, userId: string) {
     // Validate policy exists
-    const policy = await this.supabase.getClient().policy.findUnique({
-      where: { id: dto.policyId },
-      include: { policy_members: { include: { member: true } } },
-    });
+    const { data: policy, error: policyError } = await this.supabase
+      .getClient()
+      .from('policies')
+      .select('*, policy_members(*, member:members(*))')
+      .eq('id', dto.policyId)
+      .single();
 
-    if (!policy) {
+    if (policyError || !policy) {
       throw new NotFoundException(`Policy ${dto.policyId} not found`);
     }
 
@@ -48,23 +50,30 @@ export class CollectionsService {
     }
 
     // Get active mandate for principal member
-    const principalMember = policy.policy_members.find(pm => pm.relationship === 'principal');
+    const principalMember = policy.policy_members?.find((pm: any) => pm.relationship === 'principal');
     if (!principalMember) {
       throw new BadRequestException('No principal member found for policy');
     }
 
     // Create invoice for the billing period
-    const invoice = await this.supabase.getClient().invoice.create({
-      data: {
+    const { data: invoice, error: invoiceError } = await this.supabase
+      .getClient()
+      .from('invoices')
+      .insert({
         invoice_number: this.generateInvoiceNumber(),
         policy_id: dto.policyId,
-        billing_period_start: new Date(),
-        billing_period_end: this.calculateBillingPeriodEnd(policy.billing_frequency),
+        billing_period_start: new Date().toISOString(),
+        billing_period_end: this.calculateBillingPeriodEnd(policy.billing_frequency).toISOString(),
         total_amount: dto.amount,
         status: 'pending',
-        due_date: dto.scheduledDate,
-      },
-    });
+        due_date: dto.scheduledDate.toISOString(),
+      })
+      .select()
+      .single();
+
+    if (invoiceError || !invoice) {
+      throw new BadRequestException('Failed to create invoice');
+    }
 
     // Audit log
     await this.auditService.logEvent({
@@ -87,23 +96,23 @@ export class CollectionsService {
    * Process arrears for a policy (check grace period and lapse)
    */
   async processArrears(dto: ProcessArrearsDto, userId: string) {
-    const policy = await this.supabase.getClient().policy.findUnique({
-      where: { id: dto.policyId },
-      include: {
-        invoices: {
-          where: { status: 'pending' },
-          orderBy: { due_date: 'asc' },
-        },
-      },
-    });
+    const { data: policy, error: policyError } = await this.supabase
+      .getClient()
+      .from('policies')
+      .select('*, invoices!inner(*)')
+      .eq('id', dto.policyId)
+      .eq('invoices.status', 'pending')
+      .order('due_date', { foreignTable: 'invoices', ascending: true })
+      .single();
 
-    if (!policy) {
+    if (policyError || !policy) {
       throw new NotFoundException(`Policy ${dto.policyId} not found`);
     }
 
     // Check for overdue invoices
-    const overdueInvoices = policy.invoices.filter(
-      inv => inv.due_date < new Date() && inv.status === 'pending',
+    const now = new Date();
+    const overdueInvoices = (policy.invoices || []).filter(
+      (inv: any) => new Date(inv.due_date) < now && inv.status === 'pending',
     );
 
     if (overdueInvoices.length === 0) {
@@ -117,7 +126,7 @@ export class CollectionsService {
 
     // Calculate total arrears
     const totalArrears = overdueInvoices.reduce(
-      (sum, inv) => sum + Number(inv.total_amount),
+      (sum: number, inv: any) => sum + Number(inv.total_amount),
       0,
     );
 
@@ -126,7 +135,6 @@ export class CollectionsService {
     const gracePeriodExpiry = new Date(oldestOverdue.due_date);
     gracePeriodExpiry.setDate(gracePeriodExpiry.getDate() + this.GRACE_PERIOD_DAYS);
 
-    const now = new Date();
     const isGracePeriodExpired = now > gracePeriodExpiry;
 
     // If grace period expired, lapse the policy
@@ -150,11 +158,14 @@ export class CollectionsService {
    * Lapse a policy due to non-payment
    */
   async lapsePolicy(policyId: string, userId: string, reason: string) {
-    const policy = await this.supabase.getClient().policy.findUnique({
-      where: { id: policyId },
-    });
+    const { data: policy, error: policyError } = await this.supabase
+      .getClient()
+      .from('policies')
+      .select('*')
+      .eq('id', policyId)
+      .single();
 
-    if (!policy) {
+    if (policyError || !policy) {
       throw new NotFoundException(`Policy ${policyId} not found`);
     }
 
@@ -163,20 +174,28 @@ export class CollectionsService {
     }
 
     // Update policy status
-    const updated = await this.supabase.getClient().policy.update({
-      where: { id: policyId },
-      data: { status: 'lapsed' },
-    });
+    const { data: updated, error: updateError } = await this.supabase
+      .getClient()
+      .from('policies')
+      .update({ status: 'lapsed' })
+      .eq('id', policyId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw new BadRequestException('Failed to update policy status');
+    }
 
     // Create status history record
-    await this.supabase.getClient().policyStatusHistory.create({
-      data: {
+    await this.supabase
+      .getClient()
+      .from('policy_status_history')
+      .insert({
         policy_id: policyId,
         status: 'lapsed',
         reason,
         changed_by: userId,
-      },
-    });
+      });
 
     // Audit log
     await this.auditService.logEvent({
@@ -198,16 +217,15 @@ export class CollectionsService {
    * Reinstate a lapsed policy
    */
   async reinstatePolicy(dto: ReinstatePolicyDto, userId: string) {
-    const policy = await this.supabase.getClient().policy.findUnique({
-      where: { id: dto.policyId },
-      include: {
-        invoices: {
-          where: { status: 'pending' },
-        },
-      },
-    });
+    const { data: policy, error: policyError } = await this.supabase
+      .getClient()
+      .from('policies')
+      .select('*, invoices!inner(*)')
+      .eq('id', dto.policyId)
+      .eq('invoices.status', 'pending')
+      .single();
 
-    if (!policy) {
+    if (policyError || !policy) {
       throw new NotFoundException(`Policy ${dto.policyId} not found`);
     }
 
@@ -216,26 +234,34 @@ export class CollectionsService {
     }
 
     // Check if all arrears are paid
-    const unpaidInvoices = policy.invoices.filter(inv => inv.status === 'pending');
+    const unpaidInvoices = (policy.invoices || []).filter((inv: any) => inv.status === 'pending');
     if (unpaidInvoices.length > 0 && !dto.paymentReference) {
       throw new BadRequestException('All arrears must be paid before reinstatement');
     }
 
     // Update policy status
-    const updated = await this.supabase.getClient().policy.update({
-      where: { id: dto.policyId },
-      data: { status: 'active' },
-    });
+    const { data: updated, error: updateError } = await this.supabase
+      .getClient()
+      .from('policies')
+      .update({ status: 'active' })
+      .eq('id', dto.policyId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw new BadRequestException('Failed to update policy status');
+    }
 
     // Create status history record
-    await this.supabase.getClient().policyStatusHistory.create({
-      data: {
+    await this.supabase
+      .getClient()
+      .from('policy_status_history')
+      .insert({
         policy_id: dto.policyId,
         status: 'active',
         reason: 'Policy reinstated after arrears payment',
         changed_by: userId,
-      },
-    });
+      });
 
     // Audit log
     await this.auditService.logEvent({
@@ -256,35 +282,31 @@ export class CollectionsService {
    * Get policies in arrears
    */
   async getPoliciesInArrears() {
-    const policies = await this.supabase.getClient().policy.findMany({
-      where: {
-        status: 'active',
-        invoices: {
-          some: {
-            status: 'pending',
-            due_date: { lt: new Date() },
-          },
-        },
-      },
-      include: {
-        invoices: {
-          where: {
-            status: 'pending',
-            due_date: { lt: new Date() },
-          },
-        },
-      },
-    });
+    const now = new Date().toISOString();
+    
+    const { data: policies, error } = await this.supabase
+      .getClient()
+      .from('policies')
+      .select('*, invoices!inner(*)')
+      .eq('status', 'active')
+      .eq('invoices.status', 'pending')
+      .lt('invoices.due_date', now);
 
-    return policies.map(policy => {
-      const totalArrears = policy.invoices.reduce(
-        (sum, inv) => sum + Number(inv.total_amount),
+    if (error) {
+      throw new BadRequestException('Failed to fetch policies in arrears');
+    }
+
+    return (policies || []).map((policy: any) => {
+      const invoices = policy.invoices || [];
+      const totalArrears = invoices.reduce(
+        (sum: number, inv: any) => sum + Number(inv.total_amount),
         0,
       );
 
-      const oldestOverdue = policy.invoices.sort(
-        (a, b) => a.due_date.getTime() - b.due_date.getTime(),
-      )[0];
+      const sortedInvoices = [...invoices].sort(
+        (a: any, b: any) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
+      );
+      const oldestOverdue = sortedInvoices[0];
 
       const gracePeriodExpiry = new Date(oldestOverdue.due_date);
       gracePeriodExpiry.setDate(gracePeriodExpiry.getDate() + this.GRACE_PERIOD_DAYS);
@@ -293,10 +315,10 @@ export class CollectionsService {
         policyId: policy.id,
         policyNumber: policy.policy_number,
         totalArrears,
-        overdueInvoices: policy.invoices.length,
+        overdueInvoices: invoices.length,
         gracePeriodExpiry,
         daysOverdue: Math.floor(
-          (new Date().getTime() - oldestOverdue.due_date.getTime()) / (1000 * 60 * 60 * 24),
+          (new Date().getTime() - new Date(oldestOverdue.due_date).getTime()) / (1000 * 60 * 60 * 24),
         ),
       };
     });
@@ -313,7 +335,7 @@ export class CollectionsService {
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
     return policies.filter(
-      p => p.gracePeriodExpiry > now && p.gracePeriodExpiry <= sevenDaysFromNow,
+      (p: any) => p.gracePeriodExpiry > now && p.gracePeriodExpiry <= sevenDaysFromNow,
     );
   }
 
@@ -321,19 +343,40 @@ export class CollectionsService {
    * Get lapsed policies eligible for reinstatement
    */
   async getLapsedPolicies() {
-    return this.supabase.getClient().policy.findMany({
-      where: { status: 'lapsed' },
-      include: {
-        invoices: {
-          where: { status: 'pending' },
-        },
-        status_history: {
-          where: { status: 'lapsed' },
-          orderBy: { changed_at: 'desc' },
-          take: 1,
-        },
-      },
-    });
+    const { data: policies, error } = await this.supabase
+      .getClient()
+      .from('policies')
+      .select(`
+        *,
+        invoices!inner(*)
+      `)
+      .eq('status', 'lapsed')
+      .eq('invoices.status', 'pending');
+
+    if (error) {
+      throw new BadRequestException('Failed to fetch lapsed policies');
+    }
+
+    // Also fetch status history for each policy
+    const policiesWithHistory = await Promise.all(
+      (policies || []).map(async (policy: any) => {
+        const { data: history } = await this.supabase
+          .getClient()
+          .from('policy_status_history')
+          .select('*')
+          .eq('policy_id', policy.id)
+          .eq('status', 'lapsed')
+          .order('changed_at', { ascending: false })
+          .limit(1);
+
+        return {
+          ...policy,
+          status_history: history || [],
+        };
+      }),
+    );
+
+    return policiesWithHistory;
   }
 
   /**

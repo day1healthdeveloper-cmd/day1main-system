@@ -29,11 +29,14 @@ export class MandateService {
    */
   async createMandate(dto: CreateMandateDto, userId: string) {
     // Validate member exists
-    const member = await this.supabase.getClient().member.findUnique({
-      where: { id: dto.memberId },
-    });
+    const { data: member, error: memberError } = await this.supabase
+      .getClient()
+      .from('members')
+      .select('*')
+      .eq('id', dto.memberId)
+      .single();
 
-    if (!member) {
+    if (memberError || !member) {
       throw new NotFoundException(`Member ${dto.memberId} not found`);
     }
 
@@ -45,8 +48,10 @@ export class MandateService {
     });
 
     // Create mandate
-    const mandate = await this.supabase.getClient().mandate.create({
-      data: {
+    const { data: mandate, error: mandateError } = await this.supabase
+      .getClient()
+      .from('mandates')
+      .insert({
         member_id: dto.memberId,
         bank_name: dto.bankName,
         account_number: dto.accountNumber,
@@ -54,9 +59,14 @@ export class MandateService {
         branch_code: dto.branchCode,
         debicheck_ref: dto.debicheckRef,
         status: 'pending',
-        expires_at: this.calculateExpiryDate(),
-      },
-    });
+        expires_at: this.calculateExpiryDate().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (mandateError || !mandate) {
+      throw new BadRequestException('Failed to create mandate');
+    }
 
     // Audit log
     await this.auditService.logEvent({
@@ -79,11 +89,14 @@ export class MandateService {
    * Get mandate by ID
    */
   async getMandateById(mandateId: string) {
-    const mandate = await this.supabase.getClient().mandate.findUnique({
-      where: { id: mandateId },
-    });
+    const { data: mandate, error } = await this.supabase
+      .getClient()
+      .from('mandates')
+      .select('*')
+      .eq('id', mandateId)
+      .single();
 
-    if (!mandate) {
+    if (error || !mandate) {
       throw new NotFoundException(`Mandate ${mandateId} not found`);
     }
 
@@ -94,29 +107,43 @@ export class MandateService {
    * Get all mandates for a member
    */
   async getMandatesByMember(memberId: string) {
-    return this.supabase.getClient().mandate.findMany({
-      where: { member_id: memberId },
-      orderBy: { created_at: 'desc' },
-    });
+    const { data: mandates, error } = await this.supabase
+      .getClient()
+      .from('mandates')
+      .select('*')
+      .eq('member_id', memberId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new BadRequestException('Failed to fetch mandates');
+    }
+
+    return mandates || [];
   }
 
   /**
    * Get active mandate for a member
    */
   async getActiveMandateForMember(memberId: string) {
-    const mandate = await this.supabase.getClient().mandate.findFirst({
-      where: {
-        member_id: memberId,
-        status: 'active',
-        OR: [
-          { expires_at: null },
-          { expires_at: { gt: new Date() } },
-        ],
-      },
-      orderBy: { created_at: 'desc' },
-    });
+    const now = new Date().toISOString();
+    
+    const { data: mandate, error } = await this.supabase
+      .getClient()
+      .from('mandates')
+      .select('*')
+      .eq('member_id', memberId)
+      .eq('status', 'active')
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
 
-    return mandate;
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 is "no rows returned", which is acceptable
+      throw new BadRequestException('Failed to fetch active mandate');
+    }
+
+    return mandate || null;
   }
 
   /**
@@ -133,13 +160,20 @@ export class MandateService {
       throw new BadRequestException('Cannot activate a cancelled mandate');
     }
 
-    const updated = await this.supabase.getClient().mandate.update({
-      where: { id: mandateId },
-      data: {
+    const { data: updated, error } = await this.supabase
+      .getClient()
+      .from('mandates')
+      .update({
         status: 'active',
         debicheck_ref: debicheckRef || mandate.debicheck_ref,
-      },
-    });
+      })
+      .eq('id', mandateId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException('Failed to activate mandate');
+    }
 
     // Audit log
     await this.auditService.logEvent({
@@ -166,12 +200,19 @@ export class MandateService {
       throw new BadRequestException('Mandate is already cancelled');
     }
 
-    const updated = await this.supabase.getClient().mandate.update({
-      where: { id: mandateId },
-      data: {
+    const { data: updated, error } = await this.supabase
+      .getClient()
+      .from('mandates')
+      .update({
         status: 'cancelled',
-      },
-    });
+      })
+      .eq('id', mandateId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException('Failed to cancel mandate');
+    }
 
     // Audit log
     await this.auditService.logEvent({
@@ -199,12 +240,19 @@ export class MandateService {
       throw new BadRequestException('Mandate is already expired');
     }
 
-    const updated = await this.supabase.getClient().mandate.update({
-      where: { id: mandateId },
-      data: {
+    const { data: updated, error } = await this.supabase
+      .getClient()
+      .from('mandates')
+      .update({
         status: 'expired',
-      },
-    });
+      })
+      .eq('id', mandateId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException('Failed to expire mandate');
+    }
 
     // Audit log
     await this.auditService.logEvent({
@@ -278,18 +326,24 @@ export class MandateService {
    * Get mandates expiring soon (within 30 days)
    */
   async getMandatesExpiringSoon() {
+    const now = new Date().toISOString();
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    const thirtyDaysStr = thirtyDaysFromNow.toISOString();
 
-    return this.supabase.getClient().mandate.findMany({
-      where: {
-        status: 'active',
-        expires_at: {
-          lte: thirtyDaysFromNow,
-          gt: new Date(),
-        },
-      },
-      orderBy: { expires_at: 'asc' },
-    });
+    const { data: mandates, error } = await this.supabase
+      .getClient()
+      .from('mandates')
+      .select('*')
+      .eq('status', 'active')
+      .lte('expires_at', thirtyDaysStr)
+      .gt('expires_at', now)
+      .order('expires_at', { ascending: true });
+
+    if (error) {
+      throw new BadRequestException('Failed to fetch expiring mandates');
+    }
+
+    return mandates || [];
   }
 }

@@ -45,11 +45,14 @@ export class PaymentProcessingService {
   async processPayment(dto: ProcessPaymentDto, userId: string) {
     // Validate invoice if provided
     if (dto.invoiceId) {
-      const invoice = await this.supabase.getClient().invoice.findUnique({
-        where: { id: dto.invoiceId },
-      });
+      const { data: invoice, error } = await this.supabase
+        .getClient()
+        .from('invoices')
+        .select('*')
+        .eq('id', dto.invoiceId)
+        .single();
 
-      if (!invoice) {
+      if (error || !invoice) {
         throw new NotFoundException(`Invoice ${dto.invoiceId} not found`);
       }
 
@@ -70,8 +73,10 @@ export class PaymentProcessingService {
     const paymentReference = this.generatePaymentReference();
 
     // Create payment record
-    const payment = await this.supabase.getClient().payment.create({
-      data: {
+    const { data: payment, error: paymentError } = await this.supabase
+      .getClient()
+      .from('payments')
+      .insert({
         payment_reference: paymentReference,
         invoice_id: dto.invoiceId,
         mandate_id: dto.mandateId,
@@ -79,8 +84,13 @@ export class PaymentProcessingService {
         payment_method: dto.paymentMethod,
         status: 'pending',
         gateway_reference: dto.gatewayReference,
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (paymentError || !payment) {
+      throw new BadRequestException('Failed to create payment');
+    }
 
     // Audit log
     await this.auditService.logEvent({
@@ -106,12 +116,14 @@ export class PaymentProcessingService {
    */
   async handlePaymentCallback(dto: PaymentCallbackDto, userId: string) {
     // Find payment by reference
-    const payment = await this.supabase.getClient().payment.findUnique({
-      where: { payment_reference: dto.paymentReference },
-      include: { invoice: true },
-    });
+    const { data: payment, error } = await this.supabase
+      .getClient()
+      .from('payments')
+      .select('*, invoice:invoices(*)')
+      .eq('payment_reference', dto.paymentReference)
+      .single();
 
-    if (!payment) {
+    if (error || !payment) {
       throw new NotFoundException(`Payment ${dto.paymentReference} not found`);
     }
 
@@ -121,32 +133,41 @@ export class PaymentProcessingService {
     }
 
     // Update payment status
-    const updatedPayment = await this.supabase.getClient().payment.update({
-      where: { id: payment.id },
-      data: {
+    const { data: updatedPayment, error: updateError } = await this.supabase
+      .getClient()
+      .from('payments')
+      .update({
         status: dto.status === 'success' ? 'completed' : 'failed',
         gateway_reference: dto.gatewayReference,
-        processed_at: new Date(),
-      },
-    });
+        processed_at: new Date().toISOString(),
+      })
+      .eq('id', payment.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw new BadRequestException('Failed to update payment');
+    }
 
     // If payment succeeded, update invoice status
     if (dto.status === 'success' && payment.invoice_id) {
-      await this.supabase.getClient().invoice.update({
-        where: { id: payment.invoice_id },
-        data: { status: 'paid' },
-      });
+      await this.supabase
+        .getClient()
+        .from('invoices')
+        .update({ status: 'paid' })
+        .eq('id', payment.invoice_id);
     }
 
     // If payment failed, create failure record
     if (dto.status === 'failed') {
-      await this.supabase.getClient().paymentFailure.create({
-        data: {
+      await this.supabase
+        .getClient()
+        .from('payment_failures')
+        .insert({
           payment_id: payment.id,
           failure_reason: dto.failureReason || 'Unknown failure',
           failure_code: dto.metadata?.failureCode,
-        },
-      });
+        });
 
       // Schedule retry
       await this.schedulePaymentRetry({
@@ -178,11 +199,14 @@ export class PaymentProcessingService {
    * Schedule payment retry with exponential backoff
    */
   async schedulePaymentRetry(dto: SchedulePaymentRetryDto) {
-    const payment = await this.supabase.getClient().payment.findUnique({
-      where: { id: dto.paymentId },
-    });
+    const { data: payment, error } = await this.supabase
+      .getClient()
+      .from('payments')
+      .select('*')
+      .eq('id', dto.paymentId)
+      .single();
 
-    if (!payment) {
+    if (error || !payment) {
       throw new NotFoundException(`Payment ${dto.paymentId} not found`);
     }
 
@@ -193,10 +217,11 @@ export class PaymentProcessingService {
 
     if (dto.retryAttempt > maxRetries) {
       // Max retries reached, mark as permanently failed
-      await this.supabase.getClient().payment.update({
-        where: { id: dto.paymentId },
-        data: { status: 'permanently_failed' },
-      });
+      await this.supabase
+        .getClient()
+        .from('payments')
+        .update({ status: 'permanently_failed' })
+        .eq('id', dto.paymentId);
       return null;
     }
 
@@ -205,14 +230,21 @@ export class PaymentProcessingService {
     scheduledAt.setHours(scheduledAt.getHours() + delayHours);
 
     // Create retry record
-    const retry = await this.supabase.getClient().paymentRetry.create({
-      data: {
+    const { data: retry, error: retryError } = await this.supabase
+      .getClient()
+      .from('payment_retries')
+      .insert({
         payment_id: dto.paymentId,
         retry_attempt: dto.retryAttempt,
-        scheduled_at: scheduledAt,
+        scheduled_at: scheduledAt.toISOString(),
         status: 'scheduled',
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (retryError) {
+      throw new BadRequestException('Failed to schedule retry');
+    }
 
     return retry;
   }
@@ -221,17 +253,20 @@ export class PaymentProcessingService {
    * Get payment by ID
    */
   async getPaymentById(paymentId: string) {
-    const payment = await this.supabase.getClient().payment.findUnique({
-      where: { id: paymentId },
-      include: {
-        invoice: true,
-        mandate: true,
-        failures: true,
-        retries: true,
-      },
-    });
+    const { data: payment, error } = await this.supabase
+      .getClient()
+      .from('payments')
+      .select(`
+        *,
+        invoice:invoices(*),
+        mandate:mandates(*),
+        failures:payment_failures(*),
+        retries:payment_retries(*)
+      `)
+      .eq('id', paymentId)
+      .single();
 
-    if (!payment) {
+    if (error || !payment) {
       throw new NotFoundException(`Payment ${paymentId} not found`);
     }
 
@@ -242,17 +277,20 @@ export class PaymentProcessingService {
    * Get payment by reference
    */
   async getPaymentByReference(paymentReference: string) {
-    const payment = await this.supabase.getClient().payment.findUnique({
-      where: { payment_reference: paymentReference },
-      include: {
-        invoice: true,
-        mandate: true,
-        failures: true,
-        retries: true,
-      },
-    });
+    const { data: payment, error } = await this.supabase
+      .getClient()
+      .from('payments')
+      .select(`
+        *,
+        invoice:invoices(*),
+        mandate:mandates(*),
+        failures:payment_failures(*),
+        retries:payment_retries(*)
+      `)
+      .eq('payment_reference', paymentReference)
+      .single();
 
-    if (!payment) {
+    if (error || !payment) {
       throw new NotFoundException(`Payment ${paymentReference} not found`);
     }
 
@@ -263,30 +301,43 @@ export class PaymentProcessingService {
    * Get payments by invoice
    */
   async getPaymentsByInvoice(invoiceId: string) {
-    return this.supabase.getClient().payment.findMany({
-      where: { invoice_id: invoiceId },
-      include: {
-        failures: true,
-        retries: true,
-      },
-      orderBy: { created_at: 'desc' },
-    });
+    const { data: payments, error } = await this.supabase
+      .getClient()
+      .from('payments')
+      .select(`
+        *,
+        failures:payment_failures(*),
+        retries:payment_retries(*)
+      `)
+      .eq('invoice_id', invoiceId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new BadRequestException('Failed to fetch payments');
+    }
+
+    return payments || [];
   }
 
   /**
    * Get pending retries
    */
   async getPendingRetries() {
-    return this.supabase.getClient().paymentRetry.findMany({
-      where: {
-        status: 'scheduled',
-        scheduled_at: { lte: new Date() },
-      },
-      include: {
-        payment: true,
-      },
-      orderBy: { scheduled_at: 'asc' },
-    });
+    const now = new Date().toISOString();
+    
+    const { data: retries, error } = await this.supabase
+      .getClient()
+      .from('payment_retries')
+      .select('*, payment:payments(*)')
+      .eq('status', 'scheduled')
+      .lte('scheduled_at', now)
+      .order('scheduled_at', { ascending: true });
+
+    if (error) {
+      throw new BadRequestException('Failed to fetch pending retries');
+    }
+
+    return retries || [];
   }
 
   /**
@@ -295,11 +346,14 @@ export class PaymentProcessingService {
   async processRefund(dto: ProcessRefundDto, userId: string) {
     // Validate payment if provided
     if (dto.paymentId) {
-      const payment = await this.supabase.getClient().payment.findUnique({
-        where: { id: dto.paymentId },
-      });
+      const { data: payment, error } = await this.supabase
+        .getClient()
+        .from('payments')
+        .select('*')
+        .eq('id', dto.paymentId)
+        .single();
 
-      if (!payment) {
+      if (error || !payment) {
         throw new NotFoundException(`Payment ${dto.paymentId} not found`);
       }
 
@@ -313,16 +367,23 @@ export class PaymentProcessingService {
     }
 
     // Create refund record
-    const refund = await this.supabase.getClient().refund.create({
-      data: {
+    const { data: refund, error: refundError } = await this.supabase
+      .getClient()
+      .from('refunds')
+      .insert({
         payment_id: dto.paymentId,
         amount: dto.amount,
         reason: dto.reason,
         status: 'pending',
-        requested_at: new Date(),
+        requested_at: new Date().toISOString(),
         requested_by: dto.requestedBy,
-      },
-    });
+      })
+      .select()
+      .single();
+
+    if (refundError || !refund) {
+      throw new BadRequestException('Failed to create refund');
+    }
 
     // Audit log
     await this.auditService.logEvent({
@@ -345,11 +406,14 @@ export class PaymentProcessingService {
    * Approve refund
    */
   async approveRefund(refundId: string, userId: string) {
-    const refund = await this.supabase.getClient().refund.findUnique({
-      where: { id: refundId },
-    });
+    const { data: refund, error } = await this.supabase
+      .getClient()
+      .from('refunds')
+      .select('*')
+      .eq('id', refundId)
+      .single();
 
-    if (!refund) {
+    if (error || !refund) {
       throw new NotFoundException(`Refund ${refundId} not found`);
     }
 
@@ -357,14 +421,21 @@ export class PaymentProcessingService {
       throw new BadRequestException('Refund is not pending approval');
     }
 
-    const updated = await this.supabase.getClient().refund.update({
-      where: { id: refundId },
-      data: {
+    const { data: updated, error: updateError } = await this.supabase
+      .getClient()
+      .from('refunds')
+      .update({
         status: 'approved',
-        approved_at: new Date(),
+        approved_at: new Date().toISOString(),
         approved_by: userId,
-      },
-    });
+      })
+      .eq('id', refundId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw new BadRequestException('Failed to approve refund');
+    }
 
     // Audit log
     await this.auditService.logEvent({
@@ -386,11 +457,14 @@ export class PaymentProcessingService {
    * Process approved refund (via gateway)
    */
   async processApprovedRefund(refundId: string, userId: string) {
-    const refund = await this.supabase.getClient().refund.findUnique({
-      where: { id: refundId },
-    });
+    const { data: refund, error } = await this.supabase
+      .getClient()
+      .from('refunds')
+      .select('*')
+      .eq('id', refundId)
+      .single();
 
-    if (!refund) {
+    if (error || !refund) {
       throw new NotFoundException(`Refund ${refundId} not found`);
     }
 
@@ -399,13 +473,20 @@ export class PaymentProcessingService {
     }
 
     // Update refund status to processed
-    const updated = await this.supabase.getClient().refund.update({
-      where: { id: refundId },
-      data: {
+    const { data: updated, error: updateError } = await this.supabase
+      .getClient()
+      .from('refunds')
+      .update({
         status: 'processed',
-        processed_at: new Date(),
-      },
-    });
+        processed_at: new Date().toISOString(),
+      })
+      .eq('id', refundId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw new BadRequestException('Failed to process refund');
+    }
 
     // Audit log
     await this.auditService.logEvent({
@@ -427,11 +508,14 @@ export class PaymentProcessingService {
    * Get refund by ID
    */
   async getRefundById(refundId: string) {
-    const refund = await this.supabase.getClient().refund.findUnique({
-      where: { id: refundId },
-    });
+    const { data: refund, error } = await this.supabase
+      .getClient()
+      .from('refunds')
+      .select('*')
+      .eq('id', refundId)
+      .single();
 
-    if (!refund) {
+    if (error || !refund) {
       throw new NotFoundException(`Refund ${refundId} not found`);
     }
 
@@ -442,10 +526,18 @@ export class PaymentProcessingService {
    * Get refunds by status
    */
   async getRefundsByStatus(status: string) {
-    return this.supabase.getClient().refund.findMany({
-      where: { status },
-      orderBy: { requested_at: 'desc' },
-    });
+    const { data: refunds, error } = await this.supabase
+      .getClient()
+      .from('refunds')
+      .select('*')
+      .eq('status', status)
+      .order('requested_at', { ascending: false });
+
+    if (error) {
+      throw new BadRequestException('Failed to fetch refunds');
+    }
+
+    return refunds || [];
   }
 
   /**
