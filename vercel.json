@@ -1,4 +1,4 @@
 {
-  "buildCommand": "/vercel/.local/share/pnpm/pnpm -r build",
-  "installCommand": "npm install -g pnpm@8.15.0 && /vercel/.local/share/pnpm/pnpm install"
+  "buildCommand": "$(npm bin -g)/pnpm -r build",
+  "installCommand": "npm install -g pnpm@8.15.0 && $(npm bin -g)/pnpm install"
 }
