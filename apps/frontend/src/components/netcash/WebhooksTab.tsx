@@ -24,7 +24,7 @@ export function WebhooksTab() {
       if (filters.processed !== '') params.append('processed', filters.processed);
       params.append('limit', '50');
 
-      const data = await apiClient.get(`/netcash/webhook/logs?${params}`);
+      const data = await apiClient.get(`/netcash/webhook/logs?${params}`) as any;
       setWebhookLogs(data.logs || []);
     } catch (error) {
       console.error('Error fetching webhook logs:', error);
