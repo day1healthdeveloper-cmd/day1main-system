@@ -40,15 +40,15 @@ export default function DebitOrdersPage() {
 
       const [summaryData, batchesData, groupsData] = await Promise.all([
         apiClient.get('/netcash/summary').catch(err => { console.error('Summary error:', err); return null; }),
-        apiClient.get('/netcash/batches?limit=10').catch(err => { console.error('Batches error:', err); return []; }),
-        apiClient.get('/netcash/groups').catch(err => { console.error('Groups error:', err); return []; }),
+        apiClient.get('/netcash/batches?limit=10').catch(err => { console.error('Batches error:', err); return [] as any[]; }),
+        apiClient.get('/netcash/groups').catch(err => { console.error('Groups error:', err); return [] as any[]; }),
       ]);
 
       console.log('🔵 fetchData: Summary data:', summaryData);
       console.log('🔵 fetchData: Batches data:', batchesData);
       console.log('🔵 fetchData: Groups data:', groupsData);
       console.log('🔵 fetchData: Groups is array?', Array.isArray(groupsData));
-      console.log('🔵 fetchData: Groups length:', groupsData?.length);
+      console.log('🔵 fetchData: Groups length:', Array.isArray(groupsData) ? groupsData.length : 0);
 
       setSummary(summaryData);
       setBatches(Array.isArray(batchesData) ? batchesData : []);
