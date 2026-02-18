@@ -174,7 +174,7 @@ function OverviewTab({ summary, totalMembers, onRunDebitOrders, processing }: an
           <div className="bg-purple-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600">Success Rate</p>
             <p className="text-2xl font-bold text-purple-600">
-              {summary?.total > 0 ? ((summary?.byStatus?.active?.count || 0) / summary.total * 100).toFixed(1) : '0'}%
+              {summary?.total && summary.total > 0 ? ((summary?.byStatus?.active?.count || 0) / summary.total * 100).toFixed(1) : '0'}%
             </p>
             <p className="text-xs text-gray-500 mt-1">Last month</p>
           </div>
@@ -218,7 +218,7 @@ function OverviewTab({ summary, totalMembers, onRunDebitOrders, processing }: an
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold mb-3">💰 Collection Rate</h3>
           <p className="text-3xl font-bold text-purple-600">
-            {summary?.total > 0 ? ((summary?.byStatus?.active?.count || 0) / summary.total * 100).toFixed(1) : '0'}%
+            {summary?.total && summary.total > 0 ? ((summary?.byStatus?.active?.count || 0) / summary.total * 100).toFixed(1) : '0'}%
           </p>
           <p className="text-sm text-gray-500 mt-2">Current month</p>
         </div>
@@ -1148,7 +1148,7 @@ function ReportsTab({ summary }: any) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <p className="text-2xl font-bold text-green-600">
-                {summary?.total > 0 ? ((summary?.byStatus?.active?.count || 0) / summary.total * 100).toFixed(1) : '0'}%
+                {summary?.total && summary.total > 0 ? ((summary?.byStatus?.active?.count || 0) / summary.total * 100).toFixed(1) : '0'}%
               </p>
               <p className="text-sm text-gray-600">Success Rate</p>
             </div>
