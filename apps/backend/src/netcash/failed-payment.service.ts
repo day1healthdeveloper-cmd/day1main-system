@@ -15,7 +15,7 @@ export class FailedPaymentService {
    * Get all failed payments with filters
    */
   async getFailedPayments(query: QueryFailedPaymentsDto) {
-    let queryBuilder = this.supabase.client
+    let queryBuilder = this.supabase.getClient()
       .from('debit_order_transactions')
       .select(`
         *,
@@ -78,7 +78,7 @@ export class FailedPaymentService {
    */
   async autoRetryFailedPayments() {
     // Get all failed transactions with retry_count < 3
-    const { data: failedTransactions, error } = await this.supabase.client
+    const { data: failedTransactions, error } = await this.supabase.getClient()
       .from('debit_order_transactions')
       .select('id, retry_count, member_id, amount')
       .eq('status', TransactionStatus.FAILED)
@@ -142,7 +142,7 @@ export class FailedPaymentService {
 
     // Add notes if provided
     if (notes) {
-      await this.supabase.client
+      await this.supabase.getClient()
         .from('debit_order_transactions')
         .update({ 
           netcash_response: `${transaction.netcash_response || ''}\n\nManual Retry Notes: ${notes}` 
@@ -158,7 +158,7 @@ export class FailedPaymentService {
    */
   async suspendMember(dto: SuspendMemberDto, userId: string) {
     // Check if member exists
-    const { data: member, error: fetchError } = await this.supabase.client
+    const { data: member, error: fetchError } = await this.supabase.getClient()
       .from('members')
       .select('id, member_number, first_name, last_name, debit_order_status')
       .eq('id', dto.memberId)
@@ -173,7 +173,7 @@ export class FailedPaymentService {
     }
 
     // Update member status
-    const { error: updateError } = await this.supabase.client
+    const { error: updateError } = await this.supabase.getClient()
       .from('members')
       .update({
         debit_order_status: 'suspended',
@@ -210,7 +210,7 @@ export class FailedPaymentService {
     const transaction = await this.transactionService.getTransaction(dto.transactionId);
 
     // Create escalation record
-    const { data: escalation, error } = await this.supabase.client
+    const { data: escalation, error } = await this.supabase.getClient()
       .from('payment_escalations')
       .insert({
         transaction_id: dto.transactionId,
@@ -228,7 +228,7 @@ export class FailedPaymentService {
       // If table doesn't exist, just log it
       console.warn('Payment escalations table not found, logging to transaction notes');
       
-      await this.supabase.client
+      await this.supabase.getClient()
         .from('debit_order_transactions')
         .update({
           netcash_response: `${transaction.netcash_response || ''}\n\nESCALATED: ${dto.escalationReason}`,
@@ -254,7 +254,7 @@ export class FailedPaymentService {
    */
   async notifyMember(dto: NotifyMemberDto, userId: string) {
     // Get member details
-    const { data: member, error } = await this.supabase.client
+    const { data: member, error } = await this.supabase.getClient()
       .from('members')
       .select('id, member_number, first_name, last_name, email, phone')
       .eq('id', dto.memberId)
@@ -296,7 +296,7 @@ export class FailedPaymentService {
    * Get failed payment statistics
    */
   async getFailedPaymentStatistics(filters?: { brokerGroup?: string; startDate?: string; endDate?: string }) {
-    let queryBuilder = this.supabase.client
+    let queryBuilder = this.supabase.getClient()
       .from('debit_order_transactions')
       .select(`
         id,
@@ -369,7 +369,7 @@ export class FailedPaymentService {
    * Get members with repeated payment failures
    */
   async getMembersWithRepeatedFailures(minFailures: number = 3) {
-    const { data: transactions, error } = await this.supabase.client
+    const { data: transactions, error } = await this.supabase.getClient()
       .from('debit_order_transactions')
       .select(`
         member_id,
@@ -395,7 +395,7 @@ export class FailedPaymentService {
     // Group by member and count failures
     const memberFailures = new Map<string, { member: any; failureCount: number }>();
 
-    transactions?.forEach((txn) => {
+    transactions?.forEach((txn: any) => {
       if (txn.member) {
         const existing = memberFailures.get(txn.member_id);
         if (existing) {
@@ -429,7 +429,7 @@ export class FailedPaymentService {
   ) {
     // Try to insert into audit log if table exists
     try {
-      await this.supabase.client
+      await this.supabase.getClient()
         .from('member_action_log')
         .insert({
           member_id: memberId,
