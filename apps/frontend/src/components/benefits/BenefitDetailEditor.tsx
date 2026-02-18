@@ -107,8 +107,8 @@ export function BenefitDetailEditor({ benefitName, benefitId, details, onSave, o
         {/* Inclusions Section */}
         <InclusionsEditor
           inclusions={formData.inclusions || []}
-          onAdd={(value) => addToList('inclusions', value)}
-          onRemove={(index) => removeFromList('inclusions', index)}
+          onAdd={(value: string) => addToList('inclusions', value)}
+          onRemove={(index: number) => removeFromList('inclusions', index)}
           expanded={expanded.includes('inclusions')}
           onToggle={() => toggleSection('inclusions')}
         />
@@ -116,8 +116,8 @@ export function BenefitDetailEditor({ benefitName, benefitId, details, onSave, o
         {/* Exclusions Section */}
         <ExclusionsEditor
           exclusions={formData.exclusions || []}
-          onAdd={(value) => addToList('exclusions', value)}
-          onRemove={(index) => removeFromList('exclusions', index)}
+          onAdd={(value: string) => addToList('exclusions', value)}
+          onRemove={(index: number) => removeFromList('exclusions', index)}
           expanded={expanded.includes('exclusions')}
           onToggle={() => toggleSection('exclusions')}
         />
@@ -125,8 +125,8 @@ export function BenefitDetailEditor({ benefitName, benefitId, details, onSave, o
         {/* Conditions Section */}
         <ConditionsEditor
           conditions={formData.conditions || []}
-          onAdd={(value) => addToList('conditions', value)}
-          onRemove={(index) => removeFromList('conditions', index)}
+          onAdd={(value: string) => addToList('conditions', value)}
+          onRemove={(index: number) => removeFromList('conditions', index)}
           expanded={expanded.includes('conditions')}
           onToggle={() => toggleSection('conditions')}
         />
