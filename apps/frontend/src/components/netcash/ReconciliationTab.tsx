@@ -73,7 +73,7 @@ export function ReconciliationTab() {
 
     setProcessing(true);
     try {
-      const result = await apiClient.post('/netcash/reconciliation/run', { date: runDate });
+      const result = await apiClient.post('/netcash/reconciliation/run', { date: runDate }) as any;
       alert(`Reconciliation completed:\n- Expected: R${result.total_expected?.toFixed(2)}\n- Received: R${result.total_received?.toFixed(2)}\n- Discrepancies: ${result.discrepancies}`);
       setShowRunModal(false);
       setRunDate('');
