@@ -12,7 +12,7 @@ export class MfaService {
     const secret = authenticator.generateSecret()
 
     // Get user email for QR code
-    const user = await this.supabase.getClient().user.findUnique({
+    const user = await this.supabase.getClient().from('users').select('*').eq({
       where: { id: userId },
     })
 

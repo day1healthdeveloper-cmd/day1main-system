@@ -7,7 +7,7 @@ export interface RegisterBrokerDto {
   licenseNumber: string;
   companyName?: string;
   contactNumber: string;
-  commissionRate: number; // percentage (e.g., 10 for 10%)
+  commissionRate: number;
 }
 
 export interface CalculateCommissionDto {
@@ -30,44 +30,48 @@ export class BrokerService {
   ) {}
 
   async registerBroker(dto: RegisterBrokerDto, registeredBy: string) {
-    // Verify user exists
-    const user = await this.supabase.getClient().user.findUnique({
-      where: { id: dto.userId },
-      include: { profile: true },
-    });
+    const { data: user, error: userError } = await this.supabase
+      .getClient()
+      .from('users')
+      .select('*, profile:profiles(*)')
+      .eq('id', dto.userId)
+      .single();
 
-    if (!user) {
+    if (userError || !user) {
       throw new NotFoundException('User not found');
     }
 
-    // Check if user already has broker role
-    const brokerRole = await this.supabase.getClient().role.findUnique({
-      where: { name: 'broker' },
-    });
+    const { data: brokerRole, error: roleError } = await this.supabase
+      .getClient()
+      .from('roles')
+      .select('*')
+      .eq('name', 'broker')
+      .single();
 
-    if (!brokerRole) {
+    if (roleError || !brokerRole) {
       throw new BadRequestException('Broker role not found in system');
     }
 
-    const existingBrokerRole = await this.supabase.getClient().userRole.findFirst({
-      where: {
-        user_id: dto.userId,
-        role_id: brokerRole.id,
-      },
-    });
+    const { data: existingBrokerRole } = await this.supabase
+      .getClient()
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', dto.userId)
+      .eq('role_id', brokerRole.id)
+      .single();
 
     if (existingBrokerRole) {
       throw new BadRequestException('User is already registered as a broker');
     }
 
-    // Assign broker role
-    await this.supabase.getClient().userRole.create({
-      data: {
+    await this.supabase
+      .getClient()
+      .from('user_roles')
+      .insert({
         user_id: dto.userId,
         role_id: brokerRole.id,
         assigned_by: registeredBy,
-      },
-    });
+      });
 
     await this.auditService.logEvent({
       event_type: 'broker_registered',
@@ -95,23 +99,24 @@ export class BrokerService {
   }
 
   async getBrokerById(brokerId: string) {
-    const user = await this.supabase.getClient().user.findUnique({
-      where: { id: brokerId },
-      include: {
-        profile: true,
-        user_roles: {
-          include: {
-            role: true,
-          },
-        },
-      },
-    });
+    const { data: user, error } = await this.supabase
+      .getClient()
+      .from('users')
+      .select(`
+        *,
+        profile:profiles(*),
+        user_roles!user_roles_user_id_fkey(
+          role:roles(*)
+        )
+      `)
+      .eq('id', brokerId)
+      .single();
 
-    if (!user) {
+    if (error || !user) {
       throw new NotFoundException('Broker not found');
     }
 
-    const isBroker = user.user_roles.some(ur => ur.role.name === 'broker');
+    const isBroker = user.user_roles?.some((ur: any) => ur.role.name === 'broker');
     if (!isBroker) {
       throw new BadRequestException('User is not a broker');
     }
@@ -120,90 +125,80 @@ export class BrokerService {
   }
 
   async getPoliciesByBroker(brokerId: string) {
-    await this.getBrokerById(brokerId); // Verify broker exists
+    await this.getBrokerById(brokerId);
 
-    return this.supabase.getClient().policy.findMany({
-      where: {
-        broker_id: brokerId,
-      },
-      include: {
-        plan: {
-          include: {
-            product: true,
-          },
-        },
-        policy_members: {
-          where: {
-            relationship: 'principal',
-          },
-          include: {
-            member: true,
-          },
-        },
-      },
-      orderBy: {
-        created_at: 'desc',
-      },
-    });
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('policies')
+      .select(`
+        *,
+        plan:plans(*,
+          product:products(*)
+        ),
+        policy_members!policy_members_policy_id_fkey(
+          member:members(*)
+        )
+      `)
+      .eq('broker_id', brokerId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
   }
 
   async calculateCommissions(dto: CalculateCommissionDto, calculatedBy: string) {
-    await this.getBrokerById(dto.brokerId); // Verify broker exists
+    await this.getBrokerById(dto.brokerId);
 
-    // Get all policies sold by broker in the period
-    const policies = await this.supabase.getClient().policy.findMany({
-      where: {
-        broker_id: dto.brokerId,
-        created_at: {
-          gte: dto.periodStart,
-          lte: dto.periodEnd,
-        },
-        status: {
-          in: ['active', 'pending'],
-        },
-      },
-      include: {
-        plan: {
-          include: {
-            product: true,
-          },
-        },
-      },
-    });
+    const { data: policies, error } = await this.supabase
+      .getClient()
+      .from('policies')
+      .select(`
+        *,
+        plan:plans(*,
+          product:products(*)
+        )
+      `)
+      .eq('broker_id', dto.brokerId)
+      .gte('created_at', dto.periodStart.toISOString())
+      .lte('created_at', dto.periodEnd.toISOString())
+      .in('status', ['active', 'pending']);
+
+    if (error) throw error;
 
     const commissions = [];
 
-    for (const policy of policies) {
-      // Calculate commission based on policy premium
-      // Using a simple percentage model - in production this would be more complex
-      const commissionRate = 0.10; // 10% - should come from broker profile or commission rules
-      const commissionAmount = policy.premium.toNumber() * commissionRate;
+    for (const policy of policies || []) {
+      const commissionRate = 0.10;
+      const commissionAmount = parseFloat(policy.premium) * commissionRate;
 
-      // Check if commission already exists for this policy and period
-      const existing = await this.supabase.getClient().commission.findFirst({
-        where: {
-          broker_id: dto.brokerId,
-          policy_id: policy.id,
-          period_start: dto.periodStart,
-          period_end: dto.periodEnd,
-        },
-      });
+      const { data: existing } = await this.supabase
+        .getClient()
+        .from('commissions')
+        .select('*')
+        .eq('broker_id', dto.brokerId)
+        .eq('policy_id', policy.id)
+        .eq('period_start', dto.periodStart.toISOString())
+        .eq('period_end', dto.periodEnd.toISOString())
+        .single();
 
-      if (existing) {
-        continue; // Skip if already calculated
-      }
+      if (existing) continue;
 
-      const commission = await this.supabase.getClient().commission.create({
-        data: {
+      const { data: commission, error: commError } = await this.supabase
+        .getClient()
+        .from('commissions')
+        .insert({
           broker_id: dto.brokerId,
           policy_id: policy.id,
           commission_type: 'new_business',
-          amount: new Decimal(commissionAmount),
-          period_start: dto.periodStart,
-          period_end: dto.periodEnd,
+          amount: commissionAmount,
+          period_start: dto.periodStart.toISOString(),
+          period_end: dto.periodEnd.toISOString(),
           status: 'pending',
-        },
-      });
+        })
+        .select()
+        .single();
+
+      if (commError) throw commError;
 
       await this.auditService.logEvent({
         event_type: 'commission_calculated',
@@ -215,15 +210,9 @@ export class BrokerService {
           broker_id: dto.brokerId,
           policy_id: policy.id,
           policy_number: policy.policy_number,
-          premium: policy.premium.toNumber(),
+          premium: parseFloat(policy.premium),
           commission_rate: commissionRate,
           commission_amount: commissionAmount,
-          formula: 'premium * commission_rate',
-          inputs: {
-            premium: policy.premium.toNumber(),
-            commission_rate: commissionRate,
-          },
-          result: commissionAmount,
         },
       });
 
@@ -234,25 +223,33 @@ export class BrokerService {
   }
 
   async getCommissionsByBroker(brokerId: string, status?: string) {
-    await this.getBrokerById(brokerId); // Verify broker exists
+    await this.getBrokerById(brokerId);
 
-    return this.supabase.getClient().commission.findMany({
-      where: {
-        broker_id: brokerId,
-        ...(status && { status }),
-      },
-      orderBy: {
-        calculated_at: 'desc',
-      },
-    });
+    let query = this.supabase
+      .getClient()
+      .from('commissions')
+      .select('*')
+      .eq('broker_id', brokerId)
+      .order('calculated_at', { ascending: false });
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
   }
 
   async markCommissionAsPaid(commissionId: string, paidBy: string) {
-    const commission = await this.supabase.getClient().commission.findUnique({
-      where: { id: commissionId },
-    });
+    const { data: commission, error } = await this.supabase
+      .getClient()
+      .from('commissions')
+      .select('*')
+      .eq('id', commissionId)
+      .single();
 
-    if (!commission) {
+    if (error || !commission) {
       throw new NotFoundException('Commission not found');
     }
 
@@ -260,13 +257,18 @@ export class BrokerService {
       throw new BadRequestException('Commission already marked as paid');
     }
 
-    const updated = await this.supabase.getClient().commission.update({
-      where: { id: commissionId },
-      data: {
+    const { data: updated, error: updateError } = await this.supabase
+      .getClient()
+      .from('commissions')
+      .update({
         status: 'paid',
-        paid_at: new Date(),
-      },
-    });
+        paid_at: new Date().toISOString(),
+      })
+      .eq('id', commissionId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
 
     await this.auditService.logEvent({
       event_type: 'commission_paid',
@@ -276,8 +278,8 @@ export class BrokerService {
       action: 'update',
       metadata: {
         broker_id: commission.broker_id,
-        amount: commission.amount.toNumber(),
-        paid_at: updated.paid_at?.toISOString(),
+        amount: parseFloat(commission.amount),
+        paid_at: updated.paid_at,
       },
     });
 
@@ -285,73 +287,72 @@ export class BrokerService {
   }
 
   async generateCommissionStatement(dto: GenerateStatementDto, generatedBy: string) {
-    await this.getBrokerById(dto.brokerId); // Verify broker exists
+    await this.getBrokerById(dto.brokerId);
 
-    // Get all commissions for the period
-    const commissions = await this.supabase.getClient().commission.findMany({
-      where: {
-        broker_id: dto.brokerId,
-        period_start: {
-          gte: dto.periodStart,
-        },
-        period_end: {
-          lte: dto.periodEnd,
-        },
-      },
-    });
+    const { data: commissions, error } = await this.supabase
+      .getClient()
+      .from('commissions')
+      .select('*')
+      .eq('broker_id', dto.brokerId)
+      .gte('period_start', dto.periodStart.toISOString())
+      .lte('period_end', dto.periodEnd.toISOString());
 
-    if (commissions.length === 0) {
+    if (error) throw error;
+
+    if (!commissions || commissions.length === 0) {
       throw new BadRequestException('No commissions found for this period');
     }
 
-    // Fetch policy details for each commission
     const commissionsWithPolicies = await Promise.all(
       commissions.map(async (commission) => {
         if (!commission.policy_id) {
           return { ...commission, policy: null };
         }
-        const policy = await this.supabase.getClient().policy.findUnique({
-          where: { id: commission.policy_id },
-          include: {
-            plan: {
-              include: {
-                product: true,
-              },
-            },
-            policy_members: {
-              where: {
-                relationship: 'principal',
-              },
-              include: {
-                member: true,
-              },
-            },
-          },
-        });
+        const { data: policy } = await this.supabase
+          .getClient()
+          .from('policies')
+          .select(`
+            *,
+            plan:plans(*,
+              product:products(*)
+            ),
+            policy_members!policy_members_policy_id_fkey(
+              member:members(*)
+            )
+          `)
+          .eq('id', commission.policy_id)
+          .single();
         return { ...commission, policy };
       }),
     );
 
-    // Calculate total commission
     const totalCommission = commissions.reduce(
-      (sum, c) => sum + c.amount.toNumber(),
+      (sum, c) => sum + parseFloat(c.amount),
       0,
     );
 
-    // Generate statement number
-    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const count = await this.supabase.getClient().commissionStatement.count();
-    const statementNumber = `CS-${dateStr}-${String(count + 1).padStart(6, '0')}`;
+    const { count } = await this.supabase
+      .getClient()
+      .from('commission_statements')
+      .select('*', { count: 'exact', head: true });
 
-    const statement = await this.supabase.getClient().commissionStatement.create({
-      data: {
+    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const statementNumber = `CS-${dateStr}-${String((count || 0) + 1).padStart(6, '0')}`;
+
+    const { data: statement, error: stmtError } = await this.supabase
+      .getClient()
+      .from('commission_statements')
+      .insert({
         broker_id: dto.brokerId,
         statement_number: statementNumber,
-        period_start: dto.periodStart,
-        period_end: dto.periodEnd,
-        total_commission: new Decimal(totalCommission),
-      },
-    });
+        period_start: dto.periodStart.toISOString(),
+        period_end: dto.periodEnd.toISOString(),
+        total_commission: totalCommission,
+      })
+      .select()
+      .single();
+
+    if (stmtError) throw stmtError;
 
     await this.auditService.logEvent({
       event_type: 'commission_statement_generated',
@@ -366,12 +367,6 @@ export class BrokerService {
         period_end: dto.periodEnd.toISOString(),
         total_commission: totalCommission,
         commission_count: commissions.length,
-        policies: commissionsWithPolicies.map(c => ({
-          policy_id: c.policy_id,
-          policy_number: c.policy?.policy_number,
-          commission_amount: c.amount.toNumber(),
-          commission_type: c.commission_type,
-        })),
       },
     });
 
@@ -387,11 +382,14 @@ export class BrokerService {
   }
 
   async getStatementById(statementId: string) {
-    const statement = await this.supabase.getClient().commissionStatement.findUnique({
-      where: { id: statementId },
-    });
+    const { data: statement, error } = await this.supabase
+      .getClient()
+      .from('commission_statements')
+      .select('*')
+      .eq('id', statementId)
+      .single();
 
-    if (!statement) {
+    if (error || !statement) {
       throw new NotFoundException('Commission statement not found');
     }
 
@@ -399,66 +397,76 @@ export class BrokerService {
   }
 
   async getStatementsByBroker(brokerId: string) {
-    await this.getBrokerById(brokerId); // Verify broker exists
+    await this.getBrokerById(brokerId);
 
-    return this.supabase.getClient().commissionStatement.findMany({
-      where: {
-        broker_id: brokerId,
-      },
-      orderBy: {
-        generated_at: 'desc',
-      },
-    });
+    const { data, error } = await this.supabase
+      .getClient()
+      .from('commission_statements')
+      .select('*')
+      .eq('broker_id', brokerId)
+      .order('generated_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
   }
 
   async getAllBrokers() {
-    const brokerRole = await this.supabase.getClient().role.findUnique({
-      where: { name: 'broker' },
-    });
+    const { data: brokerRole, error: roleError } = await this.supabase
+      .getClient()
+      .from('roles')
+      .select('*')
+      .eq('name', 'broker')
+      .single();
 
-    if (!brokerRole) {
+    if (roleError || !brokerRole) {
       return [];
     }
 
-    const userRoles = await this.supabase.getClient().userRole.findMany({
-      where: {
-        role_id: brokerRole.id,
-      },
-      include: {
-        user: {
-          include: {
-            profile: true,
-          },
-        },
-      },
-    });
+    const { data: userRoles, error } = await this.supabase
+      .getClient()
+      .from('user_roles')
+      .select(`
+        user:users(*,
+          profile:profiles(*)
+        )
+      `)
+      .eq('role_id', brokerRole.id);
 
-    return userRoles.map(ur => ur.user);
+    if (error) throw error;
+    return userRoles?.map((ur: any) => ur.user) || [];
   }
 
   async getBrokerStatistics(brokerId: string) {
-    await this.getBrokerById(brokerId); // Verify broker exists
+    await this.getBrokerById(brokerId);
 
-    const policies = await this.supabase.getClient().policy.findMany({
-      where: { broker_id: brokerId },
-    });
+    const { data: policies, error: polError } = await this.supabase
+      .getClient()
+      .from('policies')
+      .select('*')
+      .eq('broker_id', brokerId);
 
-    const commissions = await this.supabase.getClient().commission.findMany({
-      where: { broker_id: brokerId },
-    });
+    if (polError) throw polError;
 
-    const totalCommissionEarned = commissions
+    const { data: commissions, error: commError } = await this.supabase
+      .getClient()
+      .from('commissions')
+      .select('*')
+      .eq('broker_id', brokerId);
+
+    if (commError) throw commError;
+
+    const totalCommissionEarned = (commissions || [])
       .filter(c => c.status === 'paid')
-      .reduce((sum, c) => sum + c.amount.toNumber(), 0);
+      .reduce((sum, c) => sum + parseFloat(c.amount), 0);
 
-    const totalCommissionPending = commissions
+    const totalCommissionPending = (commissions || [])
       .filter(c => c.status === 'pending')
-      .reduce((sum, c) => sum + c.amount.toNumber(), 0);
+      .reduce((sum, c) => sum + parseFloat(c.amount), 0);
 
     return {
-      totalPolicies: policies.length,
-      activePolicies: policies.filter(p => p.status === 'active').length,
-      totalCommissions: commissions.length,
+      totalPolicies: policies?.length || 0,
+      activePolicies: policies?.filter(p => p.status === 'active').length || 0,
+      totalCommissions: commissions?.length || 0,
       totalCommissionEarned,
       totalCommissionPending,
     };

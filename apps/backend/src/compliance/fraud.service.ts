@@ -50,7 +50,7 @@ export class FraudService {
   ) {}
 
   async detectDuplicateMembers(memberId: string, userId: string): Promise<DuplicateMemberResult[]> {
-    const member = await this.supabase.getClient().member.findUnique({
+    const member = await this.supabase.getClient().from('members').select('*').eq({
       where: { id: memberId },
     });
 
@@ -81,7 +81,7 @@ export class FraudService {
       if (bankDuplicates.length > 0) {
         // Get member details for duplicates
         const duplicateMemberIds = bankDuplicates.map((m) => m.member_id);
-        const duplicateMembers = await this.supabase.getClient().member.findMany({
+        const duplicateMembers = await this.supabase.getClient().from('members').select('*'){
           where: { id: { in: duplicateMemberIds } },
           select: { id: true, first_name: true, last_name: true },
         });
@@ -101,7 +101,7 @@ export class FraudService {
     }
 
     // Check for duplicate phone numbers
-    const phoneDuplicates = await this.supabase.getClient().member.findMany({
+    const phoneDuplicates = await this.supabase.getClient().from('members').select('*'){
       where: {
         id: { not: memberId },
         phone: member.phone,
@@ -124,7 +124,7 @@ export class FraudService {
     }
 
     // Check for duplicate ID numbers
-    const idDuplicates = await this.supabase.getClient().member.findMany({
+    const idDuplicates = await this.supabase.getClient().from('members').select('*'){
       where: {
         id: { not: memberId },
         id_number: member.id_number,
@@ -213,7 +213,7 @@ export class FraudService {
 
     if (!provider) return null;
 
-    const providerClaims = await this.supabase.getClient().claim.findMany({
+    const providerClaims = await this.supabase.getClient().from('claims').select('*'){
       where: {
         provider_id: providerId,
         status: 'approved',
@@ -234,7 +234,7 @@ export class FraudService {
         return sum + claimAvg;
       }, 0) / providerClaims.length;
 
-    const peerClaims = await this.supabase.getClient().claim.findMany({
+    const peerClaims = await this.supabase.getClient().from('claims').select('*'){
       where: {
         provider: { provider_type: providerType, id: { not: providerId } },
         status: 'approved',
@@ -424,7 +424,7 @@ export class FraudService {
     const evidence: any[] = [];
     const recommendations: string[] = [];
 
-    const member = await this.supabase.getClient().member.findUnique({
+    const member = await this.supabase.getClient().from('members').select('*').eq({
       where: { id: memberId },
     });
 
@@ -451,7 +451,7 @@ export class FraudService {
         recommendations.push('Investigate duplicate member records for identity fraud');
       }
 
-      const claims = await this.supabase.getClient().claim.findMany({
+      const claims = await this.supabase.getClient().from('claims').select('*'){
         where: { member_id: memberId },
         orderBy: { submission_date: 'desc' },
         take: 50,
@@ -510,7 +510,7 @@ export class FraudService {
         recommendations.push('Investigate provider billing patterns for potential fraud');
       }
 
-      const claims = await this.supabase.getClient().claim.findMany({
+      const claims = await this.supabase.getClient().from('claims').select('*'){
         where: { provider_id: providerId },
         orderBy: { submission_date: 'desc' },
         take: 100,
@@ -538,7 +538,7 @@ export class FraudService {
     const evidence: any[] = [];
     const recommendations: string[] = [];
 
-    const claim = await this.supabase.getClient().claim.findUnique({
+    const claim = await this.supabase.getClient().from('claims').select('*').eq({
       where: { id: claimId },
       include: {
         claim_lines: true,
@@ -563,7 +563,7 @@ export class FraudService {
         },
       });
 
-      const relatedClaims = await this.supabase.getClient().claim.findMany({
+      const relatedClaims = await this.supabase.getClient().from('claims').select('*'){
         where: {
           OR: [
             { member_id: claim.member_id, id: { not: claimId } },

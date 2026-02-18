@@ -24,7 +24,7 @@ export class ReportingService {
    */
   async generatePMBReport(startDate: Date, endDate: Date) {
     // Get all claims in the period for medical schemes
-    const claims = await this.supabase.getClient().claim.findMany({
+    const claims = await this.supabase.getClient().from('claims').select('*'){
       where: {
         service_date: {
           gte: startDate,
@@ -93,7 +93,7 @@ export class ReportingService {
    * Generate claims turnaround time report (CMS requirement 23.2)
    */
   async generateClaimsTurnaroundReport(startDate: Date, endDate: Date) {
-    const claims = await this.supabase.getClient().claim.findMany({
+    const claims = await this.supabase.getClient().from('claims').select('*'){
       where: {
         submission_date: {
           gte: startDate,
@@ -431,7 +431,7 @@ export class ReportingService {
    * Generate policy register (FSCA/PA requirement 24.1)
    */
   async generatePolicyRegister(regime: 'insurance' = 'insurance') {
-    const policies = await this.supabase.getClient().policy.findMany({
+    const policies = await this.supabase.getClient().from('policies').select('*'){
       where: {
         regime,
       },
@@ -487,7 +487,7 @@ export class ReportingService {
    * Generate claims register (FSCA/PA requirement 24.2)
    */
   async generateClaimsRegister(startDate: Date, endDate: Date, regime: 'insurance' = 'insurance') {
-    const claims = await this.supabase.getClient().claim.findMany({
+    const claims = await this.supabase.getClient().from('claims').select('*'){
       where: {
         submission_date: {
           gte: startDate,

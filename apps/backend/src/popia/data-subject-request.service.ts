@@ -33,7 +33,7 @@ export class DataSubjectRequestService {
 
   async createRequest(dto: CreateDataSubjectRequestDto, submittedBy: string) {
     // Verify member exists
-    const member = await this.supabase.getClient().member.findUnique({
+    const member = await this.supabase.getClient().from('members').select('*').eq({
       where: { id: dto.memberId },
     });
 
@@ -130,7 +130,7 @@ export class DataSubjectRequestService {
     }
 
     // Gather member data
-    const member = await this.supabase.getClient().member.findUnique({
+    const member = await this.supabase.getClient().from('members').select('*').eq({
       where: { id: request.member_id },
     });
 
@@ -201,7 +201,7 @@ export class DataSubjectRequestService {
       throw new BadRequestException('Request has already been processed');
     }
 
-    const member = await this.supabase.getClient().member.findUnique({
+    const member = await this.supabase.getClient().from('members').select('*').eq({
       where: { id: request.member_id },
     });
 
@@ -210,7 +210,7 @@ export class DataSubjectRequestService {
     }
 
     // Check if member has active policies
-    const activePolicies = await this.supabase.getClient().policy.findMany({
+    const activePolicies = await this.supabase.getClient().from('policies').select('*'){
       where: {
         policy_members: {
           some: {
@@ -234,7 +234,7 @@ export class DataSubjectRequestService {
       email: `erased-${request.member_id}@anonymized.local`,
     };
 
-    await this.supabase.getClient().member.update({
+    await this.supabase.getClient().from('members').update({
       where: { id: request.member_id },
       data: anonymizedData,
     });
@@ -295,7 +295,7 @@ export class DataSubjectRequestService {
       throw new BadRequestException('Request has already been processed');
     }
 
-    const member = await this.supabase.getClient().member.findUnique({
+    const member = await this.supabase.getClient().from('members').select('*').eq({
       where: { id: request.member_id },
     });
 
@@ -307,7 +307,7 @@ export class DataSubjectRequestService {
     const beforeState = { ...member };
 
     // Apply corrections
-    await this.supabase.getClient().member.update({
+    await this.supabase.getClient().from('members').update({
       where: { id: request.member_id },
       data: dto.corrections,
     });
