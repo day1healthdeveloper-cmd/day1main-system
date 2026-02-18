@@ -992,7 +992,7 @@ function MembersTab({ groups, selectedGroup }: { groups: any[], selectedGroup?: 
               </div>
               <div className="text-sm font-semibold text-gray-700">
                 Total Orders in {calendarData.year}: {
-                  Array.from(calendarData.yearData.values()).reduce((sum: number, monthMap: Map<number, any[]>) => {
+                  Array.from(calendarData.yearData.values() as IterableIterator<Map<number, any[]>>).reduce((sum: number, monthMap: Map<number, any[]>) => {
                     return sum + Array.from(monthMap.values()).reduce((daySum: number, arr: any[]) => daySum + arr.length, 0);
                   }, 0)
                 }
