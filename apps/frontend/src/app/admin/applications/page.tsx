@@ -64,6 +64,7 @@ interface Application {
   rejection_reason: string
   voice_recording_url?: string
   terms_accepted_at?: string
+  signature_url?: string
 }
 
 interface Stats {
