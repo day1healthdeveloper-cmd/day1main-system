@@ -17,7 +17,7 @@ export class ReconciliationController {
    */
   @Post('run')
   @RequirePermissions('finance:reconcile')
-  async runReconciliation(@Body('date') date: string, @Request() req) {
+  async runReconciliation(@Body('date') date: string, @Request() req: any) {
     return this.reconciliationService.runReconciliation(date, req.user.id);
   }
 
@@ -27,7 +27,7 @@ export class ReconciliationController {
    */
   @Post('auto')
   @RequirePermissions('finance:reconcile')
-  async autoReconcile(@Request() req) {
+  async autoReconcile(@Request() req: any) {
     return this.reconciliationService.autoReconcile(req.user.id);
   }
 
@@ -86,7 +86,7 @@ export class ReconciliationController {
   async resolveDiscrepancy(
     @Param('id') id: string,
     @Body() dto: Omit<ResolveDiscrepancyDto, 'discrepancyId'>,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.reconciliationService.resolveDiscrepancy(
       { ...dto, discrepancyId: id },
