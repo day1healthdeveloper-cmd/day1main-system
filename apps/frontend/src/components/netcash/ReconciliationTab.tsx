@@ -57,7 +57,7 @@ export function ReconciliationTab() {
       params.append('resolved', 'false');
       params.append('limit', '100');
 
-      const data = await apiClient.get(`/netcash/reconciliation/discrepancies/list?${params}`);
+      const data = await apiClient.get(`/netcash/reconciliation/discrepancies/list?${params}`) as any;
       setDiscrepancies(data.discrepancies || []);
       setShowDiscrepanciesModal(true);
     } catch (error) {
