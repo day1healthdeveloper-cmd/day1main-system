@@ -66,7 +66,7 @@ export class ProvidersService {
   private async generateProviderNumber(providerType: string): Promise<string> {
     const typePrefix = { doctor: 'DOC', hospital: 'HOS', pharmacy: 'PHA', specialist: 'SPE' }[providerType] || 'PRV'
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    const { count } = await this.supabase.getClient().from('providers').select('*', { count: 'exact', head: true })
+    const { count } = await this.supabase.from('providers').select('*', { count: 'exact', head: true })
     return `${typePrefix}${dateStr}${String((count || 0) + 1).padStart(3, '0')}`
   }
 
@@ -82,7 +82,7 @@ export class ProvidersService {
   }
 
   async getProviders(providerType?: string, isActive?: boolean) {
-    let query = this.supabase.getClient().from('providers').select('*')
+    let query = this.supabase.from('providers').select('*')
     if (providerType) query = query.eq('provider_type', providerType)
     if (isActive !== undefined) query = query.eq('is_active', isActive)
     const { data } = await query.order('created_at', { ascending: false })
@@ -90,7 +90,7 @@ export class ProvidersService {
   }
 
   async addPractice(providerId: string, dto: AddPracticeDto, userId: string) {
-    const { data: provider } = await this.supabase.getClient().from('providers').select('id').eq('id', providerId).single()
+    const { data: provider } = await this.supabase.from('providers').select('id').eq('id', providerId).single()
     if (!provider) throw new NotFoundException('Provider not found')
 
     const { data: practice, error } = await this.supabase
@@ -120,7 +120,7 @@ export class ProvidersService {
   }
 
   async verifyCredential(providerId: string, dto: VerifyCredentialDto, userId: string) {
-    const { data: provider } = await this.supabase.getClient().from('providers').select('id').eq('id', providerId).single()
+    const { data: provider } = await this.supabase.from('providers').select('id').eq('id', providerId).single()
     if (!provider) throw new NotFoundException('Provider not found')
 
     const { data: existing } = await this.supabase
@@ -157,7 +157,7 @@ export class ProvidersService {
   }
 
   async verifyBankAccount(providerId: string, dto: VerifyBankAccountDto, userId: string) {
-    const { data: provider } = await this.supabase.getClient().from('providers').select('id').eq('id', providerId).single()
+    const { data: provider } = await this.supabase.from('providers').select('id').eq('id', providerId).single()
     if (!provider) throw new NotFoundException('Provider not found')
 
     const { data: bankAccount, error } = await this.supabase
@@ -172,7 +172,7 @@ export class ProvidersService {
   }
 
   async createContract(providerId: string, dto: CreateContractDto, userId: string) {
-    const { data: provider } = await this.supabase.getClient().from('providers').select('id').eq('id', providerId).single()
+    const { data: provider } = await this.supabase.from('providers').select('id').eq('id', providerId).single()
     if (!provider) throw new NotFoundException('Provider not found')
 
     const { data: contract, error } = await this.supabase
@@ -187,7 +187,7 @@ export class ProvidersService {
   }
 
   async assignNetwork(providerId: string, dto: AssignNetworkDto, userId: string) {
-    const { data: provider } = await this.supabase.getClient().from('providers').select('id').eq('id', providerId).single()
+    const { data: provider } = await this.supabase.from('providers').select('id').eq('id', providerId).single()
     if (!provider) throw new NotFoundException('Provider not found')
 
     const { data: network, error } = await this.supabase
@@ -202,7 +202,7 @@ export class ProvidersService {
   }
 
   async grantAuthorisation(providerId: string, dto: GrantAuthorisationDto, userId: string) {
-    const { data: provider } = await this.supabase.getClient().from('providers').select('id').eq('id', providerId).single()
+    const { data: provider } = await this.supabase.from('providers').select('id').eq('id', providerId).single()
     if (!provider) throw new NotFoundException('Provider not found')
 
     const { data: auth, error } = await this.supabase
@@ -217,7 +217,7 @@ export class ProvidersService {
   }
 
   async revokeAuthorisation(authorisationId: string, userId: string) {
-    const { data: auth } = await this.supabase.getClient().from('provider_authorisations').select('*').eq('id', authorisationId).single()
+    const { data: auth } = await this.supabase.from('provider_authorisations').select('*').eq('id', authorisationId).single()
     if (!auth) throw new NotFoundException('Authorisation not found')
 
     const { data: updated, error } = await this.supabase
