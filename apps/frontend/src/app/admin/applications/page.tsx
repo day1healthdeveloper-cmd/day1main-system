@@ -65,6 +65,9 @@ interface Application {
   voice_recording_url?: string
   terms_accepted_at?: string
   signature_url?: string
+  email_consent?: boolean
+  sms_consent?: boolean
+  phone_consent?: boolean
 }
 
 interface Stats {
