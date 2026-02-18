@@ -37,7 +37,7 @@ export class DataImportService {
       throw new BadRequestException('File is empty');
     }
 
-    const columns = Object.keys(data[0]);
+    const columns = Object.keys(data[0] as Record<string, any>);
     const preview = data.slice(0, 3);
 
     // Validate columns based on type
@@ -130,7 +130,7 @@ export class DataImportService {
       };
     } catch (error) {
       importFile.status = 'error';
-      importFile.errors.push(error.message);
+      importFile.errors.push(error instanceof Error ? error.message : String(error));
       throw error;
     }
   }
@@ -179,7 +179,7 @@ export class DataImportService {
           importFile.processedRecords++;
         }
       } catch (error) {
-        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error.message}`);
+        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }
@@ -208,7 +208,7 @@ export class DataImportService {
           importFile.processedRecords++;
         }
       } catch (error) {
-        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error.message}`);
+        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }
@@ -240,7 +240,7 @@ export class DataImportService {
           importFile.processedRecords++;
         }
       } catch (error) {
-        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error.message}`);
+        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }
@@ -261,7 +261,7 @@ export class DataImportService {
         // Store in appropriate financial table
         importFile.processedRecords++;
       } catch (error) {
-        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error.message}`);
+        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }
@@ -289,7 +289,7 @@ export class DataImportService {
           importFile.processedRecords++;
         }
       } catch (error) {
-        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error.message}`);
+        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }
@@ -320,7 +320,7 @@ export class DataImportService {
           importFile.processedRecords++;
         }
       } catch (error) {
-        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error.message}`);
+        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }
@@ -340,7 +340,7 @@ export class DataImportService {
         // Store in brokers table
         importFile.processedRecords++;
       } catch (error) {
-        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error.message}`);
+        importFile.errors.push(`Row ${importFile.processedRecords + 1}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   }

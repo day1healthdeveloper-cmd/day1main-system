@@ -275,7 +275,7 @@ export class ClaimsController {
   async requestMoreInfo(
     @Param('preauthId') preauthId: string,
     @Body() body: { required_info: string[] },
-    @Request() req: any,
+    @Request() req: AuthRequest,
   ) {
     return this.preauthService.requestMoreInfo(preauthId, body.required_info, req.user.userId)
   }
