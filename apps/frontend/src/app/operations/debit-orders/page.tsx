@@ -55,7 +55,7 @@ export default function DebitOrdersPage() {
       setGroups(Array.isArray(groupsData) ? groupsData : []);
       
       // Set total members from summary
-      if (summaryData && typeof summaryData === 'object' && 'total' in summaryData) {
+      if (summaryData && typeof summaryData === 'object' && 'total' in summaryData && typeof summaryData.total === 'number') {
         setTotalMembers(summaryData.total);
       }
       
