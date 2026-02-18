@@ -47,8 +47,7 @@ export class BreachIncidentService {
       discovered_at: dto.discoveredAt,
       discovered_by: discoveredBy,
       status: 'open',
-      },
-    });
+    }).select().single();
 
     await this.auditService.logEvent({
       event_type: 'breach_incident_created',
@@ -111,28 +110,13 @@ export class BreachIncidentService {
   }
 
   async getOpenIncidents() {
-    return this.supabase.getClient().breachIncident.findMany({
-      where: {
-        status: 'open',
-      },
-      orderBy: {
-        severity: 'desc',
-      },
-    });
+    const { data } = await this.supabase.getClient().from('breach_incidents').select('*').eq('status', 'open').order('severity', { ascending: false });
+    return data || [];
   }
 
   async getCriticalIncidents() {
-    return this.supabase.getClient().breachIncident.findMany({
-      where: {
-        severity: 'critical',
-        status: {
-          in: ['open', 'investigating'],
-        },
-      },
-      orderBy: {
-        discovered_at: 'desc',
-      },
-    });
+    const { data } = await this.supabase.getClient().from('breach_incidents').select('*').eq('severity', 'critical').in('status', ['open', 'investigating']).order('discovered_at', { ascending: false });
+    return data || [];
   }
 
   async investigateBreach(dto: InvestigateBreachDto, investigatedBy: string) {
@@ -142,12 +126,9 @@ export class BreachIncidentService {
       throw new BadRequestException('Cannot investigate a closed incident');
     }
 
-    const updated = await this.supabase.getClient().breachIncident.update({
-      where: { id: dto.incidentId },
-      data: {
-        status: 'investigating',
-      },
-    });
+    const { data: updated, error: updateError } = await this.supabase.getClient().from('breach_incidents').update({
+      status: 'investigating',
+    }).eq('id', dto.incidentId).select().single();
 
     await this.auditService.logEvent({
       event_type: 'breach_incident_investigation_started',
@@ -173,13 +154,10 @@ export class BreachIncidentService {
       throw new BadRequestException('Incident already reported to regulator');
     }
 
-    const updated = await this.supabase.getClient().breachIncident.update({
-      where: { id: dto.incidentId },
-      data: {
-        reported_to_regulator: true,
-        reported_at: new Date(),
-      },
-    });
+    const { data: updated, error: updateError } = await this.supabase.getClient().from('breach_incidents').update({
+      reported_to_regulator: true,
+      reported_at: new Date().toISOString(),
+    }).eq('id', dto.incidentId).select().single();
 
     await this.auditService.logEvent({
       event_type: 'breach_incident_reported_to_regulator',
@@ -238,47 +216,43 @@ export class BreachIncidentService {
   }
 
   async getIncidentStatistics() {
-    const total = await this.supabase.getClient().breachIncident.count();
-    const open = await this.supabase.getClient().breachIncident.count({
+    const { count: total } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true });
+    const { count: open } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true }).eq('status', 'open');
       where: { status: 'open' },
     });
     const investigating = await this.supabase.getClient().breachIncident.count({
       where: { status: 'investigating' },
-    });
-    const closed = await this.supabase.getClient().breachIncident.count({
-      where: { status: 'closed' },
-    });
-    const critical = await this.supabase.getClient().breachIncident.count({
-      where: { severity: 'critical' },
-    });
-    const reportedToRegulator = await this.supabase.getClient().breachIncident.count({
-      where: { reported_to_regulator: true },
-    });
+    const { count: closed } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true }).eq('status', 'closed');
+    const { count: critical } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true }).eq('severity', 'critical');
+    const { count: reportedToRegulator } = await this.supabase.getClient().from('breach_incidents').select('*', { count: 'exact', head: true }).eq('reported_to_regulator', true);
 
     // Calculate average time to resolution for closed incidents
     const { data: closedIncidents } = await this.supabase.getClient().from('breach_incidents').select('discovered_at, closed_at').eq('status', 'closed');
 
     const avgResolutionDays =
-      closedIncidents.length > 0
-        ? closedIncidents.reduce((sum, incident) => {
+      (closedIncidents || []).length > 0
+        ? (closedIncidents || []).reduce((sum: number, incident: any) => {
             if (incident.closed_at) {
               const days = Math.floor(
-                (incident.closed_at.getTime() - incident.discovered_at.getTime()) /
+                (new Date(incident.closed_at).getTime() - new Date(incident.discovered_at).getTime()) /
                   (1000 * 60 * 60 * 24),
               );
               return sum + days;
             }
             return sum;
-          }, 0) / closedIncidents.length
+          }, 0) / (closedIncidents || []).length
         : 0;
 
     return {
       total,
       open,
       investigating,
-      closed,
-      critical,
-      reportedToRegulator,
+    return {
+      total: total || 0,
+      open: open || 0,
+      closed: closed || 0,
+      critical: critical || 0,
+      reportedToRegulator: reportedToRegulator || 0,
       avgResolutionDays: Math.round(avgResolutionDays * 10) / 10,
     };
   }
