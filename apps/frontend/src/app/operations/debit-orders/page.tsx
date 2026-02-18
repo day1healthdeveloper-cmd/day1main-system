@@ -39,7 +39,7 @@ export default function DebitOrdersPage() {
       console.log('🔵 fetchData: Calling backend APIs directly...');
 
       const [summaryData, batchesData, groupsData] = await Promise.all([
-        apiClient.get('/netcash/summary').catch(err => { console.error('Summary error:', err); return null; }),
+        apiClient.get('/netcash/summary').catch(err => { console.error('Summary error:', err); return null as any; }),
         apiClient.get('/netcash/batches?limit=10').catch(err => { console.error('Batches error:', err); return [] as any[]; }),
         apiClient.get('/netcash/groups').catch(err => { console.error('Groups error:', err); return [] as any[]; }),
       ]);
@@ -55,7 +55,7 @@ export default function DebitOrdersPage() {
       setGroups(Array.isArray(groupsData) ? groupsData : []);
       
       // Set total members from summary
-      if (summaryData && summaryData.total) {
+      if (summaryData && typeof summaryData === 'object' && 'total' in summaryData) {
         setTotalMembers(summaryData.total);
       }
       
