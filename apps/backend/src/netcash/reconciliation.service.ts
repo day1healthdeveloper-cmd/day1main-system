@@ -17,7 +17,7 @@ export class ReconciliationService {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data: transactions, error: txnError } = await this.supabase.client
+    const { data: transactions, error: txnError } = await this.supabase.getClient()
       .from('debit_order_transactions')
       .select(`
         *,
@@ -44,7 +44,7 @@ export class ReconciliationService {
     const discrepancyAmount = totalExpected - totalReceived;
 
     // Create reconciliation record
-    const { data: reconciliation, error: recError } = await this.supabase.client
+    const { data: reconciliation, error: recError } = await this.supabase.getClient()
       .from('payment_reconciliations')
       .insert({
         reconciliation_date: date,
@@ -79,7 +79,7 @@ export class ReconciliationService {
     }
 
     // Update reconciliation status
-    await this.supabase.client
+    await this.supabase.getClient()
       .from('payment_reconciliations')
       .update({
         status: ReconciliationStatus.COMPLETED,
@@ -98,7 +98,7 @@ export class ReconciliationService {
    * Get reconciliation by ID
    */
   async getReconciliation(reconciliationId: string) {
-    const { data: reconciliation, error } = await this.supabase.client
+    const { data: reconciliation, error } = await this.supabase.getClient()
       .from('payment_reconciliations')
       .select(`
         *,
@@ -112,7 +112,7 @@ export class ReconciliationService {
     }
 
     // Get discrepancies
-    const { data: discrepancies } = await this.supabase.client
+    const { data: discrepancies } = await this.supabase.getClient()
       .from('payment_discrepancies')
       .select(`
         *,
@@ -130,7 +130,7 @@ export class ReconciliationService {
    * List reconciliations with filters
    */
   async listReconciliations(query: QueryReconciliationsDto) {
-    let queryBuilder = this.supabase.client
+    let queryBuilder = this.supabase.getClient()
       .from('payment_reconciliations')
       .select('*', { count: 'exact' });
 
@@ -179,7 +179,7 @@ export class ReconciliationService {
     difference: number;
     reason: string;
   }) {
-    const { error } = await this.supabase.client
+    const { error } = await this.supabase.getClient()
       .from('payment_discrepancies')
       .insert({
         reconciliation_id: data.reconciliationId,
@@ -201,7 +201,7 @@ export class ReconciliationService {
    * Get discrepancies with filters
    */
   async getDiscrepancies(query: QueryDiscrepanciesDto) {
-    let queryBuilder = this.supabase.client
+    let queryBuilder = this.supabase.getClient()
       .from('payment_discrepancies')
       .select(`
         *,
@@ -247,7 +247,7 @@ export class ReconciliationService {
    * Resolve a discrepancy
    */
   async resolveDiscrepancy(dto: ResolveDiscrepancyDto, userId: string) {
-    const { data: discrepancy, error: fetchError } = await this.supabase.client
+    const { data: discrepancy, error: fetchError } = await this.supabase.getClient()
       .from('payment_discrepancies')
       .select('*')
       .eq('id', dto.discrepancyId)
@@ -261,7 +261,7 @@ export class ReconciliationService {
       throw new BadRequestException('Discrepancy already resolved');
     }
 
-    const { error: updateError } = await this.supabase.client
+    const { error: updateError } = await this.supabase.getClient()
       .from('payment_discrepancies')
       .update({
         resolved: true,
@@ -286,7 +286,7 @@ export class ReconciliationService {
    * Get reconciliation statistics
    */
   async getReconciliationStatistics(filters?: { startDate?: string; endDate?: string }) {
-    let queryBuilder = this.supabase.client
+    let queryBuilder = this.supabase.getClient()
       .from('payment_reconciliations')
       .select('*');
 
@@ -352,7 +352,7 @@ export class ReconciliationService {
     const dateStr = yesterday.toISOString().split('T')[0];
 
     // Check if reconciliation already exists for this date
-    const { data: existing } = await this.supabase.client
+    const { data: existing } = await this.supabase.getClient()
       .from('payment_reconciliations')
       .select('id')
       .eq('reconciliation_date', dateStr)

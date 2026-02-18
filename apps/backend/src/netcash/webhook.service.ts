@@ -56,7 +56,7 @@ export class WebhookService {
    */
   private async processTransactionWebhook(payload: NetcashWebhookDto) {
     // Find transaction by reference
-    const { data: transaction, error } = await this.supabase.client
+    const { data: transaction, error } = await this.supabase.getClient()
       .from('debit_order_transactions')
       .select('id, status')
       .eq('transaction_reference', payload.transactionReference)
@@ -91,7 +91,7 @@ export class WebhookService {
    */
   private async processBatchWebhook(payload: NetcashWebhookDto) {
     // Find batch by reference
-    const { data: batch, error } = await this.supabase.client
+    const { data: batch, error } = await this.supabase.getClient()
       .from('debit_order_runs')
       .select('id, status')
       .eq('batch_reference', payload.batchReference)
@@ -105,7 +105,7 @@ export class WebhookService {
     // Update batch status
     const status = this.mapNetcashBatchStatus(payload.status);
     
-    await this.supabase.client
+    await this.supabase.getClient()
       .from('debit_order_runs')
       .update({
         status,
@@ -121,7 +121,7 @@ export class WebhookService {
    * Log webhook to database
    */
   private async logWebhook(payload: NetcashWebhookDto, signature?: string) {
-    const { data: log, error } = await this.supabase.client
+    const { data: log, error } = await this.supabase.getClient()
       .from('netcash_webhook_logs')
       .insert({
         payload: JSON.stringify(payload),
@@ -144,7 +144,7 @@ export class WebhookService {
    * Update webhook log status
    */
   private async updateWebhookLog(logId: string, processed: boolean, errorMessage?: string) {
-    await this.supabase.client
+    await this.supabase.getClient()
       .from('netcash_webhook_logs')
       .update({
         processed,
@@ -218,7 +218,7 @@ export class WebhookService {
    * Get webhook logs with filters
    */
   async getWebhookLogs(query: QueryWebhookLogsDto) {
-    let queryBuilder = this.supabase.client
+    let queryBuilder = this.supabase.getClient()
       .from('netcash_webhook_logs')
       .select('*', { count: 'exact' });
 
@@ -252,7 +252,7 @@ export class WebhookService {
    * Get webhook statistics
    */
   async getWebhookStatistics(filters?: { startDate?: string; endDate?: string }) {
-    let queryBuilder = this.supabase.client
+    let queryBuilder = this.supabase.getClient()
       .from('netcash_webhook_logs')
       .select('processed, error_message');
 
@@ -301,7 +301,7 @@ export class WebhookService {
    * Retry failed webhook
    */
   async retryWebhook(webhookLogId: string) {
-    const { data: log, error } = await this.supabase.client
+    const { data: log, error } = await this.supabase.getClient()
       .from('netcash_webhook_logs')
       .select('*')
       .eq('id', webhookLogId)
