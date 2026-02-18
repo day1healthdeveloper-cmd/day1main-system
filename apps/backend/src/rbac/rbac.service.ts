@@ -37,7 +37,7 @@ export class RbacService {
     }
 
     // Assign role
-    await this.supabase.getClient().from('user_roles').insert({
+    await this.supabase.from('user_roles').insert({
       user_id: userId,
       role_id: roleId,
       assigned_by: assignedBy,
@@ -45,7 +45,7 @@ export class RbacService {
 
     // Log audit event
     if (assignedBy) {
-      await this.supabase.getClient().from('audit_events').insert({
+      await this.supabase.from('audit_events').insert({
         event_type: 'rbac',
         entity_type: 'user_role',
         entity_id: userId,
@@ -87,7 +87,7 @@ export class RbacService {
 
     // Log audit event
     if (revokedBy) {
-      await this.supabase.getClient().from('audit_events').insert({
+      await this.supabase.from('audit_events').insert({
         event_type: 'rbac',
         entity_type: 'user_role',
         entity_id: userId,
