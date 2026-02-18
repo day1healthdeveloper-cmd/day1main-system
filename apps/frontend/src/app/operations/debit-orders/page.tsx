@@ -60,7 +60,7 @@ export default function DebitOrdersPage() {
       }
       
       console.log(`🔵 fetchData: Loaded ${Array.isArray(groupsData) ? groupsData.length : 0} groups`);
-      console.log(`🔵 fetchData: Total members: ${summaryData?.total || 0}`);
+      console.log(`🔵 fetchData: Total members: ${summaryData && typeof summaryData === 'object' && 'total' in summaryData ? summaryData.total : 0}`);
     } catch (error) {
       console.error('🔴 fetchData: Error:', error);
       setBatches([]);
