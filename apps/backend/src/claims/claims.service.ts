@@ -26,7 +26,7 @@ export class ClaimsService {
 
     const claimNumber = await this.generateClaimNumber()
 
-    const { data: claim, error } = await this.supabase
+    const { data: claim, error } = await this.supabase.getClient()
       .from('claims')
       .insert({
         claim_number: claimNumber,
@@ -77,7 +77,7 @@ export class ClaimsService {
   private async validateMemberEligibility(memberId: string, serviceDate: string): Promise<void> {
     const serviceDateObj = new Date(serviceDate).toISOString()
 
-    const { data: policyMembers } = await this.supabase
+    const { data: policyMembers } = await this.supabase.getClient()
       .from('policy_members')
       .select('*, policy:policies(*)')
       .eq('member_id', memberId)
@@ -96,7 +96,7 @@ export class ClaimsService {
   private async validateWaitingPeriods(memberId: string, diagnosisCode: string, serviceDate: string): Promise<void> {
     const serviceDateObj = new Date(serviceDate)
 
-    const { data: policyMember } = await this.supabase
+    const { data: policyMember } = await this.supabase.getClient()
       .from('policy_members')
       .select('*, policy:policies(*, plan:plans(*))')
       .eq('member_id', memberId)
@@ -117,7 +117,7 @@ export class ClaimsService {
   }
 
   private async validateExclusions(memberId: string, diagnosisCode: string, procedureCodes: string[]): Promise<void> {
-    const { data: policyMember } = await this.supabase
+    const { data: policyMember } = await this.supabase.getClient()
       .from('policy_members')
       .select('policy_id')
       .eq('member_id', memberId)
@@ -127,7 +127,7 @@ export class ClaimsService {
 
     if (!policyMember) return
 
-    const { data: policy } = await this.supabase
+    const { data: policy } = await this.supabase.getClient()
       .from('policies')
       .select('plan_id')
       .eq('id', policyMember.policy_id)
@@ -135,7 +135,7 @@ export class ClaimsService {
 
     if (!policy) return
 
-    const { data: benefits } = await this.supabase
+    const { data: benefits } = await this.supabase.getClient()
       .from('plan_benefits')
       .select('id')
       .eq('plan_id', policy.plan_id)
@@ -143,7 +143,7 @@ export class ClaimsService {
     if (!benefits || benefits.length === 0) return
 
     const benefitIds = benefits.map(b => b.id)
-    const { data: exclusions } = await this.supabase
+    const { data: exclusions } = await this.supabase.getClient()
       .from('benefit_exclusions')
       .select('*')
       .in('benefit_id', benefitIds)
@@ -158,7 +158,7 @@ export class ClaimsService {
   }
 
   private async validateClinicalCodes(diagnosisCode: string, procedureCodes: string[]): Promise<void> {
-    const { data: diagnosis } = await this.supabase
+    const { data: diagnosis } = await this.supabase.getClient()
       .from('clinical_codes')
       .select('id')
       .eq('code', diagnosisCode)
@@ -168,7 +168,7 @@ export class ClaimsService {
     if (!diagnosis) throw new BadRequestException(`Invalid ICD-10 diagnosis code: ${diagnosisCode}`)
 
     for (const procCode of procedureCodes) {
-      const { data: procedure } = await this.supabase
+      const { data: procedure } = await this.supabase.getClient()
         .from('clinical_codes')
         .select('id')
         .eq('code', procCode)
@@ -185,7 +185,7 @@ export class ClaimsService {
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString()
 
-    const { count } = await this.supabase
+    const { count } = await this.supabase.getClient()
       .from('claims')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', startOfDay)
@@ -212,7 +212,7 @@ export class ClaimsService {
   }
 
   async getClaimsByMember(memberId: string) {
-    const { data } = await this.supabase
+    const { data } = await this.supabase.getClient()
       .from('claims')
       .select('*, provider:providers(*), claim_lines(*)')
       .eq('member_id', memberId)
@@ -222,7 +222,7 @@ export class ClaimsService {
   }
 
   async getClaimsByProvider(providerId: string) {
-    const { data } = await this.supabase
+    const { data } = await this.supabase.getClient()
       .from('claims')
       .select('*, member:members(*), claim_lines(*)')
       .eq('provider_id', providerId)
@@ -232,7 +232,7 @@ export class ClaimsService {
   }
 
   async getClaimsByStatus(status: string) {
-    const { data } = await this.supabase
+    const { data } = await this.supabase.getClient()
       .from('claims')
       .select('*, member:members(*), provider:providers(*), claim_lines(*)')
       .eq('status', status)
@@ -245,7 +245,7 @@ export class ClaimsService {
     const { data: claim } = await this.supabase.getClient().from('claims').select('id').eq('id', claimId).single()
     if (!claim) throw new NotFoundException('Claim not found')
 
-    const { data } = await this.supabase
+    const { data } = await this.supabase.getClient()
       .from('claim_status_history')
       .select('*')
       .eq('claim_id', claimId)

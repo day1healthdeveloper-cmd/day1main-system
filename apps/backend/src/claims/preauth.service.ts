@@ -45,7 +45,7 @@ export class PreAuthService {
 
     const preauthNumber = await this.generatePreAuthNumber()
 
-    const { data: preauth, error } = await this.supabase
+    const { data: preauth, error } = await this.supabase.getClient()
       .from('preauth_requests')
       .insert({ preauth_number: preauthNumber, policy_id: policyId, member_id: memberId, provider_id: providerId, service_type: serviceType, diagnosis_code: diagnosisCode, procedure_codes: procedureCodes, estimated_cost: estimatedCost, status: 'pending' })
       .select()

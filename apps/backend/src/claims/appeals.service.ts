@@ -36,7 +36,7 @@ export class AppealsService {
       throw new BadRequestException('Only rejected or pended claims can be appealed')
     }
 
-    const { data: existingAppeal } = await this.supabase
+    const { data: existingAppeal } = await this.supabase.getClient()
       .from('appeals')
       .select('id')
       .eq('claim_id', claimId)
@@ -45,7 +45,7 @@ export class AppealsService {
 
     if (existingAppeal) throw new BadRequestException('An appeal is already pending for this claim')
 
-    const { data: appeal, error } = await this.supabase
+    const { data: appeal, error } = await this.supabase.getClient()
       .from('appeals')
       .insert({ claim_id: claimId, appeal_reason: appealReason, supporting_docs: supportingDocs, status: 'pending', submitted_by: userId })
       .select()

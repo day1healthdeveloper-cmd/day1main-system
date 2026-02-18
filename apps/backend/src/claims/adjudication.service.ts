@@ -24,7 +24,7 @@ export class AdjudicationService {
   ) {}
 
   async adjudicateClaim(claimId: string, userId: string): Promise<AdjudicationResult> {
-    const { data: claim, error } = await this.supabase
+    const { data: claim, error } = await this.supabase.getClient()
       .from('claims')
       .select('*')
       .eq('id', claimId)
@@ -86,7 +86,7 @@ export class AdjudicationService {
   private async checkPmbProtection(claim: any, policy: any): Promise<{ is_protected: boolean; category?: string }> {
     if (!policy?.plan) return { is_protected: false }
 
-    const { data: product } = await this.supabase
+    const { data: product } = await this.supabase.getClient()
       .from('products')
       .select('regime')
       .eq('id', policy.plan.product_id)
