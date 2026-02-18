@@ -393,7 +393,7 @@ function MembersTab({ groups, selectedGroup }: { groups: any[], selectedGroup?: 
       }
       
       // Fetch all members to get their debit dates
-      const allMembers = await apiClient.get('/netcash/members?limit=1000');
+      const allMembers = await apiClient.get('/netcash/members?limit=1000') as any[];
       
       // Filter members by group if specified
       const filteredMembers = preSelectedGroup 
