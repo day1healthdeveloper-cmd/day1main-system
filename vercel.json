@@ -1,4 +1,5 @@
 {
-  "buildCommand": "npx pnpm@8.15.0 -r build",
-  "installCommand": "npx pnpm@8.15.0 install"
+  "buildCommand": "cd apps/frontend && npx pnpm@8.15.0 build",
+  "installCommand": "npx pnpm@8.15.0 install",
+  "outputDirectory": "apps/frontend/.next"
 }
