@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -152,11 +153,12 @@ export default function ManageGroupsPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Manage Groups</h1>
-        <p className="text-gray-600 mt-1">Daily operations and member management for payment groups</p>
-      </div>
+    <SidebarLayout>
+      <div className="p-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Manage Groups</h1>
+          <p className="text-gray-600 mt-1">Daily operations and member management for payment groups</p>
+        </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
@@ -339,5 +341,6 @@ export default function ManageGroupsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </SidebarLayout>
   );
 }
