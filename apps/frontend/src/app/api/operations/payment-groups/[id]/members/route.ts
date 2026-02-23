@@ -12,7 +12,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   try {
     const { data, error } = await supabase
       .from('members')
-      .select('id, member_number, first_name, last_name, monthly_premium, payment_group_id, collection_method')
+      .select('id, member_number, first_name, last_name, id_number, date_of_birth, monthly_premium, employee_number, payment_group_id, collection_method')
       .eq('payment_group_id', params.id)
       .order('member_number');
 

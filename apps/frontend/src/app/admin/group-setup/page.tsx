@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -42,8 +43,8 @@ export default function GroupSetupPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingGroup, setEditingGroup] = useState<PaymentGroup | null>(null);
+  const [filterMethod, setFilterMethod] = useState<string>('all');
   const [formData, setFormData] = useState<Partial<PaymentGroup>>({
-    group_type: 'debit_order_group',
     collection_method: 'group_debit_order',
     collection_frequency: 'monthly',
     status: 'active',
@@ -119,21 +120,48 @@ export default function GroupSetupPage() {
     }
   };
 
+  const filteredGroups = groups.filter((group) => {
+    if (filterMethod === 'all') return true;
+    return group.collection_method === filterMethod;
+  });
+
   if (loading) {
     return <div className="p-8">Loading...</div>;
   }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Group Setup</h1>
-          <p className="text-gray-600 mt-1">Configure payment groups and company information</p>
+    <SidebarLayout>
+      <div className="p-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Group Setup ({groups.length})</h1>
+            <p className="text-gray-600 mt-1">Configure payment groups and company information</p>
+          </div>
+          <Button onClick={() => setShowForm(true)}>
+            + Add New Group
+          </Button>
         </div>
-        <Button onClick={() => setShowForm(true)}>
-          + Add New Group
-        </Button>
-      </div>
+
+        <div className="mb-4 flex gap-2">
+          <Button
+            variant={filterMethod === 'all' ? 'default' : 'outline'}
+            onClick={() => setFilterMethod('all')}
+          >
+            All Groups ({groups.length})
+          </Button>
+          <Button
+            variant={filterMethod === 'group_debit_order' ? 'default' : 'outline'}
+            onClick={() => setFilterMethod('group_debit_order')}
+          >
+            Group Debit Order ({groups.filter(g => g.collection_method === 'group_debit_order').length})
+          </Button>
+          <Button
+            variant={filterMethod === 'individual_eft' ? 'default' : 'outline'}
+            onClick={() => setFilterMethod('individual_eft')}
+          >
+            Individual EFT ({groups.filter(g => g.collection_method === 'individual_eft').length})
+          </Button>
+        </div>
 
       {showForm && (
         <Card className="mb-6">
@@ -145,15 +173,6 @@ export default function GroupSetupPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Group Code *</Label>
-                  <Input
-                    required
-                    value={formData.group_code || ''}
-                    onChange={(e) => setFormData({ ...formData, group_code: e.target.value })}
-                    placeholder="e.g., DAY1-GRP01"
-                  />
-                </div>
-                <div>
                   <Label>Group Name *</Label>
                   <Input
                     required
@@ -161,24 +180,6 @@ export default function GroupSetupPage() {
                     onChange={(e) => setFormData({ ...formData, group_name: e.target.value })}
                     placeholder="e.g., Day1 Health Group 1"
                   />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Group Type *</Label>
-                  <Select
-                    value={formData.group_type}
-                    onValueChange={(value) => setFormData({ ...formData, group_type: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="debit_order_group">Debit Order Group</SelectItem>
-                      <SelectItem value="eft_group">EFT Group</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div>
                   <Label>Collection Method *</Label>
@@ -283,16 +284,18 @@ export default function GroupSetupPage() {
               )}
 
               <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label>Collection Day</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={formData.collection_day || ''}
-                    onChange={(e) => setFormData({ ...formData, collection_day: parseInt(e.target.value) })}
-                  />
-                </div>
+                {formData.collection_method === 'group_debit_order' && (
+                  <div>
+                    <Label>Collection Day</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="31"
+                      value={formData.collection_day || ''}
+                      onChange={(e) => setFormData({ ...formData, collection_day: parseInt(e.target.value) })}
+                    />
+                  </div>
+                )}
                 <div>
                   <Label>Collection Frequency</Label>
                   <Select
@@ -345,7 +348,6 @@ export default function GroupSetupPage() {
                     setShowForm(false);
                     setEditingGroup(null);
                     setFormData({
-                      group_type: 'debit_order_group',
                       collection_method: 'group_debit_order',
                       collection_frequency: 'monthly',
                       status: 'active',
@@ -361,14 +363,14 @@ export default function GroupSetupPage() {
       )}
 
       <div className="grid gap-4">
-        {groups.map((group) => (
+        {filteredGroups.map((group) => (
           <Card key={group.id}>
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle>{group.group_name}</CardTitle>
                   <CardDescription>
-                    {group.company_name} • {group.group_code}
+                    {group.company_name}
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
@@ -384,10 +386,6 @@ export default function GroupSetupPage() {
             <CardContent>
               <div className="grid grid-cols-4 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-500">Type</p>
-                  <p className="font-medium">{group.group_type === 'debit_order_group' ? 'Debit Order' : 'EFT'}</p>
-                </div>
-                <div>
                   <p className="text-gray-500">Collection Method</p>
                   <p className="font-medium">{group.collection_method === 'group_debit_order' ? 'Group Debit Order' : 'Individual EFT'}</p>
                 </div>
@@ -398,6 +396,10 @@ export default function GroupSetupPage() {
                 <div>
                   <p className="text-gray-500">Total Premium</p>
                   <p className="font-medium">R{group.total_monthly_premium.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Status</p>
+                  <p className="font-medium capitalize">{group.status}</p>
                 </div>
               </div>
               {group.bank_name && (
@@ -428,5 +430,6 @@ export default function GroupSetupPage() {
         ))}
       </div>
     </div>
+    </SidebarLayout>
   );
 }

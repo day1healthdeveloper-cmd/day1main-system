@@ -231,19 +231,89 @@ function OverviewTab({ summary, totalMembers, onRunDebitOrders, processing }: an
 function GroupsTab({ groups, summary, onViewDetails }: any) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'members' | 'premium'>('name');
+  const [paymentGroups, setPaymentGroups] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  console.log('GroupsTab rendered with groups:', groups);
+  useEffect(() => {
+    fetchPaymentGroups();
+  }, []);
 
-  const filteredGroups = (groups || [])
-    .filter((g: any) => g.broker_group && g.broker_group.toLowerCase().includes(searchTerm.toLowerCase()))
+  const fetchPaymentGroups = async () => {
+    try {
+      const response = await fetch('/api/operations/payment-groups');
+      if (response.ok) {
+        const data = await response.json();
+        // Filter only Group Debit Order groups
+        const debitOrderGroups = data.filter((g: any) => g.collection_method === 'group_debit_order');
+        setPaymentGroups(debitOrderGroups);
+      }
+    } catch (error) {
+      console.error('Error fetching payment groups:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getNextCollectionDate = (collectionDates: string[] | null | undefined): string => {
+    if (!collectionDates || collectionDates.length !== 12) {
+      return 'N/A';
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Filter out empty dates and convert to Date objects with their month index
+    const validDates = collectionDates
+      .map((dateStr, monthIndex) => {
+        if (!dateStr || dateStr === '') return null;
+        const date = new Date(dateStr);
+        return { date, monthIndex };
+      })
+      .filter(item => item !== null) as { date: Date; monthIndex: number }[];
+
+    if (validDates.length === 0) {
+      return 'N/A';
+    }
+
+    // Find the next date that's today or in the future
+    const nextDate = validDates.find(item => item.date >= today);
+    
+    if (nextDate) {
+      return nextDate.date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
+
+    // If all dates have passed this year, return the first date of next year
+    const firstDate = validDates[0];
+    const nextYearDate = new Date(firstDate.date);
+    nextYearDate.setFullYear(nextYearDate.getFullYear() + 1);
+    
+    return nextYearDate.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const filteredGroups = paymentGroups
+    .filter((g: any) => g.group_name && g.group_name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a: any, b: any) => {
-      if (sortBy === 'name') return a.broker_group.localeCompare(b.broker_group);
-      if (sortBy === 'members') return b.member_count - a.member_count;
-      if (sortBy === 'premium') return b.total_premium - a.total_premium;
+      if (sortBy === 'name') return a.group_name.localeCompare(b.group_name);
+      if (sortBy === 'members') return b.total_members - a.total_members;
+      if (sortBy === 'premium') return b.total_monthly_premium - a.total_monthly_premium;
       return 0;
     });
 
-  console.log('Filtered groups:', filteredGroups.length);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -251,8 +321,8 @@ function GroupsTab({ groups, summary, onViewDetails }: any) {
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold">👥 Broker Groups</h2>
-            <p className="text-sm text-gray-600 mt-1">Manage and monitor all broker groups</p>
+            <h2 className="text-xl font-semibold">🏦 Group Debit Order Groups</h2>
+            <p className="text-sm text-gray-600 mt-1">Manage and monitor all group debit order payment groups</p>
           </div>
           <div className="flex gap-3">
             <input
@@ -278,44 +348,44 @@ function GroupsTab({ groups, summary, onViewDetails }: any) {
       {/* Groups Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredGroups.map((group: any) => (
-          <div key={group.broker_group} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          <div key={group.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">{group.broker_group}</h3>
-                <p className="text-sm text-gray-500">Broker Group</p>
+                <h3 className="text-lg font-bold text-gray-900">{group.group_name}</h3>
+                <p className="text-sm text-gray-500">{group.company_name}</p>
               </div>
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
-                Active
+              <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                group.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+              }`}>
+                {group.status}
               </span>
             </div>
 
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Members</span>
-                <span className="font-semibold">{group.member_count}</span>
+                <span className="font-semibold">{group.total_members}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Monthly Premium</span>
-                <span className="font-semibold text-green-600">R{group.total_premium?.toFixed(2)}</span>
+                <span className="text-sm text-gray-600">Total Monthly Premium</span>
+                <span className="font-semibold text-green-600">R{group.total_monthly_premium?.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Arrears</span>
-                <span className="font-semibold text-orange-600">R{group.total_arrears?.toFixed(2)}</span>
+                <span className="text-sm text-gray-600">Collection Day</span>
+                <span className="font-semibold text-blue-600">{getNextCollectionDate(group.collection_dates)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Success Rate</span>
-                <span className="font-semibold text-purple-600">
-                  {group.member_count > 0 ? ((group.active_count / group.member_count) * 100).toFixed(1) : '0'}%
-                </span>
+                <span className="text-sm text-gray-600">Group Code</span>
+                <span className="font-semibold text-gray-700">{group.group_code}</span>
               </div>
             </div>
 
             <div className="mt-4 pt-4 border-t">
               <button 
-                onClick={() => onViewDetails(group.broker_group)}
+                onClick={() => onViewDetails(group.group_name)}
                 className="w-full text-sm text-blue-600 hover:text-blue-800 font-medium"
               >
-                View Details →
+                View Members →
               </button>
             </div>
           </div>
@@ -324,7 +394,7 @@ function GroupsTab({ groups, summary, onViewDetails }: any) {
 
       {filteredGroups.length === 0 && (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <p className="text-gray-500">No groups found matching your search</p>
+          <p className="text-gray-500">No group debit order groups found matching your search</p>
         </div>
       )}
     </div>

@@ -243,13 +243,13 @@ export default function OperationsDashboardPage() {
 
               <button 
                 className="p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-left group"
-                onClick={() => router.push('/operations/call-centre')}
+                onClick={() => router.push('/operations/manage-groups')}
               >
                 <div className="w-10 h-10 bg-blue-100 group-hover:bg-blue-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
-                  <Phone className="w-5 h-5 text-blue-600" />
+                  <Users className="w-5 h-5 text-blue-600" />
                 </div>
-                <p className="font-medium">Call Centre</p>
-                <p className="text-xs text-gray-500">Member support</p>
+                <p className="font-medium">Manage Groups</p>
+                <p className="text-xs text-gray-500">Group operations</p>
               </button>
 
               <button 
@@ -273,6 +273,33 @@ export default function OperationsDashboardPage() {
                 <p className="font-medium">Reports</p>
                 <p className="text-xs text-gray-500">Operational reports</p>
               </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Collection Dates Calendar */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>📅 Group Debit Order Collection Calendar</CardTitle>
+                <CardDescription>Scheduled collection dates for all Group Debit Order groups</CardDescription>
+              </div>
+              <Button onClick={() => router.push('/operations/collection-calendar')}>
+                Manage Dates
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8 text-gray-500">
+              <p className="text-sm">Collection calendar will be displayed here</p>
+              <p className="text-xs mt-1">Set 12 collection dates per year for each group</p>
+              <Button 
+                className="mt-4"
+                onClick={() => router.push('/operations/collection-calendar')}
+              >
+                Set Up Collection Dates
+              </Button>
             </div>
           </CardContent>
         </Card>

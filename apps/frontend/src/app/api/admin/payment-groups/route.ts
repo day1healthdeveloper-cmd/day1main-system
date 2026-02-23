@@ -28,6 +28,21 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // Auto-generate group_code from group_name if not provided
+    if (!body.group_code) {
+      const groupCode = body.group_name
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .substring(0, 50);
+      body.group_code = groupCode;
+    }
+
+    // Set group_type based on collection_method if not provided
+    if (!body.group_type) {
+      body.group_type = body.collection_method === 'group_debit_order' ? 'debit_order_group' : 'eft_group';
+    }
+
     const { data, error } = await supabase
       .from('payment_groups')
       .insert([body])
