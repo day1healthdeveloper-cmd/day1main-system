@@ -1,8 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 
-// Backend removed - feature temporarily disabled
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
-  return NextResponse.json({ 
-    error: 'Feature temporarily unavailable - backend migration to Supabase in progress' 
-  }, { status: 503 });
+  try {
+    const supabase = createServerSupabaseClient()
+    
+    const { data: batches, error } = await supabase
+      .from('debit_order_batches')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (error) throw error
+
+    return NextResponse.json({ batches: batches || [] })
+  } catch (error) {
+    console.error('Error fetching batches:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch batches' },
+      { status: 500 }
+    )
+  }
 }
