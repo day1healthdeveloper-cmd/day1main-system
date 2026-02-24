@@ -46,45 +46,12 @@ export default function LoginPage() {
     try {
       await login(email, password);
       
-      // Get user data to check role
-      const response = await fetch('http://localhost:3000/api/v1/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
+      // User data is now in auth context, no need to fetch
+      // Wait a moment for context to update
+      await new Promise(resolve => setTimeout(resolve, 100));
       
-      if (response.ok) {
-        const userData = await response.json();
-        const roles = userData.roles || [];
-        
-        console.log('=== LOGIN DEBUG ===');
-        console.log('Email:', email);
-        console.log('Roles:', roles);
-        console.log('==================');
-        
-        // Each user has exactly ONE role - direct mapping
-        const role = roles[0]; // Get the first (and only) role
-        
-        const roleRoutes: Record<string, string> = {
-          'system_admin': '/admin/dashboard',
-          'operations_manager': '/operations/dashboard',
-          'broker': '/broker/dashboard',
-          'marketing_manager': '/marketing/dashboard',
-          'compliance_officer': '/compliance/dashboard',
-          'finance_manager': '/finance/dashboard',
-          'claims_assessor': '/claims-assessor/dashboard',
-          'call_centre_agent': '/dashboard',
-          'ambulance_operator': '/dashboard',
-          'provider': '/provider/dashboard',
-          'member': '/dashboard',
-        };
-        
-        const redirectPath = roleRoutes[role] || '/dashboard';
-        console.log('Redirecting to:', redirectPath);
-        router.push(redirectPath);
-      } else {
-        router.push('/dashboard');
-      }
+      // Redirect will happen automatically based on role
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {

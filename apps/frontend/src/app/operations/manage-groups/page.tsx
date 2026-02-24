@@ -173,6 +173,8 @@ export default function ManageGroupsPage() {
           commence_date: '',
           monthly_premium: '',
           employee_number: '',
+          phone: '',
+          email: '',
         });
         await fetchGroupMembers(selectedGroup.id);
         await fetchGroups();
@@ -629,6 +631,8 @@ export default function ManageGroupsPage() {
                             commence_date: '',
                             monthly_premium: '',
                             employee_number: '',
+                            phone: '',
+                            email: '',
                           });
                         }}>
                           Cancel

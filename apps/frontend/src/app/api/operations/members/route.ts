@@ -23,6 +23,8 @@ export async function POST(request: NextRequest) {
         date_of_birth: body.commence_date,
         monthly_premium: body.monthly_premium,
         employee_number: body.employee_number || null,
+        phone: body.phone || null,
+        email: body.email || null,
         payment_group_id: body.payment_group_id,
         collection_method: body.collection_method,
         status: 'active',

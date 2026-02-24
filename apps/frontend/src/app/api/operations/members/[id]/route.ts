@@ -14,7 +14,6 @@ export async function PUT(
   try {
     const supabase = getSupabaseClient();
     const body = await request.json();
-    const { id } = params;
 
     const { data: member, error } = await supabase
       .from('members')
@@ -26,10 +25,12 @@ export async function PUT(
         date_of_birth: body.commence_date,
         monthly_premium: body.monthly_premium,
         employee_number: body.employee_number || null,
+        phone: body.phone || null,
+        email: body.email || null,
         payment_group_id: body.payment_group_id,
         collection_method: body.collection_method,
       })
-      .eq('id', id)
+      .eq('id', params.id)
       .select()
       .single();
 
@@ -37,9 +38,7 @@ export async function PUT(
       console.error('Error updating member:', error);
       return NextResponse.json({ 
         error: 'Failed to update member', 
-        details: error.message,
-        hint: error.hint,
-        code: error.code 
+        details: error.message 
       }, { status: 400 });
     }
 

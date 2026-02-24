@@ -1,7 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiClient } from '@/lib/api-client';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 interface User {
   id: string;
@@ -32,26 +37,94 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user on mount
+  // Load user on mount and listen for auth changes
   useEffect(() => {
     loadUser();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state changed:', event);
+      if (session) {
+        await loadUser();
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadUser = async () => {
     console.log('🔄 Loading user...');
     try {
-      if (apiClient.isAuthenticated()) {
-        console.log('✅ User is authenticated, fetching user data...');
-        const userData = await apiClient.getCurrentUser();
-        console.log('✅ User data loaded:', userData);
-        setUser(userData);
-      } else {
-        console.log('❌ User is not authenticated');
+      // Get Supabase session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        console.log('❌ No active session');
+        setUser(null);
+        setLoading(false);
+        return;
       }
+
+      console.log('✅ Session found, fetching user data...');
+
+      // Get user data from custom users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select(`
+          id,
+          email,
+          is_active,
+          profile:profiles(first_name, last_name),
+          user_roles!user_roles_user_id_fkey(
+            role:roles(
+              name,
+              role_permissions(
+                permission:permissions(name)
+              )
+            )
+          )
+        `)
+        .eq('email', session.user.email)
+        .single();
+
+      if (userError || !userData) {
+        console.error('❌ Error loading user data:', userError);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      if (!userData.is_active) {
+        console.error('❌ User is inactive');
+        await supabase.auth.signOut();
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // Extract roles and permissions
+      const roles = userData.user_roles?.map((ur: any) => ur.role.name) || [];
+      const permissions = userData.user_roles?.flatMap((ur: any) =>
+        ur.role.role_permissions?.map((rp: any) => rp.permission.name) || []
+      ) || [];
+
+      const transformedUser: User = {
+        id: userData.id,
+        email: userData.email,
+        firstName: userData.profile?.first_name || '',
+        lastName: userData.profile?.last_name || '',
+        roles,
+        permissions: [...new Set(permissions)],
+      };
+
+      console.log('✅ User data loaded:', transformedUser);
+      setUser(transformedUser);
     } catch (error) {
       console.error('❌ Error loading user:', error);
-      // Silently clear invalid tokens - user will need to log in again
-      apiClient.clearTokens();
       setUser(null);
     } finally {
       setLoading(false);
@@ -60,18 +133,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      await apiClient.login(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
       await loadUser();
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('Login error:', error);
+      throw new Error(error.message || 'Login failed');
     }
   };
 
   const logout = async () => {
     try {
-      await apiClient.logout();
-    } finally {
+      await supabase.auth.signOut();
       setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
@@ -82,10 +163,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastName: string;
   }) => {
     try {
-      await apiClient.register(data);
+      // Create Supabase Auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (authError) throw authError;
+
+      // User data will be created via database trigger or we can create it here
       await loadUser();
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      console.error('Register error:', error);
+      throw new Error(error.message || 'Registration failed');
     }
   };
 

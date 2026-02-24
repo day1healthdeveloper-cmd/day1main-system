@@ -1,7 +1,0 @@
-export * from './register-provider.dto'
-export * from './add-practice.dto'
-export * from './verify-credential.dto'
-export * from './verify-bank-account.dto'
-export * from './create-contract.dto'
-export * from './assign-network.dto'
-export * from './grant-authorisation.dto'

@@ -14,8 +14,32 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       router.push('/login');
+      return;
     }
-  }, [loading, isAuthenticated, router]);
+
+    // Redirect to role-specific dashboard
+    if (user && user.roles && user.roles.length > 0) {
+      const role = user.roles[0];
+      const roleRoutes: Record<string, string> = {
+        'system_admin': '/admin/dashboard',
+        'operations_manager': '/operations/dashboard',
+        'broker': '/broker/dashboard',
+        'marketing_manager': '/marketing/dashboard',
+        'compliance_officer': '/compliance/dashboard',
+        'finance_manager': '/finance/dashboard',
+        'claims_assessor': '/claims-assessor/dashboard',
+        'call_centre_agent': '/dashboard',
+        'ambulance_operator': '/dashboard',
+        'provider': '/provider/dashboard',
+        'member': '/dashboard',
+      };
+
+      const redirectPath = roleRoutes[role];
+      if (redirectPath && redirectPath !== '/dashboard') {
+        router.push(redirectPath);
+      }
+    }
+  }, [loading, isAuthenticated, user, router]);
 
   if (loading) {
     return (
