@@ -47,46 +47,27 @@ export default function PolicyDocumentPage() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
   useEffect(() => {
-    // fetchData(); // Disabled - backend no longer exists
+    fetchData();
   }, [productId, activeTab]);
 
   const fetchData = async () => {
-    // Backend removed - this feature is temporarily disabled
-    return;
-    /*
     try {
-      const token = apiClient.getAccessToken();
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      };
-
-      // Fetch product
-      const productRes = await fetch(`http://localhost:3000/api/v1/products/${productId}`, { headers });
-      const productData = await productRes.json();
-      setProduct(productData);
-
-      // Fetch definitions
-      const defsRes = await fetch(`http://localhost:3000/api/v1/products/${productId}/definitions`, { headers });
-      if (defsRes.ok) {
-        const defsData = await defsRes.json();
-        setDefinitions(defsData);
+      // Fetch product from Supabase
+      const productRes = await fetch(`/api/admin/products/${productId}`);
+      if (productRes.ok) {
+        const productData = await productRes.json();
+        setProduct(productData);
       }
-
-      // Fetch section items if not on definitions tab
-      if (activeTab !== 'definitions') {
-        const itemsRes = await fetch(`http://localhost:3000/api/v1/products/${productId}/section-items/${activeTab}`, { headers });
-        if (itemsRes.ok) {
-          const itemsData = await itemsRes.json();
-          setSectionItems(itemsData);
-        }
-      }
+      
+      // Note: Definitions and section items features are temporarily disabled
+      // These require complex product management tables that need migration
+      setDefinitions([]);
+      setSectionItems([]);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }
-    */
   };
 
   const handleEdit = (def: Definition) => {

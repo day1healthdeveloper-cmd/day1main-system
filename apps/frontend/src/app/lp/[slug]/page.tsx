@@ -34,7 +34,7 @@ export default function LandingPageView() {
   useEffect(() => {
     async function fetchLandingPage() {
       try {
-        const response = await fetch(`http://localhost:3000/api/v1/public/landing-pages/slug/${slug}`);
+        const response = await fetch(`/api/public/landing-pages/${slug}`);
         
         if (!response.ok) {
           throw new Error('Landing page not found');

@@ -23,50 +23,16 @@ export function PolicyDocumentViewer({ productId, productName, isOpen, onClose }
   }, [isOpen, productId]);
 
   const fetchPolicyData = async () => {
-    // Backend removed - this feature is temporarily disabled
-    return;
-    /*
     try {
-      const token = apiClient.getAccessToken();
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      };
-
-      // Fetch definitions
-      const defsRes = await fetch(`http://localhost:3000/api/v1/products/${productId}/definitions`, { headers });
-      if (defsRes.ok) {
-        const defsData = await defsRes.json();
-        setDefinitions(defsData);
-      }
-
-      // Fetch all section items
-      const sectionTypes = [
-        'waiting-periods',
-        'general-provisions',
-        'payment-premium',
-        'exclusions-limitations',
-        'general-conditions',
-        'insuring-section',
-        'funeral-benefit',
-        'critical-illness-definitions'
-      ];
-
-      const sectionsData: any = {};
-      for (const sectionType of sectionTypes) {
-        const res = await fetch(`http://localhost:3000/api/v1/products/${productId}/section-items/${sectionType}`, { headers });
-        if (res.ok) {
-          const data = await res.json();
-          sectionsData[sectionType] = data;
-        }
-      }
-      setSections(sectionsData);
+      // Note: Policy definitions and sections require complex product management
+      // tables that are being migrated. Temporarily showing empty state.
+      setDefinitions([]);
+      setSections({});
     } catch (error) {
       console.error('Failed to fetch policy data:', error);
     } finally {
       setLoading(false);
     }
-    */
   };
 
   const groupDefinitionsByCategory = () => {
