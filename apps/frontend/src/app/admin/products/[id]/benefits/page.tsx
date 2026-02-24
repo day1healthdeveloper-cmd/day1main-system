@@ -102,6 +102,9 @@ export default function PolicyDocumentPage() {
   };
 
   const handleSave = async () => {
+    alert('This feature is temporarily disabled - backend removed');
+    return;
+    /*
     if (!formData.term || !formData.definition) {
       alert('Term and definition are required');
       return;
@@ -142,9 +145,13 @@ export default function PolicyDocumentPage() {
     } finally {
       setSaving(false);
     }
+    */
   };
 
   const handleDelete = async (id: string) => {
+    alert('This feature is temporarily disabled - backend removed');
+    return;
+    /*
     if (!confirm('Are you sure you want to delete this definition?')) return;
 
     try {
@@ -160,6 +167,7 @@ export default function PolicyDocumentPage() {
       console.error('Failed to delete definition:', error);
       alert('Failed to delete definition');
     }
+    */
   };
 
   const handleCancel = () => {
@@ -173,6 +181,9 @@ export default function PolicyDocumentPage() {
     : definitions.filter(def => def.category === filterCategory);
 
   const handleAddSectionItem = async (data: { title: string; content: string }) => {
+    alert('This feature is temporarily disabled - backend removed');
+    return;
+    /*
     const token = apiClient.getAccessToken();
     await fetch(`http://localhost:3000/api/v1/products/${productId}/section-items/${activeTab}`, {
       method: 'POST',
@@ -183,9 +194,13 @@ export default function PolicyDocumentPage() {
       body: JSON.stringify(data),
     });
     fetchData();
+    */
   };
 
   const handleUpdateSectionItem = async (itemId: string, data: { title: string; content: string }) => {
+    alert('This feature is temporarily disabled - backend removed');
+    return;
+    /*
     const token = apiClient.getAccessToken();
     await fetch(`http://localhost:3000/api/v1/products/section-items/${itemId}`, {
       method: 'PUT',
@@ -196,15 +211,20 @@ export default function PolicyDocumentPage() {
       body: JSON.stringify(data),
     });
     fetchData();
+    */
   };
 
   const handleDeleteSectionItem = async (itemId: string) => {
+    alert('This feature is temporarily disabled - backend removed');
+    return;
+    /*
     const token = apiClient.getAccessToken();
     await fetch(`http://localhost:3000/api/v1/products/section-items/${itemId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` },
     });
     fetchData();
+    */
   };
 
   if (loading) {
