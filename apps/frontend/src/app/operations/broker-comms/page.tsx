@@ -11,10 +11,14 @@ export default function BrokerCommunicationsPage() {
   const [sortBy, setSortBy] = useState<'name' | 'members' | 'premium'>('name');
 
   useEffect(() => {
-    fetchBrokerGroups();
+    // fetchBrokerGroups(); // Disabled - backend removed
+    setLoading(false);
   }, []);
 
   const fetchBrokerGroups = async () => {
+    // Backend removed - this feature is temporarily disabled
+    return;
+    /*
     try {
       const data = await apiClient.get('/netcash/groups');
       setGroups(Array.isArray(data) ? data : []);
@@ -24,6 +28,7 @@ export default function BrokerCommunicationsPage() {
     } finally {
       setLoading(false);
     }
+    */
   };
 
   const filteredGroups = (groups || [])
