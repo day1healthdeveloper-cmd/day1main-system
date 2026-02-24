@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-  return createClient(supabaseUrl, supabaseServiceKey)
-}
-
 export async function GET(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin()
   try {
+    const supabaseAdmin = createServerSupabaseClient()
     // Fetch all applications with contact information
     const { data: applications, error } = await supabaseAdmin
       .from('applications')
@@ -78,8 +72,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const supabaseAdmin = getSupabaseAdmin()
   try {
+    const supabaseAdmin = createServerSupabaseClient()
     const body = await request.json()
     const { applicationId, status, reviewNotes, rejectionReason, reviewedBy } = body
 

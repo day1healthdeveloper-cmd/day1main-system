@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
-function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-  return createClient(supabaseUrl, supabaseServiceKey)
-}
-
 export async function GET() {
-  const supabase = getSupabaseAdmin()
+  const supabase = createServerSupabaseClient()
   try {
     console.log('=== FETCHING LEADS FROM CONTACTS TABLE ===');
     
