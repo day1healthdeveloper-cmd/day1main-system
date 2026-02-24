@@ -1,15 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
+    const supabase = createServerSupabaseClient();
     const body = await request.json();
 
     // Auto-generate group_code from group_name if not provided
@@ -45,6 +41,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
+    const supabase = createServerSupabaseClient();
     const { error } = await supabase
       .from('payment_groups')
       .delete()

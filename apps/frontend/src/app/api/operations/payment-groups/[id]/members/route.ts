@@ -1,15 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
+    const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
       .from('members')
       .select('id, member_number, first_name, last_name, id_number, date_of_birth, monthly_premium, employee_number, payment_group_id, collection_method, phone, email')
@@ -27,6 +23,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
+    const supabase = createServerSupabaseClient();
     const body = await request.json();
     const { member_id } = body;
 

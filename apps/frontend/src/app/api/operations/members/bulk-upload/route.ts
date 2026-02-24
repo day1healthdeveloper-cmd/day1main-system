@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import * as XLSX from 'xlsx';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 function capitalizeName(name: string): string {
   if (!name) return '';
@@ -17,6 +12,7 @@ function capitalizeName(name: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createServerSupabaseClient();
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const groupId = formData.get('groupId') as string;
