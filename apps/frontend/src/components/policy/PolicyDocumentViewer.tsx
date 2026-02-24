@@ -23,6 +23,9 @@ export function PolicyDocumentViewer({ productId, productName, isOpen, onClose }
   }, [isOpen, productId]);
 
   const fetchPolicyData = async () => {
+    // Backend removed - this feature is temporarily disabled
+    return;
+    /*
     try {
       const token = apiClient.getAccessToken();
       const headers = {
@@ -63,6 +66,7 @@ export function PolicyDocumentViewer({ productId, productName, isOpen, onClose }
     } finally {
       setLoading(false);
     }
+    */
   };
 
   const groupDefinitionsByCategory = () => {

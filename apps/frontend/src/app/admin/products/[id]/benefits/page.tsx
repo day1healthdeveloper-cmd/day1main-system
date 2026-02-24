@@ -47,10 +47,13 @@ export default function PolicyDocumentPage() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
   useEffect(() => {
-    fetchData();
+    // fetchData(); // Disabled - backend no longer exists
   }, [productId, activeTab]);
 
   const fetchData = async () => {
+    // Backend removed - this feature is temporarily disabled
+    return;
+    /*
     try {
       const token = apiClient.getAccessToken();
       const headers = {
@@ -83,6 +86,7 @@ export default function PolicyDocumentPage() {
     } finally {
       setLoading(false);
     }
+    */
   };
 
   const handleEdit = (def: Definition) => {
