@@ -686,6 +686,8 @@ export default function ManageGroupsPage() {
                                         commence_date: member.date_of_birth || '',
                                         monthly_premium: member.monthly_premium.toString(),
                                         employee_number: member.employee_number || '',
+                                        phone: member.phone || '',
+                                        email: member.email || '',
                                       });
                                       setShowAddMemberForm(true);
                                     }}
