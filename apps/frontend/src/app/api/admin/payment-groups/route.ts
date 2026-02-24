@@ -22,6 +22,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const supabase = createServerSupabaseClient();
     const body = await request.json();
 
     // Auto-generate group_code from group_name if not provided
