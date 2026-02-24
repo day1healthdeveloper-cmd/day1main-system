@@ -362,7 +362,7 @@ export default function ManageGroupsPage() {
           <TabsTrigger value="members">Member Management</TabsTrigger>
           <TabsTrigger value="payments">Payment History</TabsTrigger>
           {filterMethod !== 'group_debit_order' && (
-            <TabsTrigger value="notifications">EFT Notifications</TabsTrigger>
+            <TabsTrigger value="notifications">EFT POP Verification</TabsTrigger>
           )}
         </TabsList>
 
@@ -468,15 +468,6 @@ export default function ManageGroupsPage() {
                         >
                           View Members
                         </Button>
-                        {group.collection_method === 'individual_eft' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => sendEFTNotifications(group.id)}
-                          >
-                            Send Notifications
-                          </Button>
-                        )}
                       </div>
                     </div>
                   ))}
@@ -495,14 +486,6 @@ export default function ManageGroupsPage() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  {selectedGroup.collection_method === 'individual_eft' && (
-                    <Button
-                      variant="outline"
-                      onClick={() => sendEFTNotifications(selectedGroup.id)}
-                    >
-                      Send Notifications
-                    </Button>
-                  )}
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -583,6 +566,24 @@ export default function ManageGroupsPage() {
                           />
                         </div>
                         <div>
+                          <Label>Phone Number</Label>
+                          <Input
+                            type="tel"
+                            value={(newMemberData as any).phone_number || ''}
+                            onChange={(e) => setNewMemberData({...newMemberData, phone_number: e.target.value} as any)}
+                            placeholder="e.g., 0821234567"
+                          />
+                        </div>
+                        <div>
+                          <Label>Email</Label>
+                          <Input
+                            type="email"
+                            value={(newMemberData as any).email || ''}
+                            onChange={(e) => setNewMemberData({...newMemberData, email: e.target.value} as any)}
+                            placeholder="e.g., member@example.com"
+                          />
+                        </div>
+                        <div>
                           <Label>Commence Date *</Label>
                           <Input
                             type="date"
@@ -641,6 +642,8 @@ export default function ManageGroupsPage() {
                             <th className="text-left p-3 text-sm font-medium">Name</th>
                             <th className="text-left p-3 text-sm font-medium">Surname</th>
                             <th className="text-left p-3 text-sm font-medium">ID Number</th>
+                            <th className="text-left p-3 text-sm font-medium">Phone</th>
+                            <th className="text-left p-3 text-sm font-medium">Email</th>
                             <th className="text-left p-3 text-sm font-medium">Commence Date</th>
                             <th className="text-left p-3 text-sm font-medium">Premium</th>
                             <th className="text-left p-3 text-sm font-medium">Employee Nr</th>
@@ -654,6 +657,8 @@ export default function ManageGroupsPage() {
                               <td className="p-3 text-sm">{member.first_name}</td>
                               <td className="p-3 text-sm">{member.last_name}</td>
                               <td className="p-3 text-sm">{member.id_number || '-'}</td>
+                              <td className="p-3 text-sm">{member.phone_number || '-'}</td>
+                              <td className="p-3 text-sm">{member.email || '-'}</td>
                               <td className="p-3 text-sm">{member.date_of_birth || '-'}</td>
                               <td className="p-3 text-sm">R{member.monthly_premium}</td>
                               <td className="p-3 text-sm">{member.employee_number || '-'}</td>
@@ -754,12 +759,6 @@ export default function ManageGroupsPage() {
                           {group.total_members} members • R{group.total_monthly_premium.toFixed(2)} total premium
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => sendEFTNotifications(group.id)}
-                      >
-                        Send Notifications
-                      </Button>
                     </div>
                   ))}
                 {searchFilteredGroups.filter(g => g.collection_method === 'individual_eft').length === 0 && (

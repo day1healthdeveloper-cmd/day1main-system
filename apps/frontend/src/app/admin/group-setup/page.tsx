@@ -44,6 +44,7 @@ export default function GroupSetupPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingGroup, setEditingGroup] = useState<PaymentGroup | null>(null);
   const [filterMethod, setFilterMethod] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [formData, setFormData] = useState<Partial<PaymentGroup>>({
     collection_method: 'group_debit_order',
     collection_frequency: 'monthly',
@@ -121,8 +122,16 @@ export default function GroupSetupPage() {
   };
 
   const filteredGroups = groups.filter((group) => {
-    if (filterMethod === 'all') return true;
-    return group.collection_method === filterMethod;
+    // Filter by collection method
+    const methodMatch = filterMethod === 'all' || group.collection_method === filterMethod;
+    
+    // Filter by search term
+    const searchMatch = searchTerm === '' || 
+      group.group_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      group.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      group.group_code?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return methodMatch && searchMatch;
   });
 
   if (loading) {
@@ -142,25 +151,36 @@ export default function GroupSetupPage() {
           </Button>
         </div>
 
-        <div className="mb-4 flex gap-2">
-          <Button
-            variant={filterMethod === 'all' ? 'default' : 'outline'}
-            onClick={() => setFilterMethod('all')}
-          >
-            All Groups ({groups.length})
-          </Button>
-          <Button
-            variant={filterMethod === 'group_debit_order' ? 'default' : 'outline'}
-            onClick={() => setFilterMethod('group_debit_order')}
-          >
-            Group Debit Order ({groups.filter(g => g.collection_method === 'group_debit_order').length})
-          </Button>
-          <Button
-            variant={filterMethod === 'individual_eft' ? 'default' : 'outline'}
-            onClick={() => setFilterMethod('individual_eft')}
-          >
-            Individual EFT ({groups.filter(g => g.collection_method === 'individual_eft').length})
-          </Button>
+        <div className="mb-4 flex flex-col md:flex-row gap-3">
+          <div className="flex gap-2">
+            <Button
+              variant={filterMethod === 'all' ? 'default' : 'outline'}
+              onClick={() => setFilterMethod('all')}
+            >
+              All Groups ({groups.length})
+            </Button>
+            <Button
+              variant={filterMethod === 'group_debit_order' ? 'default' : 'outline'}
+              onClick={() => setFilterMethod('group_debit_order')}
+            >
+              Group Debit Order ({groups.filter(g => g.collection_method === 'group_debit_order').length})
+            </Button>
+            <Button
+              variant={filterMethod === 'individual_eft' ? 'default' : 'outline'}
+              onClick={() => setFilterMethod('individual_eft')}
+            >
+              Individual EFT ({groups.filter(g => g.collection_method === 'individual_eft').length})
+            </Button>
+          </div>
+          <div className="flex-1 md:max-w-md">
+            <Input
+              type="text"
+              placeholder="Search groups by name, company, or code..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full"
+            />
+          </div>
         </div>
 
       {showForm && (
