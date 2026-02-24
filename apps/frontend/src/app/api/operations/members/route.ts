@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseClient();
+    const supabase = createServerSupabaseClient();
     const { searchParams } = new URL(request.url);
     const noGroup = searchParams.get('no_group');
 
