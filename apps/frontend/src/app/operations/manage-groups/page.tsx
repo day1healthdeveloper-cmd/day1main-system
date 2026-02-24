@@ -33,7 +33,10 @@ interface Member {
   employee_number?: string;
   payment_group_id?: string;
   collection_method: string;
+  phone?: string;
+  email?: string;
 }
+
 
 export default function ManageGroupsPage() {
   const { addToast } = useToast();
@@ -54,6 +57,8 @@ export default function ManageGroupsPage() {
     commence_date: '',
     monthly_premium: '',
     employee_number: '',
+    phone: '',
+    email: '',
   });
 
   const getNextCollectionDate = (collectionDates: string[] | null | undefined): string => {
@@ -569,8 +574,8 @@ export default function ManageGroupsPage() {
                           <Label>Phone Number</Label>
                           <Input
                             type="tel"
-                            value={(newMemberData as any).phone_number || ''}
-                            onChange={(e) => setNewMemberData({...newMemberData, phone_number: e.target.value} as any)}
+                            value={(newMemberData as any).phone || ''}
+                            onChange={(e) => setNewMemberData({...newMemberData, phone: e.target.value} as any)}
                             placeholder="e.g., 0821234567"
                           />
                         </div>
@@ -657,7 +662,7 @@ export default function ManageGroupsPage() {
                               <td className="p-3 text-sm">{member.first_name}</td>
                               <td className="p-3 text-sm">{member.last_name}</td>
                               <td className="p-3 text-sm">{member.id_number || '-'}</td>
-                              <td className="p-3 text-sm">{member.phone_number || '-'}</td>
+                              <td className="p-3 text-sm">{member.phone || '-'}</td>
                               <td className="p-3 text-sm">{member.email || '-'}</td>
                               <td className="p-3 text-sm">{member.date_of_birth || '-'}</td>
                               <td className="p-3 text-sm">R{member.monthly_premium}</td>
