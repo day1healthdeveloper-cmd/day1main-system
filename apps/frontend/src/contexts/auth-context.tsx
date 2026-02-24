@@ -112,11 +112,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ur.role.role_permissions?.map((rp: any) => rp.permission.name) || []
       ) || [];
 
+      // Handle profile - it comes as an array from Supabase join
+      const profile = Array.isArray(userData.profile) ? userData.profile[0] : userData.profile;
+
       const transformedUser: User = {
         id: userData.id,
         email: userData.email,
-        firstName: userData.profile?.first_name || '',
-        lastName: userData.profile?.last_name || '',
+        firstName: profile?.first_name || '',
+        lastName: profile?.last_name || '',
         roles,
         permissions: [...new Set(permissions)],
       };
