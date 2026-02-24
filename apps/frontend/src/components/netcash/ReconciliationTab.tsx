@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiClient } from '@/lib/api-client';
+// import { apiClient } from '@/lib/api-client'; // Removed - backend no longer exists
 
 export function ReconciliationTab() {
   const [reconciliations, setReconciliations] = useState<any[]>([]);

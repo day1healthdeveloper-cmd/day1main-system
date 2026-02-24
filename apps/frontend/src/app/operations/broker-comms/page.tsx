@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
-import { apiClient } from '@/lib/api-client';
+// import { apiClient } from '@/lib/api-client'; // Removed - backend no longer exists
 
 export default function BrokerCommunicationsPage() {
   const [groups, setGroups] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'members' | 'premium'>('name');
 

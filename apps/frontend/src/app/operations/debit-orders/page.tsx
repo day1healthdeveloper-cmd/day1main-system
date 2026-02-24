@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
-import { apiClient } from '@/lib/api-client';
+// import { apiClient } from '@/lib/api-client'; // Removed - backend no longer exists
 import { TransactionsTab } from '@/components/netcash/TransactionsTab';
 import { FailedPaymentsTab } from '@/components/netcash/FailedPaymentsTab';
 import { ReconciliationTab } from '@/components/netcash/ReconciliationTab';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiClient } from '@/lib/api-client';
+// import { apiClient } from '@/lib/api-client'; // Removed - backend no longer exists
 
 export function WebhooksTab() {
   const [webhookLogs, setWebhookLogs] = useState<any[]>([]);

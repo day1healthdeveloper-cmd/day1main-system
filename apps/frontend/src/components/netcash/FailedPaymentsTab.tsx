@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiClient } from '@/lib/api-client';
+// import { apiClient } from '@/lib/api-client'; // Removed - backend no longer exists
 
 export function FailedPaymentsTab() {
   const [failedPayments, setFailedPayments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
   const [filters, setFilters] = useState({ brokerGroup: '', minRetries: '' });
