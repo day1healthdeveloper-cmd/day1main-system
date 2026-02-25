@@ -63,7 +63,6 @@ export function ComprehensiveBenefitPanel({ benefitId, benefitName }: Props) {
   const saveDetails = async () => {
     alert('Benefit management features are temporarily unavailable during system migration.');
     return;
-    }
   };
 
   const addNetworkProvider = async () => {
