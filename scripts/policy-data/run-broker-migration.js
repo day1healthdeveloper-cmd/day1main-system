@@ -103,7 +103,7 @@ async function runMigration() {
       { code: 'D1BPO', name: 'Agency BPO', broker_commission_rate: 5, branch_commission_rate: 2, agent_commission_rate: 1, policy_prefix: 'BPO', member_count: 0, status: 'active' },
       { code: 'D1CSS', name: 'CSS Credit Solutions Services', broker_commission_rate: 5, branch_commission_rate: 2, agent_commission_rate: 1, policy_prefix: 'CSS', member_count: 0, status: 'active' },
       { code: 'D1MED', name: 'Medi-Safu Brokers', broker_commission_rate: 5, branch_commission_rate: 2, agent_commission_rate: 1, policy_prefix: 'MED', member_count: 574, status: 'active' },
-      { code: 'D1MEM', name: 'Medi-Safu Brokers Montana', broker_commission_rate: 5, branch_commission_rate: 2, agent_commission_rate: 1, policy_prefix: 'MEM', member_count: 0, status: 'active' },
+      { code: 'D1MBM', name: 'Medi-Safu Brokers Montana', broker_commission_rate: 5, branch_commission_rate: 2, agent_commission_rate: 1, policy_prefix: 'MBM', member_count: 0, status: 'active' },
       { code: 'D1MKT', name: 'MKT Marketing', broker_commission_rate: 5, branch_commission_rate: 2, agent_commission_rate: 1, policy_prefix: 'MKT', member_count: 610, status: 'active' },
       { code: 'D1MTS', name: 'All My T', broker_commission_rate: 5, branch_commission_rate: 2, agent_commission_rate: 1, policy_prefix: 'MTS', member_count: 0, status: 'active' },
       { code: 'D1NAV', name: 'Day1 Navigator', broker_commission_rate: 5, branch_commission_rate: 2, agent_commission_rate: 1, policy_prefix: 'NAV', member_count: 381, status: 'active' },

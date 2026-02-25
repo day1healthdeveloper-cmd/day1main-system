@@ -149,7 +149,7 @@ async function createBrokerTables() {
     ('D1BPO', 'Agency BPO', 'BPO', 'active'),
     ('D1CSS', 'CSS Credit Solutions Services', 'CSS', 'active'),
     ('D1MED', 'Medi-Safu Brokers', 'MED', 'active'),
-    ('D1MEM', 'Medi-Safu Brokers Montana', 'MEM', 'active'),
+    ('D1MBM', 'Medi-Safu Brokers Montana', 'MBM', 'active'),
     ('D1MKT', 'MKT Marketing', 'MKT', 'active'),
     ('D1MTS', 'All My T', 'MTS', 'active'),
     ('D1NAV', 'Day1 Navigator', 'NAV', 'active'),
