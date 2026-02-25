@@ -154,7 +154,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           ),
         },
         {
-          name: 'Providers',
+          name: 'Provider Setup',
           href: '/admin/providers',
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
