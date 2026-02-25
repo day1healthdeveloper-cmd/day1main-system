@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createServerSupabaseClient()
     
+    // Fetch all brokers
     const { data: brokers, error } = await supabase
       .from('brokers')
       .select('*')
@@ -14,7 +15,23 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
 
-    return NextResponse.json({ brokers: brokers || [] })
+    // For each broker, count actual members from members table
+    const brokersWithCounts = await Promise.all(
+      (brokers || []).map(async (broker) => {
+        const { count } = await supabase
+          .from('members')
+          .select('*', { count: 'exact', head: true })
+          .eq('broker_id', broker.id)
+          .eq('status', 'active')
+
+        return {
+          ...broker,
+          member_count: count || 0,
+        }
+      })
+    )
+
+    return NextResponse.json({ brokers: brokersWithCounts })
   } catch (error) {
     console.error('Error fetching brokers:', error)
     return NextResponse.json(

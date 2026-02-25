@@ -29,7 +29,7 @@ All members in the system share the same database structure. Only the **values**
 - `account_holder_name` - Account holder name
 
 ### Broker/Group Information
-- `broker_group` - Broker code (DAY1, D1PAR, D1MAM, etc.)
+- `broker_code` - Broker code (DAY1, AXS, MED, etc.)
 - `broker_id` - Foreign key to brokers table
 - `debit_order_day` - Day of month for debit order (1-31)
 - `monthly_premium` - Monthly premium amount
@@ -128,7 +128,7 @@ All members in the system share the same database structure. Only the **values**
   "branch_code": "051001",
   "account_holder_name": "John Smith",
   
-  "broker_group": "DAY1",
+  "broker_code": "DAY1",
   "broker_id": "broker-uuid",
   "debit_order_day": 2,
   "monthly_premium": 565.00,
@@ -192,7 +192,7 @@ All members in the system share the same database structure. Only the **values**
 - `member_number` - Unique policy number
 - Personal details (name, ID, DOB, contact info)
 - Banking details
-- `broker_group` - Which broker channel they came from
+- `broker_code` - Which broker channel they came from
 - `monthly_premium` - Their specific premium amount
 
 ### Often Different
@@ -232,8 +232,8 @@ All members in the system share the same database structure. Only the **values**
 ## Next Steps
 
 1. ✅ Schema is complete (57 columns)
-2. ✅ Broker columns added (broker_group, broker_id, payment fields)
-3. ⏳ Fill in missing data for existing 895 members
+2. ✅ Broker columns added (broker_code, broker_id, payment fields)
+3. ✅ All members linked to brokers (DAY1: 864, MED: 65, AXS: 71)
 4. ⏳ Build member management UI
 5. ⏳ Build broker dashboards
 6. ⏳ Build debit order processing

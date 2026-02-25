@@ -19,14 +19,14 @@ CREATE TABLE IF NOT EXISTS brokers (
 );
 
 -- Step 2: Add broker columns to members table
-ALTER TABLE members ADD COLUMN IF NOT EXISTS broker_group VARCHAR(10);
+ALTER TABLE members ADD COLUMN IF NOT EXISTS broker_code VARCHAR(10);
 ALTER TABLE members ADD COLUMN IF NOT EXISTS broker_id UUID REFERENCES brokers(id);
 ALTER TABLE members ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20);
 ALTER TABLE members ADD COLUMN IF NOT EXISTS last_payment_date DATE;
 ALTER TABLE members ADD COLUMN IF NOT EXISTS last_payment_amount DECIMAL(10,2);
 
 -- Step 3: Create indexes
-CREATE INDEX IF NOT EXISTS idx_members_broker_group ON members(broker_group);
+CREATE INDEX IF NOT EXISTS idx_members_broker_code ON members(broker_code);
 CREATE INDEX IF NOT EXISTS idx_members_broker_id ON members(broker_id);
 CREATE INDEX IF NOT EXISTS idx_members_payment_status ON members(payment_status);
 
@@ -57,24 +57,24 @@ CREATE INDEX IF NOT EXISTS idx_payment_history_status ON payment_history(status)
 -- Step 6: Insert all 19 broker records
 INSERT INTO brokers (code, name, broker_commission_rate, branch_commission_rate, agent_commission_rate, policy_prefix, member_count, status) VALUES
 ('DAY1', 'Day1Health Direct', 0.00, 0.00, 0.00, 'DAY1', 996, 'active'),
-('D1PAR', 'Parabellum', 5.00, 2.00, 1.00, 'PAR', 1447, 'active'),
-('D1MAM', 'Mamela', 5.00, 2.00, 1.00, 'MAM', 0, 'active'),
-('D1ACU', 'Acumen Holdings (PTY) LTD', 5.00, 2.00, 1.00, 'ACU', 6, 'active'),
-('D1AIB', 'Assurity Insurance Broker', 5.00, 2.00, 1.00, 'AIB', 0, 'active'),
-('D1ARC', 'ARC BPO', 5.00, 2.00, 1.00, 'ARC', 0, 'active'),
-('D1AXS', 'Accsure', 5.00, 2.00, 1.00, 'AXS', 0, 'active'),
-('D1BOU', 'Boulderson', 5.00, 2.00, 1.00, 'BOU', 0, 'active'),
-('D1BPO', 'Agency BPO', 5.00, 2.00, 1.00, 'BPO', 0, 'active'),
-('D1CSS', 'CSS Credit Solutions Services', 5.00, 2.00, 1.00, 'CSS', 0, 'active'),
-('D1MED', 'Medi-Safu Brokers', 5.00, 2.00, 1.00, 'MED', 574, 'active'),
-('D1MEM', 'Medi-Safu Brokers Montana', 5.00, 2.00, 1.00, 'MEM', 0, 'active'),
-('D1MKT', 'MKT Marketing', 5.00, 2.00, 1.00, 'MKT', 610, 'active'),
-('D1MTS', 'All My T', 5.00, 2.00, 1.00, 'MTS', 0, 'active'),
-('D1NAV', 'Day1 Navigator', 5.00, 2.00, 1.00, 'NAV', 381, 'active'),
-('D1RCO', 'Right Cover Online', 5.00, 2.00, 1.00, 'RCO', 0, 'active'),
-('D1TFG', 'The Foschini Group', 5.00, 2.00, 1.00, 'TFG', 0, 'active'),
-('D1THR', '360 Financial Service', 5.00, 2.00, 1.00, 'THR', 0, 'active'),
-('D1TLD', 'Teledirect', 5.00, 2.00, 1.00, 'TLD', 0, 'active')
+('PAR', 'Parabellum', 5.00, 2.00, 1.00, 'PAR', 1447, 'active'),
+('MAM', 'Mamela', 5.00, 2.00, 1.00, 'MAM', 0, 'active'),
+('ACU', 'Acumen Holdings (PTY) LTD', 5.00, 2.00, 1.00, 'ACU', 6, 'active'),
+('AIB', 'Assurity Insurance Broker', 5.00, 2.00, 1.00, 'AIB', 0, 'active'),
+('ARC', 'ARC BPO', 5.00, 2.00, 1.00, 'ARC', 0, 'active'),
+('AXS', 'Accsure', 5.00, 2.00, 1.00, 'AXS', 0, 'active'),
+('BOU', 'Boulderson', 5.00, 2.00, 1.00, 'BOU', 0, 'active'),
+('BPO', 'Agency BPO', 5.00, 2.00, 1.00, 'BPO', 0, 'active'),
+('CSS', 'CSS Credit Solutions Services', 5.00, 2.00, 1.00, 'CSS', 0, 'active'),
+('MED', 'Medi-Safu Brokers', 5.00, 2.00, 1.00, 'MED', 574, 'active'),
+('MEM', 'Medi-Safu Brokers Montana', 5.00, 2.00, 1.00, 'MEM', 0, 'active'),
+('MKT', 'MKT Marketing', 5.00, 2.00, 1.00, 'MKT', 610, 'active'),
+('MTS', 'All My T', 5.00, 2.00, 1.00, 'MTS', 0, 'active'),
+('NAV', 'Day1 Navigator', 5.00, 2.00, 1.00, 'NAV', 381, 'active'),
+('RCO', 'Right Cover Online', 5.00, 2.00, 1.00, 'RCO', 0, 'active'),
+('TFG', 'The Foschini Group', 5.00, 2.00, 1.00, 'TFG', 0, 'active'),
+('THR', '360 Financial Service', 5.00, 2.00, 1.00, 'THR', 0, 'active'),
+('TLD', 'Teledirect', 5.00, 2.00, 1.00, 'TLD', 0, 'active')
 ON CONFLICT (code) DO UPDATE SET
   name = EXCLUDED.name,
   member_count = EXCLUDED.member_count;

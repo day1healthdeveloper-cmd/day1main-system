@@ -30,6 +30,7 @@ export default function AdminBrokersPage() {
   const [brokers, setBrokers] = useState<Broker[]>([]);
   const [loadingBrokers, setLoadingBrokers] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingBroker, setEditingBroker] = useState<Broker | null>(null);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     code: '',
@@ -47,8 +48,10 @@ export default function AdminBrokersPage() {
 
   const fetchBrokers = async () => {
     try {
+      console.log('Fetching brokers...');
       const response = await fetch('/api/admin/brokers');
       const data = await response.json();
+      console.log('Brokers response:', data);
       setBrokers(data.brokers || []);
     } catch (error) {
       console.error('Error fetching brokers:', error);
@@ -61,14 +64,24 @@ export default function AdminBrokersPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const response = await fetch('/api/admin/brokers', {
-        method: 'POST',
+      const url = editingBroker 
+        ? `/api/admin/brokers/${editingBroker.id}`
+        : '/api/admin/brokers';
+      
+      const method = editingBroker ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
+        alert(editingBroker ? '✅ Broker updated successfully!' : '✅ Broker added successfully!');
         setShowAddForm(false);
+        setEditingBroker(null);
         setFormData({
           code: '',
           name: '',
@@ -80,15 +93,71 @@ export default function AdminBrokersPage() {
         });
         fetchBrokers();
       } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to add broker');
+        if (data.error?.includes('duplicate key') || data.error?.includes('unique constraint')) {
+          alert('❌ Error: A broker with this code already exists. Please use a different code.');
+        } else {
+          alert('❌ Error: ' + (data.error || 'Failed to save broker'));
+        }
       }
     } catch (error) {
-      console.error('Error adding broker:', error);
-      alert('Failed to add broker');
+      console.error('Error saving broker:', error);
+      alert('❌ Failed to save broker. Please try again.');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEditBroker = (broker: Broker) => {
+    console.log('Edit broker clicked:', broker);
+    setEditingBroker(broker);
+    setFormData({
+      code: broker.code,
+      name: broker.name,
+      broker_commission_rate: broker.broker_commission_rate.toString(),
+      branch_commission_rate: broker.branch_commission_rate.toString(),
+      agent_commission_rate: broker.agent_commission_rate.toString(),
+      policy_prefix: broker.policy_prefix,
+      status: broker.status,
+    });
+    setShowAddForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteBroker = async (broker: Broker) => {
+    if (!confirm(`Are you sure you want to delete ${broker.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/brokers/${broker.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        alert('✅ Broker deleted successfully!');
+        fetchBrokers();
+      } else {
+        const data = await response.json();
+        alert('❌ Error: ' + (data.error || 'Failed to delete broker'));
+      }
+    } catch (error) {
+      console.error('Error deleting broker:', error);
+      alert('❌ Failed to delete broker. Please try again.');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setShowAddForm(false);
+    setEditingBroker(null);
+    setFormData({
+      code: '',
+      name: '',
+      broker_commission_rate: '5.00',
+      branch_commission_rate: '2.00',
+      agent_commission_rate: '1.00',
+      policy_prefix: '',
+      status: 'active',
+    });
   };
 
   // Disabled auth check for demo
@@ -144,7 +213,9 @@ export default function AdminBrokersPage() {
 
         {showAddForm && (
           <Card>
-            <CardHeader><CardTitle>Add New Broker</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>{editingBroker ? 'Edit Broker' : 'Add New Broker'}</CardTitle>
+            </CardHeader>
             <CardContent>
               <form onSubmit={handleAddBroker} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -154,8 +225,10 @@ export default function AdminBrokersPage() {
                       placeholder="e.g., D1ABC"
                       value={formData.code}
                       onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                      disabled={!!editingBroker}
                       required
                     />
+                    {editingBroker && <p className="text-xs text-gray-500">Code cannot be changed</p>}
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Broker Name *</label>
@@ -216,11 +289,11 @@ export default function AdminBrokersPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
+                  <Button type="button" variant="outline" onClick={handleCancelEdit}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={saving}>
-                    {saving ? 'Saving...' : 'Add Broker'}
+                    {saving ? 'Saving...' : editingBroker ? 'Update Broker' : 'Add Broker'}
                   </Button>
                 </div>
               </form>
@@ -252,36 +325,67 @@ export default function AdminBrokersPage() {
         <Card>
           <CardHeader><CardTitle>Broker Directory</CardTitle></CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium">Code</th>
-                    <th className="text-left py-3 px-4 font-medium">Name</th>
-                    <th className="text-left py-3 px-4 font-medium">Policy Prefix</th>
-                    <th className="text-center py-3 px-4 font-medium">Members</th>
-                    <th className="text-center py-3 px-4 font-medium">Broker %</th>
-                    <th className="text-center py-3 px-4 font-medium">Branch %</th>
-                    <th className="text-center py-3 px-4 font-medium">Agent %</th>
-                    <th className="text-left py-3 px-4 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredBrokers.map((broker) => (
-                    <tr key={broker.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-mono text-sm font-medium">{broker.code}</td>
-                      <td className="py-3 px-4">{broker.name}</td>
-                      <td className="py-3 px-4 font-mono text-sm">{broker.policy_prefix}</td>
-                      <td className="py-3 px-4 text-center font-medium">{broker.member_count || 0}</td>
-                      <td className="py-3 px-4 text-center">{broker.broker_commission_rate}%</td>
-                      <td className="py-3 px-4 text-center">{broker.branch_commission_rate}%</td>
-                      <td className="py-3 px-4 text-center">{broker.agent_commission_rate}%</td>
-                      <td className="py-3 px-4">{getStatusBadge(broker.status)}</td>
+            {loadingBrokers ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <p className="text-gray-600">Loading brokers...</p>
+              </div>
+            ) : filteredBrokers.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No brokers found</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium">Code</th>
+                      <th className="text-left py-3 px-4 font-medium">Name</th>
+                      <th className="text-left py-3 px-4 font-medium">Policy Prefix</th>
+                      <th className="text-center py-3 px-4 font-medium">Members</th>
+                      <th className="text-center py-3 px-4 font-medium">Broker %</th>
+                      <th className="text-center py-3 px-4 font-medium">Branch %</th>
+                      <th className="text-center py-3 px-4 font-medium">Agent %</th>
+                      <th className="text-left py-3 px-4 font-medium">Status</th>
+                      <th className="text-left py-3 px-4 font-medium">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredBrokers.map((broker) => (
+                      <tr key={broker.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 font-mono text-sm font-medium">{broker.code}</td>
+                        <td className="py-3 px-4">{broker.name}</td>
+                        <td className="py-3 px-4 font-mono text-sm">{broker.policy_prefix}</td>
+                        <td className="py-3 px-4 text-center font-medium">{broker.member_count || 0}</td>
+                        <td className="py-3 px-4 text-center">{broker.broker_commission_rate}%</td>
+                        <td className="py-3 px-4 text-center">{broker.branch_commission_rate}%</td>
+                        <td className="py-3 px-4 text-center">{broker.agent_commission_rate}%</td>
+                        <td className="py-3 px-4">{getStatusBadge(broker.status)}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleEditBroker(broker)}
+                            >
+                              Edit
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleDeleteBroker(broker)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
