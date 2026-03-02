@@ -259,7 +259,7 @@ export default function LandingPagesPage() {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => window.open(`http://localhost:3001/lp/${page.slug}`, '_blank')}
+                          onClick={() => window.open(`/lp/${page.slug}`, '_blank')}
                         >
                           <ExternalLink className="w-3 h-3 mr-1" />
                           View
