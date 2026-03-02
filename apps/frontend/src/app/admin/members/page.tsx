@@ -136,6 +136,7 @@ export default function AdminMembersPage() {
       pending: 'bg-yellow-100 text-yellow-800',
       suspended: 'bg-orange-100 text-orange-800',
       cancelled: 'bg-red-100 text-red-800',
+      in_waiting: 'bg-blue-100 text-blue-800',
     };
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
