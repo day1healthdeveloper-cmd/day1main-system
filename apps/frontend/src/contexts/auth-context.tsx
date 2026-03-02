@@ -71,6 +71,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log('✅ Session found, fetching user data...');
 
+      // Check if user is a provider first
+      const { data: providerData } = await supabase
+        .from('providers')
+        .select('id, name, login_email, user_id')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (providerData) {
+        // User is a provider
+        console.log('✅ Provider user found');
+        const nameParts = providerData.name.split(' ');
+        const transformedUser: User = {
+          id: session.user.id,
+          email: providerData.login_email || session.user.email || '',
+          firstName: nameParts[0] || '',
+          lastName: nameParts.slice(1).join(' ') || '',
+          roles: ['provider'],
+          permissions: [],
+        };
+        console.log('✅ Provider data loaded:', transformedUser);
+        setUser(transformedUser);
+        setLoading(false);
+        return;
+      }
+
       // Get user data from custom users table
       const { data: userData, error: userError } = await supabase
         .from('users')
@@ -154,8 +179,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await supabase.auth.signOut();
       setUser(null);
+      // Clear any cached data
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
     } catch (error) {
       console.error('Logout error:', error);
+      throw error;
     }
   };
 

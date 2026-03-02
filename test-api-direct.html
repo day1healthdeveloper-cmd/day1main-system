@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API</title>
+</head>
+<body>
+    <h1>Testing Policy Sections API</h1>
+    <button onclick="testAPI()">Test API</button>
+    <pre id="output"></pre>
+
+    <script>
+        async function testAPI() {
+            const productId = '9bb038ad-dbf6-480c-a71e-adb93943cb1c';
+            const url = `http://localhost:3001/api/admin/products/${productId}/policy-sections`;
+            
+            document.getElementById('output').textContent = 'Loading...';
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const output = {
+                    'Section keys': Object.keys(data.sections || {}),
+                    'Definitions count': data.sections?.definitions?.length || 0,
+                    'First 3 definitions': data.sections?.definitions?.slice(0, 3).map(d => ({
+                        title: d.title,
+                        content: d.content?.substring(0, 50) + '...'
+                    }))
+                };
+                
+                document.getElementById('output').textContent = JSON.stringify(output, null, 2);
+            } catch (error) {
+                document.getElementById('output').textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -24,10 +24,19 @@ export function PolicyDocumentViewer({ productId, productName, isOpen, onClose }
 
   const fetchPolicyData = async () => {
     try {
-      // Note: Policy definitions and sections require complex product management
-      // tables that are being migrated. Temporarily showing empty state.
-      setDefinitions([]);
-      setSections({});
+      setLoading(true);
+      
+      // Fetch policy section items from Supabase
+      const response = await fetch(`/api/admin/products/${productId}/policy-sections`);
+      const data = await response.json();
+      
+      if (data.sections) {
+        setSections(data.sections);
+      }
+      
+      if (data.definitions) {
+        setDefinitions(data.definitions);
+      }
     } catch (error) {
       console.error('Failed to fetch policy data:', error);
     } finally {

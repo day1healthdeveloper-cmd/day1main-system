@@ -1,16 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest) {
-  const supabaseAdmin = createServerSupabaseClient()
+export async function GET() {
   try {
-    // Fetch all products
+    const supabaseAdmin = createServerSupabaseClient()
+    
     const { data: products, error } = await supabaseAdmin
       .from('products')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .select('id, name')
+      .eq('status', 'published')
+      .order('name')
 
     if (error) throw error
 
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to fetch products:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch products', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to fetch products' },
       { status: 500 }
     )
   }

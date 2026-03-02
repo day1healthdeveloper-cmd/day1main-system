@@ -52,6 +52,8 @@ export default function PolicyDocumentPage() {
 
   const fetchData = async () => {
     try {
+      console.log('[fetchData] Starting fetch for product:', productId, 'tab:', activeTab);
+      
       // Fetch product from Supabase
       const productRes = await fetch(`/api/admin/products/${productId}`);
       if (productRes.ok) {
@@ -59,10 +61,43 @@ export default function PolicyDocumentPage() {
         setProduct(productData);
       }
       
-      // Note: Definitions and section items features are temporarily disabled
-      // These require complex product management tables that need migration
-      setDefinitions([]);
-      setSectionItems([]);
+      // Fetch policy section items
+      const sectionsRes = await fetch(`/api/admin/products/${productId}/policy-sections?t=${Date.now()}`);
+      if (sectionsRes.ok) {
+        const sectionsData = await sectionsRes.json();
+        
+        console.log('[fetchData] Sections data received:', {
+          sectionKeys: Object.keys(sectionsData.sections || {}),
+          definitionsCount: sectionsData.sections?.definitions?.length || 0,
+          activeTab
+        });
+        
+        // Set section items for current tab
+        if (sectionsData.sections && sectionsData.sections[activeTab]) {
+          console.log('[fetchData] Setting section items for tab:', activeTab, 'count:', sectionsData.sections[activeTab].length);
+          setSectionItems(sectionsData.sections[activeTab]);
+        } else {
+          console.log('[fetchData] No section items found for tab:', activeTab);
+          setSectionItems([]);
+        }
+        
+        // For definitions tab, also set the definitions state for backward compatibility
+        if (activeTab === 'definitions' && sectionsData.sections && sectionsData.sections['definitions']) {
+          // Convert section items to definition format
+          const defs = sectionsData.sections['definitions'].map((item: any) => ({
+            id: item.id,
+            term: item.title,
+            definition: item.content,
+            category: 'general',
+            display_order: item.display_order
+          }));
+          console.log('[fetchData] Setting definitions:', defs.length);
+          setDefinitions(defs);
+        } else if (activeTab === 'definitions') {
+          console.log('[fetchData] No definitions found');
+          setDefinitions([]);
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -255,159 +290,22 @@ export default function PolicyDocumentPage() {
         {/* Tab Content */}
         {activeTab === 'definitions' && (
           <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Definitions ({filteredDefinitions.length})</CardTitle>
-                <p className="text-sm text-gray-600 mt-1">
-                  In this Policy, unless the context indicates a contrary intention, the following words and expressions bear the meanings assigned to them and cognate expressions bear corresponding meanings
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="px-3 py-2 border rounded text-sm"
-                >
-                  <option value="all">All Categories ({definitions.length})</option>
-                  <option value="general">General</option>
-                  <option value="medical">Medical</option>
-                  <option value="legal">Legal</option>
-                  <option value="financial">Financial</option>
-                </select>
-                <Button onClick={handleAddNew} disabled={addingNew || editingId !== null} size="sm">
-                  + Add Definition
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {addingNew && (
-                <div className="border-2 border-blue-500 rounded-lg p-4 bg-blue-50">
-                  <h3 className="font-semibold mb-3">Add New Definition</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium">Term</label>
-                      <Input
-                        value={formData.term}
-                        onChange={(e) => setFormData({ ...formData, term: e.target.value })}
-                        placeholder="e.g., Accident or Accidental"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Category</label>
-                      <select
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className="w-full px-3 py-2 border rounded mt-1"
-                      >
-                        <option value="general">General</option>
-                        <option value="medical">Medical</option>
-                        <option value="legal">Legal</option>
-                        <option value="financial">Financial</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Definition</label>
-                      <textarea
-                        value={formData.definition}
-                        onChange={(e) => setFormData({ ...formData, definition: e.target.value })}
-                        placeholder="Enter the complete definition..."
-                        rows={6}
-                        className="w-full px-3 py-2 border rounded mt-1"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleSave} disabled={saving}>
-                        {saving ? 'Saving...' : 'Save'}
-                      </Button>
-                      <Button variant="outline" onClick={handleCancel}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {filteredDefinitions.map((def) => (
-                <div key={def.id} className="border rounded-lg p-4">
-                  {editingId === def.id ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium">Term</label>
-                        <Input
-                          value={formData.term}
-                          onChange={(e) => setFormData({ ...formData, term: e.target.value })}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Category</label>
-                        <select
-                          value={formData.category}
-                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                          className="w-full px-3 py-2 border rounded mt-1"
-                        >
-                          <option value="general">General</option>
-                          <option value="medical">Medical</option>
-                          <option value="legal">Legal</option>
-                          <option value="financial">Financial</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Definition</label>
-                        <textarea
-                          value={formData.definition}
-                          onChange={(e) => setFormData({ ...formData, definition: e.target.value })}
-                          rows={6}
-                          className="w-full px-3 py-2 border rounded mt-1"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button onClick={handleSave} disabled={saving}>
-                          {saving ? 'Saving...' : 'Save'}
-                        </Button>
-                        <Button variant="outline" onClick={handleCancel}>
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-semibold">{def.term}</h3>
-                            <span className="text-xs px-2 py-1 bg-gray-100 rounded">{def.category}</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleEdit(def)}>
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDelete(def.id)}>
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{def.definition}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {filteredDefinitions.length === 0 && !addingNew && (
-                <p className="text-center text-gray-500 py-8">
-                  {filterCategory === 'all' 
-                    ? 'No definitions added yet. Click "Add Definition" to get started.'
-                    : `No ${filterCategory} definitions found.`}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            <CardHeader>
+              <CardTitle>Definitions ({sectionItems.length})</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                In this Policy, unless the context indicates a contrary intention, the following words and expressions bear the meanings assigned to them and cognate expressions bear corresponding meanings
+              </p>
+            </CardHeader>
+            <CardContent>
+              <PolicySectionItems
+                items={sectionItems}
+                onAdd={handleAddSectionItem}
+                onUpdate={handleUpdateSectionItem}
+                onDelete={handleDeleteSectionItem}
+                sectionName="Definitions"
+              />
+            </CardContent>
+          </Card>
         )}
 
         {/* Waiting Periods Tab */}

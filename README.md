@@ -1,5 +1,7 @@
 # Day1Main - Medical Insurer Operating System
 
+> **IMPORTANT:** This project follows an official 8-section structure. See [docs/PROJECT_STRUCTURE_MASTER.md](./docs/PROJECT_STRUCTURE_MASTER.md) for the complete structure and dependencies.
+
 A comprehensive South African medical insurer and health-financing operating system with compliance built into the architecture.
 
 ## Features

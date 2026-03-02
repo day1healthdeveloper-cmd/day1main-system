@@ -36,99 +36,118 @@ export default function EligibilityCheckPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSearching(true);
+    
+    if (!memberNumber && !idNumber) {
+      alert('Please enter either a member number or ID number');
+      return;
+    }
 
-    // Simulate API call
-    setTimeout(() => {
+    setIsSearching(true);
+    setSearchResult(null);
+
+    try {
+      const response = await fetch('/api/provider/eligibility', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberNumber: memberNumber || undefined,
+          idNumber: idNumber || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || 'Failed to check eligibility');
+        setIsSearching(false);
+        return;
+      }
+
+      // Transform API response to match UI format
       setSearchResult({
+        eligible: data.eligible,
+        message: data.message,
         member: {
-          memberNumber: 'M-2024-5678',
-          firstName: 'John',
-          lastName: 'Smith',
-          idNumber: '8001015800083',
-          dateOfBirth: '1 Jan 1980',
-          contactNumber: '+27 82 123 4567',
-          email: 'john.smith@example.com',
+          memberNumber: data.member.memberNumber,
+          firstName: data.member.firstName,
+          lastName: data.member.lastName,
+          idNumber: data.member.idNumber,
+          dateOfBirth: data.member.dateOfBirth,
+          contactNumber: '-',
+          email: '-',
         },
         policy: {
-          policyNumber: 'POL-2024-001234',
-          planName: 'Comprehensive Medical Plan',
-          status: 'Active',
-          startDate: '1 Jan 2024',
-          renewalDate: '1 Jan 2025',
-          premium: 2450,
+          policyNumber: data.policy.policyNumber,
+          planName: data.policy.planType || 'Medical Plan',
+          status: data.policy.status,
+          startDate: data.policy.startDate,
+          renewalDate: data.policy.endDate,
+          premium: 0,
         },
         coverage: {
           inNetwork: true,
           outOfNetwork: true,
           annualLimit: 500000,
-          annualUsed: 45000,
-          annualRemaining: 455000,
+          annualUsed: 0,
+          annualRemaining: 500000,
           waitingPeriods: {
-            general: 'Completed',
-            chronic: 'Completed',
-            maternity: 'Not Applicable',
+            general: data.waitingPeriods.general.completed ? 'Completed' : `${data.waitingPeriods.general.daysRemaining} days remaining`,
+            specialist: data.waitingPeriods.specialist.completed ? 'Completed' : `${data.waitingPeriods.specialist.daysRemaining} days remaining`,
+            hospital: data.waitingPeriods.hospital.completed ? 'Completed' : `${data.waitingPeriods.hospital.daysRemaining} days remaining`,
           },
         },
         benefits: [
           {
             category: 'General Practitioner',
-            limit: 'Unlimited',
-            used: 'R2,400',
-            remaining: 'Unlimited',
+            limit: data.benefits.gp_visits.limit,
+            used: `${data.benefits.gp_visits.used}`,
+            remaining: data.benefits.gp_visits.remaining,
             coPayment: 'None',
             preAuthRequired: false,
           },
           {
             category: 'Specialist Consultation',
-            limit: 'R15,000 per year',
-            used: 'R3,500',
-            remaining: 'R11,500',
+            limit: `${data.benefits.specialist_visits.limit} visits`,
+            used: `${data.benefits.specialist_visits.used} visits`,
+            remaining: `${data.benefits.specialist_visits.remaining} visits`,
             coPayment: '10%',
             preAuthRequired: true,
           },
           {
-            category: 'Hospital Admission',
-            limit: 'R500,000 per year',
-            used: 'R45,000',
-            remaining: 'R455,000',
-            coPayment: 'None',
-            preAuthRequired: true,
-          },
-          {
-            category: 'Pathology',
-            limit: 'R8,000 per year',
-            used: 'R1,200',
-            remaining: 'R6,800',
+            category: 'Dental',
+            limit: `R${data.benefits.dental.limit}`,
+            used: `R${data.benefits.dental.used}`,
+            remaining: `R${data.benefits.dental.remaining}`,
             coPayment: 'None',
             preAuthRequired: false,
           },
           {
-            category: 'Radiology',
-            limit: 'R12,000 per year',
-            used: 'R0',
-            remaining: 'R12,000',
-            coPayment: '10%',
+            category: 'Optical',
+            limit: `R${data.benefits.optical.limit}`,
+            used: `R${data.benefits.optical.used}`,
+            remaining: `R${data.benefits.optical.remaining}`,
+            coPayment: 'None',
+            preAuthRequired: false,
+          },
+          {
+            category: 'Hospital Admission',
+            limit: data.benefits.hospital.limit,
+            used: `R${data.benefits.hospital.used}`,
+            remaining: data.benefits.hospital.remaining,
+            coPayment: 'None',
             preAuthRequired: true,
           },
         ],
-        dependants: [
-          {
-            name: 'Jane Smith',
-            relationship: 'Spouse',
-            idNumber: '8501015800084',
-            status: 'Active',
-          },
-          {
-            name: 'Tom Smith',
-            relationship: 'Child',
-            idNumber: '1501015800085',
-            status: 'Active',
-          },
-        ],
+        dependants: [],
       });
+    } catch (error: any) {
+      console.error('Error checking eligibility:', error);
+      alert('Failed to check eligibility. Please try again.');
+    } finally {
       setIsSearching(false);
-    }, 1000);
+    }
   };
 
   const handleClear = () => {
@@ -207,8 +226,12 @@ export default function EligibilityCheckPage() {
                     <CardTitle>Member Information</CardTitle>
                     <CardDescription>Patient details and contact information</CardDescription>
                   </div>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                    ✓ Eligible
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    searchResult.eligible 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {searchResult.eligible ? '✓ Eligible' : '✗ Not Eligible'}
                   </span>
                 </div>
               </CardHeader>
