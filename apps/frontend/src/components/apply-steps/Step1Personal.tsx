@@ -110,6 +110,9 @@ export default function Step1Personal({ data, updateData, nextStep }: Props) {
     postalCode: data.postalCode || '',
   })
 
+  // Track if gender was auto-populated from ID
+  const [genderLocked, setGenderLocked] = useState(false)
+
   const [date, setDate] = useState<Date | undefined>(
     formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined
   )
@@ -173,6 +176,9 @@ export default function Step1Personal({ data, updateData, nextStep }: Props) {
     
     // Update date picker
     setDate(birthDate)
+    
+    // Lock gender selection
+    setGenderLocked(true)
   }
 
   const handleIdScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,6 +227,7 @@ export default function Step1Personal({ data, updateData, nextStep }: Props) {
             const genderDigits = parseInt(extracted.idNumber.substring(6, 10))
             const gender = genderDigits < 5000 ? 'female' : 'male'
             setFormData(prev => ({ ...prev, gender }))
+            setGenderLocked(true)
           }
         }
         
@@ -516,10 +523,13 @@ export default function Step1Personal({ data, updateData, nextStep }: Props) {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, gender: 'male' }))}
+              onClick={() => !genderLocked && setFormData(prev => ({ ...prev, gender: 'male' }))}
+              disabled={genderLocked}
               className={`flex-1 px-4 py-1.5 text-sm rounded border transition-colors ${
                 formData.gender === 'male'
                   ? 'bg-green-600 text-white border-green-600'
+                  : genderLocked
+                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-green-500'
               }`}
             >
@@ -527,16 +537,22 @@ export default function Step1Personal({ data, updateData, nextStep }: Props) {
             </button>
             <button
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, gender: 'female' }))}
+              onClick={() => !genderLocked && setFormData(prev => ({ ...prev, gender: 'female' }))}
+              disabled={genderLocked}
               className={`flex-1 px-4 py-1.5 text-sm rounded border transition-colors ${
                 formData.gender === 'female'
                   ? 'bg-green-600 text-white border-green-600'
+                  : genderLocked
+                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-green-500'
               }`}
             >
               Female
             </button>
           </div>
+          {genderLocked && (
+            <p className="text-xs text-gray-500 mt-1">Gender auto-detected from ID number</p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2">
