@@ -204,7 +204,7 @@ export default function Step5Dependents({ data, updateData, nextStep, prevStep }
                     className={`w-full justify-start text-left font-normal h-8 px-2 text-sm ${!date && "text-muted-foreground"}`}
                   >
                     <CalendarIcon className="mr-2 h-3 w-3" />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    {date ? format(date, "PPP") : <span>Select date of birth</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

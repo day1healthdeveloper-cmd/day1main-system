@@ -371,8 +371,7 @@ export default function AdminMembersPage() {
                               {member.product ? 'Change' : 'Assign'}
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => {
-                              setSelectedMember(member);
-                              setShowMemberDetails(true);
+                              router.push(`/admin/members/${member.id}`);
                             }}>
                               View
                             </Button>

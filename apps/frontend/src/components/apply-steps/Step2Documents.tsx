@@ -52,6 +52,11 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
   const [selfie, setSelfie] = useState<string | null>(data.selfieUrl || null)
   const [cameraActive, setCameraActive] = useState(false)
   
+  // Error states
+  const [idError, setIdError] = useState<string | null>(null)
+  const [addressError, setAddressError] = useState<string | null>(null)
+  const [selfieError, setSelfieError] = useState<string | null>(null)
+  
   const idFileInputRef = useRef<HTMLInputElement>(null)
   const addressFileInputRef = useRef<HTMLInputElement>(null)
   const selfieFileInputRef = useRef<HTMLInputElement>(null)
@@ -126,6 +131,23 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif']
+    if (!validTypes.includes(file.type.toLowerCase())) {
+      setIdError('Invalid file format. Please upload JPG, PNG, or HEIC images only.')
+      e.target.value = ''
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setIdError('File too large. Maximum size is 10MB.')
+      e.target.value = ''
+      return
+    }
+
+    setIdError(null)
+
     const reader = new FileReader()
     reader.onloadend = async () => {
       const imageUrl = reader.result as string
@@ -157,6 +179,23 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
     if (!file || addressDocs.length >= 1) return
 
     const isPdf = file.type === 'application/pdf'
+    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif']
+
+    // Validate file type
+    if (!isPdf && !validImageTypes.includes(file.type.toLowerCase())) {
+      setAddressError('Invalid file format. Please upload JPG, PNG, HEIC images or PDF only.')
+      e.target.value = ''
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setAddressError('File too large. Maximum size is 10MB.')
+      e.target.value = ''
+      return
+    }
+
+    setAddressError(null)
 
     if (isPdf) {
       const reader = new FileReader()
@@ -263,6 +302,23 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
   const handleSelfieFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif']
+    if (!validTypes.includes(file.type.toLowerCase())) {
+      setSelfieError('Invalid file format. Please upload JPG, PNG, or HEIC images only.')
+      e.target.value = ''
+      return
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setSelfieError('File too large. Maximum size is 10MB.')
+      e.target.value = ''
+      return
+    }
+
+    setSelfieError(null)
 
     const reader = new FileReader()
     reader.onloadend = () => {
@@ -379,6 +435,12 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
                   Upload Document
                 </button>
                 <p className="text-xs text-gray-500 mt-1">Smart scanning with Google Vision AI</p>
+                <p className="text-xs text-blue-600 font-medium mt-1">Accepted: JPG, PNG, HEIC (Max 10MB)</p>
+                {idError && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                    <p className="text-xs text-red-600 font-medium">❌ {idError}</p>
+                  </div>
+                )}
                 <input
                   ref={idFileInputRef}
                   type="file"
@@ -519,6 +581,12 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
                 Upload Proof of Address
               </button>
               <p className="text-xs text-gray-500 mt-1">Utility bill or bank statement (max 3 months old)</p>
+              <p className="text-xs text-blue-600 font-medium mt-1">Accepted: JPG, PNG, HEIC, PDF (Max 10MB)</p>
+              {addressError && (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                  <p className="text-xs text-red-600 font-medium">❌ {addressError}</p>
+                </div>
+              )}
               <input
                 ref={addressFileInputRef}
                 type="file"
@@ -613,6 +681,12 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
                 className="hidden"
               />
               <p className="text-xs text-gray-500 text-center">Face camera directly • Good lighting • No glasses/hats</p>
+              <p className="text-xs text-blue-600 font-medium text-center">Accepted: JPG, PNG, HEIC (Max 10MB)</p>
+              {selfieError && (
+                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                  <p className="text-xs text-red-600 font-medium">❌ {selfieError}</p>
+                </div>
+              )}
             </div>
           )}
 

@@ -558,11 +558,11 @@ export default function Step1Personal({ data, updateData, nextStep }: Props) {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Email *</label>
-            <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500" />
+            <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="example@email.com" className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Mobile *</label>
-            <input type="tel" name="mobile" value={formData.mobile} onChange={handleChange} required pattern="[0-9]{10}" className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500" />
+            <input type="tel" name="mobile" value={formData.mobile} onChange={handleChange} required pattern="[0-9]{10}" placeholder="0821234567" className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500" />
           </div>
         </div>
 
@@ -574,11 +574,11 @@ export default function Step1Personal({ data, updateData, nextStep }: Props) {
         <div className="grid grid-cols-12 gap-2 items-end pb-10">
           <div className="col-span-4">
             <label className="block text-xs font-medium text-gray-700 mb-0.5">City *</label>
-            <input type="text" name="city" value={formData.city} onChange={handleChange} required className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500" />
+            <input type="text" name="city" value={formData.city} onChange={handleChange} required placeholder="Cape Town" className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500" />
           </div>
           <div className="col-span-3">
             <label className="block text-xs font-medium text-gray-700 mb-0.5">Postal Code *</label>
-            <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} required pattern="[0-9]{4}" className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500" />
+            <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} required pattern="[0-9]{4}" placeholder="8001" className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500" />
           </div>
           <div className="col-span-5">
             <button type="submit" className="w-full px-4 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 font-medium">

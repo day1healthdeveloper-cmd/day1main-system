@@ -5,7 +5,7 @@
  * - Bank name selection (SA banks)
  * - Account holder name
  * - Account number and branch code
- * - Debit order day (1-28 of each month)
+ * - Debit order day (1-28 of each month) - Calendar style picker
  * 
  * Part of Day1Health 6-step application flow
  */
@@ -36,8 +36,57 @@ export default function Step7Banking({ data, updateData, nextStep, prevStep }: P
     debitOrderDay: data.debitOrderDay || 1,
   })
 
+  const [verifying, setVerifying] = useState(false)
+  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'success' | 'failed'>('idle')
+  const [verificationMessage, setVerificationMessage] = useState('')
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    // Reset verification status when account details change
+    if (e.target.name === 'accountNumber' || e.target.name === 'branchCode') {
+      setVerificationStatus('idle')
+      setVerificationMessage('')
+    }
+  }
+
+  const handleVerifyAccount = async () => {
+    if (!formData.accountNumber || !formData.branchCode || !formData.bankName) {
+      setVerificationMessage('Please fill in bank name, account number, and branch code first')
+      setVerificationStatus('failed')
+      return
+    }
+
+    setVerifying(true)
+    setVerificationMessage('')
+
+    try {
+      const response = await fetch('/api/netcash/verify-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountNumber: formData.accountNumber,
+          branchCode: formData.branchCode,
+          bankName: formData.bankName,
+          accountHolderName: formData.accountHolderName,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        setVerificationStatus('success')
+        setVerificationMessage(result.message || 'Account verified successfully!')
+      } else {
+        setVerificationStatus('failed')
+        setVerificationMessage(result.message || 'Account verification failed. Please check your details.')
+      }
+    } catch (error) {
+      console.error('Verification error:', error)
+      setVerificationStatus('failed')
+      setVerificationMessage('Unable to verify account. Please try again.')
+    } finally {
+      setVerifying(false)
+    }
   }
 
   const handleNext = () => {
@@ -89,15 +138,34 @@ export default function Step7Banking({ data, updateData, nextStep, prevStep }: P
             <label className="block text-xs font-medium text-gray-700 mb-0.5">
               Account Number *
             </label>
-            <input
-              type="text"
-              name="accountNumber"
-              value={formData.accountNumber}
-              onChange={handleChange}
-              required
-              placeholder="Account number"
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500"
-            />
+            <div className="flex gap-1">
+              <input
+                type="text"
+                name="accountNumber"
+                value={formData.accountNumber}
+                onChange={handleChange}
+                required
+                placeholder="Account number"
+                className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500"
+              />
+              <button
+                type="button"
+                onClick={handleVerifyAccount}
+                disabled={verifying || !formData.accountNumber || !formData.branchCode || !formData.bankName}
+                className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {verifying ? '⏳' : '✓'} Verify
+              </button>
+            </div>
+            {verificationStatus !== 'idle' && (
+              <div className={`mt-1 p-1.5 rounded text-xs ${
+                verificationStatus === 'success' 
+                  ? 'bg-green-50 text-green-700 border border-green-200' 
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {verificationStatus === 'success' ? '✓' : '✗'} {verificationMessage}
+              </div>
+            )}
           </div>
 
           <div>
@@ -118,22 +186,29 @@ export default function Step7Banking({ data, updateData, nextStep, prevStep }: P
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-0.5">
+          <label className="block text-xs font-medium text-gray-700 mb-1">
             Debit Order Day *
           </label>
-          <select
-            name="debitOrderDay"
-            value={formData.debitOrderDay}
-            onChange={handleChange}
-            required
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500"
-          >
+          <p className="text-xs text-gray-500 mb-2">Select the day of the month for your debit order</p>
+          <div className="grid grid-cols-7 gap-1 p-2 bg-gray-50 border border-gray-300 rounded">
             {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
-              <option key={day} value={day}>
-                {day}{day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'} of each month
-              </option>
+              <button
+                key={day}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, debitOrderDay: day }))}
+                className={`aspect-square flex items-center justify-center text-sm font-medium rounded transition-colors ${
+                  formData.debitOrderDay === day
+                    ? 'bg-green-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-green-500 hover:bg-green-50'
+                }`}
+              >
+                {day}
+              </button>
             ))}
-          </select>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Selected: <span className="font-medium text-green-600">{formData.debitOrderDay}{formData.debitOrderDay === 1 ? 'st' : formData.debitOrderDay === 2 ? 'nd' : formData.debitOrderDay === 3 ? 'rd' : 'th'}</span> of each month
+          </p>
           <p className="text-xs text-gray-500 mt-0.5">Choose a day when you know you'll have funds available</p>
         </div>
 

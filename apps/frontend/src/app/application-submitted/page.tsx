@@ -2,13 +2,82 @@
 
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 export default function ApplicationSubmittedPage() {
   const searchParams = useSearchParams()
   const ref = searchParams.get('ref')
+  const [showNotification, setShowNotification] = useState(true)
+  const [emailSent, setEmailSent] = useState(false)
+
+  useEffect(() => {
+    // Send confirmation email when page loads
+    const sendConfirmationEmail = async () => {
+      try {
+        const response = await fetch('/api/applications/send-confirmation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            applicationRef: ref,
+          }),
+        })
+        
+        if (response.ok) {
+          setEmailSent(true)
+        }
+      } catch (error) {
+        console.error('Failed to send confirmation email:', error)
+      }
+    }
+
+    if (ref) {
+      sendConfirmationEmail()
+    }
+
+    // Auto-hide notification after 8 seconds
+    const timer = setTimeout(() => {
+      setShowNotification(false)
+    }, 8000)
+
+    return () => clearTimeout(timer)
+  }, [ref])
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      {/* Success Notification Popup */}
+      {showNotification && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+          <div className="bg-white rounded-lg shadow-2xl border-2 border-green-500 p-4 max-w-md">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 mb-1">Application Submitted!</h3>
+                <p className="text-sm text-gray-600 mb-2">
+                  Your application <span className="font-mono font-bold text-green-600">{ref}</span> has been received.
+                </p>
+                <p className="text-xs text-gray-500">
+                  {emailSent ? '✓ Confirmation email sent' : '⏳ Sending confirmation email...'}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowNotification(false)}
+                className="flex-shrink-0 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-2xl w-full">
         <div className="bg-white rounded-lg shadow-lg p-8 text-center">
           {/* Success Icon */}
