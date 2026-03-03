@@ -370,7 +370,10 @@ export default function AdminMembersPage() {
                             }}>
                               {member.product ? 'Change' : 'Assign'}
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => {
+                            <Button variant="outline" size="sm" onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('View button clicked for member:', member.id);
                               router.push(`/admin/members/${member.id}`);
                             }}>
                               View
