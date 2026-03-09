@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 
 interface SystemStats {
   totalMembers: number;
+  activeMembers: number;
+  pendingMembers: number;
+  suspendedMembers: number;
   activePolicies: number;
   pendingClaims: number;
   pendingPreauths: number;
@@ -47,20 +50,38 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Real data from database
-  const [stats] = useState<SystemStats>({
-    totalMembers: 5,
+  const [stats, setStats] = useState<SystemStats>({
+    totalMembers: 0,
+    activeMembers: 0,
+    pendingMembers: 0,
+    suspendedMembers: 0,
     activePolicies: 0,
     pendingClaims: 0,
     pendingPreauths: 0,
     totalProviders: 0,
-    activeBrokers: 0, // 8 users exist but they are department admins, not brokers
+    activeBrokers: 0,
   });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoadingStats(true);
+      const response = await fetch('/api/admin/dashboard/stats');
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   const [pendingApprovals] = useState<PendingApproval[]>([
     {
@@ -394,65 +415,85 @@ export default function AdminDashboardPage() {
         {/* System Statistics */}
         <div>
           <h2 className="text-lg font-semibold text-gray-900 mb-3">System Statistics</h2>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/admin/members')}>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">Members</p>
-                  <p className="text-3xl font-bold mt-1">{stats.totalMembers.toLocaleString()}</p>
-                </div>
-              </CardContent>
-            </Card>
+          {loadingStats ? (
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="pt-6">
+                    <div className="text-center animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded w-20 mx-auto mb-2"></div>
+                      <div className="h-8 bg-gray-200 rounded w-16 mx-auto"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">Total Members</p>
+                    <p className="text-3xl font-bold mt-1">{stats.totalMembers.toLocaleString()}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/admin/policies')}>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">Active Policies</p>
-                  <p className="text-3xl font-bold mt-1 text-green-600">
-                    {stats.activePolicies.toLocaleString()}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">Active Policies</p>
+                    <p className="text-3xl font-bold mt-1 text-green-600">
+                      {stats.activeMembers.toLocaleString()}
+                    </p>
+                    <div className="mt-2 text-xs text-gray-500">
+                      <span className="text-yellow-600">{stats.pendingMembers} pending</span>
+                      {' • '}
+                      <span className="text-red-600">{stats.suspendedMembers} suspended</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/admin/claims')}>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">Pending Claims</p>
-                  <p className="text-3xl font-bold mt-1 text-yellow-600">{stats.pendingClaims}</p>
-                </div>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">Pending Claims</p>
+                    <p className="text-3xl font-bold mt-1 text-yellow-600">{stats.pendingClaims}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/admin/preauth')}>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">Pending Preauths</p>
-                  <p className="text-3xl font-bold mt-1 text-orange-600">
-                    {stats.pendingPreauths}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">Pending Preauths</p>
+                    <p className="text-3xl font-bold mt-1 text-orange-600">
+                      {stats.pendingPreauths}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/admin/providers')}>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">Providers</p>
-                  <p className="text-3xl font-bold mt-1">{stats.totalProviders}</p>
-                </div>
-              </CardContent>
-            </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">Providers</p>
+                    <p className="text-3xl font-bold mt-1">{stats.totalProviders}</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => router.push('/admin/brokers')}>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="text-sm text-gray-600">Active Brokers</p>
-                  <p className="text-3xl font-bold mt-1">{stats.activeBrokers}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">Active Brokers</p>
+                    <p className="text-3xl font-bold mt-1">{stats.activeBrokers}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
 
         {/* Financial Overview */}

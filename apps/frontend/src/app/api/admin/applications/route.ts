@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { generateNextMemberNumber } from '@/lib/generate-member-number'
 
 export const dynamic = 'force-dynamic'
 
@@ -107,8 +108,9 @@ export async function PATCH(request: NextRequest) {
 
     // If approved, create member record
     if (status === 'approved') {
-      // Generate member number
-      const memberNumber = `MEM-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`
+      // Generate sequential DAY1 member number
+      const memberNumber = await generateNextMemberNumber()
+      console.log(`✅ Generated member number: ${memberNumber}`)
       
       // Create member record - EXACT COPY of ALL application fields
       const { data: member, error: memberError } = await supabaseAdmin

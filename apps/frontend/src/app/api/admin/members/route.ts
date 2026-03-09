@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const broker = searchParams.get('broker')
     const plan = searchParams.get('plan')
     const paymentMethod = searchParams.get('payment_method')
+    const kycStatus = searchParams.get('kyc_status')
     const search = searchParams.get('search')
     
     // Build query with filters
@@ -38,9 +39,14 @@ export async function GET(request: NextRequest) {
       query = query.eq('payment_method', paymentMethod)
     }
     
+    if (kycStatus && kycStatus !== 'all') {
+      query = query.eq('kyc_status', kycStatus)
+    }
+    
     // Apply search AFTER filters (search within filtered results)
     if (search) {
-      query = query.or(`member_number.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`)
+      const cleanSearch = search.replace(/\s+/g, ''); // Remove spaces for ID number matching
+      query = query.or(`member_number.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,id_number.ilike.%${cleanSearch}%,mobile.ilike.%${search}%`)
     }
 
     const { data: members, error, count } = await query

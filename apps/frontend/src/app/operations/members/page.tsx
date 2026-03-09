@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { EditMemberPlanModal } from '@/components/admin/edit-member-plan-modal';
 
 interface Member {
   id: string;
@@ -37,20 +35,16 @@ interface FilterOptions {
   statuses: string[];
 }
 
-export default function AdminMembersPage() {
+export default function OperationsMembersPage() {
   const router = useRouter();
-  const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [kycFilter, setKycFilter] = useState('all');
   const [brokerFilter, setBrokerFilter] = useState('all');
   const [planFilter, setPlanFilter] = useState('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [showMemberDetails, setShowMemberDetails] = useState(false);
-  const [showEditPlanModal, setShowEditPlanModal] = useState(false);
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     brokers: [],
     plans: [],
@@ -65,9 +59,6 @@ export default function AdminMembersPage() {
     kycPending: 0,
   });
   const [dataLoading, setDataLoading] = useState(true);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -80,7 +71,6 @@ export default function AdminMembersPage() {
   const fetchMembers = async () => {
     try {
       setDataLoading(true);
-      console.log('🔄 Fetching members from API...');
       
       const params = new URLSearchParams();
       if (statusFilter !== 'all') params.append('status', statusFilter);
@@ -97,99 +87,30 @@ export default function AdminMembersPage() {
         },
       });
       const data = await response.json();
-      console.log('✅ Members API response:', data);
-      console.log('   Members count:', data.count);
-      console.log('   Stats:', data.stats);
       setMembers(data.members || []);
+      setTotalCount(data.count || 0);
       setStats(data.stats || stats);
       if (data.filters) {
         setFilterOptions(data.filters);
       }
     } catch (error) {
-      console.error('❌ Failed to fetch members:', error);
+      console.error('Failed to fetch members:', error);
     } finally {
       setDataLoading(false);
     }
   };
 
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('all');
-    setKycFilter('all');
-    setBrokerFilter('all');
-    setPlanFilter('all');
-    setPaymentMethodFilter('all');
-    setCurrentPage(1);
-  };
-
-  const handleExportCSV = () => {
-    const csvData = filteredMembers.map(member => ({
-      'Member Number': member.memberNumber,
-      'First Name': member.firstName,
-      'Last Name': member.lastName,
-      'ID Number': member.idNumber,
-      'Email': member.email,
-      'Phone': member.phone,
-      'Status': member.status,
-      'Plan': member.product,
-      'Monthly Premium': member.monthlyPremium,
-      'Broker Code': member.brokerCode,
-      'Broker Name': member.brokerName,
-      'Payment Method': member.paymentMethod,
-      'Join Date': new Date(member.joinDate).toLocaleDateString(),
-    }));
-
-    const headers = Object.keys(csvData[0] || {});
-    const csvContent = [
-      headers.join(','),
-      ...csvData.map(row => headers.map(header => `"${row[header as keyof typeof row]}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `members-export-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
-  const toggleSelectMember = (memberId: string) => {
-    setSelectedMembers(prev =>
-      prev.includes(memberId)
-        ? prev.filter(id => id !== memberId)
-        : [...prev, memberId]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedMembers.length === paginatedMembers.length) {
-      setSelectedMembers([]);
-    } else {
-      setSelectedMembers(paginatedMembers.map(m => m.id));
-    }
-  };
-
-  // Disabled auth check for demo
-  // useEffect(() => {
-  //   if (!loading && !isAuthenticated) {
-  //     router.push('/login');
-  //   }
-  // }, [loading, isAuthenticated, router]);
-
-  if (loading || dataLoading) {
+  if (dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading members...</p>
+      <SidebarLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading members...</p>
+          </div>
         </div>
-      </div>
+      </SidebarLayout>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   const getStatusBadge = (status: Member['status']) => {
@@ -207,36 +128,16 @@ export default function AdminMembersPage() {
     );
   };
 
-  const getKycBadge = (kycStatus: Member['kycStatus']) => {
-    const styles = {
-      verified: 'bg-green-100 text-green-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      failed: 'bg-red-100 text-red-800',
-    };
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[kycStatus]}`}>
-        {kycStatus.charAt(0).toUpperCase() + kycStatus.slice(1)}
-      </span>
-    );
-  };
-
   const filteredMembers = members;
-
-  // Pagination
-  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedMembers = filteredMembers.slice(startIndex, endIndex);
 
   return (
     <SidebarLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Member Administration</h1>
-            <p className="text-gray-600 mt-1">Search and manage member records</p>
+            <h1 className="text-3xl font-bold text-gray-900">Manage Members</h1>
+            <p className="text-gray-600 mt-1">View and manage member records</p>
           </div>
-          <Button onClick={() => router.push('/admin/members/new')}>+ Add Member</Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -273,24 +174,6 @@ export default function AdminMembersPage() {
             </CardContent>
           </Card>
         </div>
-
-        {selectedMembers.length > 0 && (
-          <Card className="border-blue-500 bg-blue-50">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">
-                  {selectedMembers.length} member{selectedMembers.length > 1 ? 's' : ''} selected
-                </p>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">Bulk Update Status</Button>
-                  <Button size="sm" variant="outline">Bulk Assign Plan</Button>
-                  <Button size="sm" variant="outline">Send Bulk Email</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSelectedMembers([])}>Clear Selection</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         <Card>
           <CardHeader>
@@ -383,11 +266,6 @@ export default function AdminMembersPage() {
                 </select>
               </div>
             </div>
-            <div className="flex justify-end mt-4">
-              <Button variant="outline" size="sm" onClick={handleClearFilters}>
-                Clear All Filters
-              </Button>
-            </div>
           </CardContent>
         </Card>
 
@@ -396,13 +274,9 @@ export default function AdminMembersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Members List</CardTitle>
-                <CardDescription>
-                  Showing {startIndex + 1}-{Math.min(endIndex, filteredMembers.length)} of {filteredMembers.length} members
-                </CardDescription>
+                <CardDescription>Showing {filteredMembers.length} of {totalCount} members</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={filteredMembers.length === 0}>
-                Export to CSV
-              </Button>
+              <Button variant="outline" size="sm">Export to CSV</Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -418,13 +292,12 @@ export default function AdminMembersPage() {
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Contact</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Broker</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Premium</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Payment</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredMembers.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="text-center py-8 text-gray-500">
+                      <td colSpan={8} className="text-center py-8 text-gray-500">
                         No members found matching your filters
                       </td>
                     </tr>
@@ -444,8 +317,10 @@ export default function AdminMembersPage() {
                         </td>
                         <td className="py-3 px-4">{getStatusBadge(member.status)}</td>
                         <td className="py-3 px-4">
-                          <Button variant="outline" size="sm" onClick={() => {
-                            router.push(`/admin/members/${member.id}`);
+                          <Button variant="outline" size="sm" onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            router.push(`/operations/members/${member.id}`);
                           }}>
                             View
                           </Button>
@@ -461,9 +336,6 @@ export default function AdminMembersPage() {
                         <td className="py-3 px-4">
                           <p className="text-sm font-medium">R {member.monthlyPremium}</p>
                         </td>
-                        <td className="py-3 px-4">
-                          <p className="text-xs">{member.paymentMethod}</p>
-                        </td>
                       </tr>
                     ))
                   )}
@@ -472,94 +344,7 @@ export default function AdminMembersPage() {
             </div>
           </CardContent>
         </Card>
-
-        {showMemberDetails && selectedMember && (
-          <Card className="border-2 border-primary">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Member Details</CardTitle>
-                  <CardDescription>{selectedMember.memberNumber}</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => setShowMemberDetails(false)}>Close</Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-600">Full Name</p>
-                    <p className="font-medium">{selectedMember.firstName} {selectedMember.lastName}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">ID Number</p>
-                    <p className="font-medium">{selectedMember.idNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Email</p>
-                    <p className="font-medium">{selectedMember.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Phone</p>
-                    <p className="font-medium">{selectedMember.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Broker</p>
-                    <p className="font-medium">{selectedMember.brokerCode} - {selectedMember.brokerName}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Plan</p>
-                    <p className="font-medium">{selectedMember.product}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Monthly Premium</p>
-                    <p className="font-medium">R {selectedMember.monthlyPremium}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Payment Method</p>
-                    <p className="font-medium">{selectedMember.paymentMethod}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Status</p>
-                    <div className="mt-1">{getStatusBadge(selectedMember.status)}</div>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">KYC Status</p>
-                    <div className="mt-1">{getKycBadge(selectedMember.kycStatus)}</div>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Join Date</p>
-                    <p className="font-medium">{new Date(selectedMember.joinDate).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Member Number</p>
-                    <p className="font-medium font-mono">{selectedMember.memberNumber}</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 pt-4">
-                  <Button size="sm">Edit Member</Button>
-                  <Button size="sm" variant="outline">View Policy</Button>
-                  <Button size="sm" variant="outline">View Claims</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
-
-      {editingMember && (
-        <EditMemberPlanModal
-          member={editingMember}
-          isOpen={showEditPlanModal}
-          onClose={() => {
-            setShowEditPlanModal(false);
-            setEditingMember(null);
-          }}
-          onSave={() => {
-            fetchMembers(); // Refresh the list
-          }}
-        />
-      )}
     </SidebarLayout>
   );
 }

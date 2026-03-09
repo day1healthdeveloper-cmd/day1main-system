@@ -26,6 +26,21 @@ export async function GET(
       )
     }
 
+    // Fetch dependents count
+    const { count: dependentsCount } = await supabaseAdmin
+      .from('member_dependents')
+      .select('*', { count: 'exact', head: true })
+      .eq('member_id', params.id)
+      .eq('status', 'active')
+
+    // Fetch dependents details
+    const { data: dependents } = await supabaseAdmin
+      .from('member_dependents')
+      .select('*')
+      .eq('member_id', params.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: true })
+
     // Transform to match expected format
     const transformedMember = {
       id: member.id,
@@ -34,24 +49,58 @@ export async function GET(
       lastName: member.last_name,
       idNumber: member.id_number,
       email: member.email,
-      phone: member.phone,
+      phone: member.mobile,
+      mobile: member.mobile,
       status: member.status,
       brokerCode: member.broker_code,
       brokerName: member.brokers?.name || 'N/A',
-      policyNumber: member.policy_number,
+      policyNumber: member.member_number, // Policy number = Member number
       product: member.plan_name,
       planId: member.plan_id,
+      planStartDate: member.plan_start_date,
       paymentMethod: member.payment_method,
       monthlyPremium: member.monthly_premium || 0,
-      joinDate: member.join_date,
+      joinDate: member.approved_at || member.created_at, // Use approved_at or created_at
       kycStatus: member.kyc_status || 'pending',
       riskScore: member.risk_score || 0,
+      
+      // Address Information
       addressLine1: member.address_line1,
       addressLine2: member.address_line2,
       city: member.city,
       postalCode: member.postal_code,
+      
+      // Personal Details
       dateOfBirth: member.date_of_birth,
       gender: member.gender,
+      
+      // Banking Details
+      bankName: member.bank_name,
+      accountNumber: member.account_number,
+      branchCode: member.branch_code,
+      debitOrderDay: member.debit_order_day,
+      
+      // Status & Lifecycle
+      suspensionReason: member.suspension_reason,
+      suspensionDate: member.suspension_date,
+      cancellationDate: member.cancellation_date,
+      cancellationReason: member.cancellation_reason,
+      activatedAt: member.activated_at,
+      
+      // Waiting Periods
+      waitingPeriodEndDate: member.waiting_period_end_date,
+      pmbWaitingPeriodEndDate: member.pmb_waiting_period_end_date,
+      
+      // Timestamps
+      createdAt: member.created_at,
+      updatedAt: member.updated_at,
+      
+      // Application Reference
+      applicationId: member.application_id,
+      
+      // Dependents
+      dependentsCount: dependentsCount || 0,
+      dependents: dependents || [],
     }
 
     return NextResponse.json(transformedMember)

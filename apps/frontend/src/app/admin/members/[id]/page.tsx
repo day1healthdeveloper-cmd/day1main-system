@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, FileText, CreditCard, Activity } from 'lucide-react';
+import { ArrowLeft, FileText, CreditCard, Activity } from 'lucide-react';
+import { Collapse, CollapseGroup } from '@/components/ui/collapse';
 
 interface Member {
   id: string;
@@ -15,6 +16,7 @@ interface Member {
   idNumber: string;
   email: string;
   phone: string;
+  mobile?: string;
   status: 'active' | 'pending' | 'suspended' | 'cancelled' | 'in_waiting';
   brokerCode: string;
   brokerName: string;
@@ -31,6 +33,10 @@ interface Member {
   postalCode?: string;
   dateOfBirth?: string;
   gender?: string;
+  bankName?: string;
+  accountNumber?: string;
+  branchCode?: string;
+  debitOrderDay?: number;
 }
 
 export default function MemberDetailPage() {
@@ -40,6 +46,41 @@ export default function MemberDetailPage() {
   
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [editedData, setEditedData] = useState<Partial<Member>>({});
+
+  const handleEditSection = (section: string) => {
+    setEditingSection(section);
+    setEditedData(member || {});
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSection(null);
+    setEditedData({});
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const response = await fetch(`/api/admin/members/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editedData),
+      });
+      
+      if (response.ok) {
+        const updated = await response.json();
+        setMember(updated);
+        setEditingSection(null);
+        setEditedData({});
+      }
+    } catch (error) {
+      console.error('Failed to update member:', error);
+    }
+  };
+
+  const handleFieldChange = (field: keyof Member, value: any) => {
+    setEditedData(prev => ({ ...prev, [field]: value }));
+  };
 
   useEffect(() => {
     fetchMemberDetails();
@@ -99,7 +140,7 @@ export default function MemberDetailPage() {
         </div>
       </SidebarLayout>
     );
-  }
+  };
 
   if (!member) {
     return (
@@ -135,10 +176,6 @@ export default function MemberDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Member
-            </Button>
             <Button variant="outline" size="sm">
               <FileText className="w-4 h-4 mr-2" />
               View Policy
@@ -183,144 +220,330 @@ export default function MemberDetailPage() {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Personal Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-600">Full Name</p>
-                  <p className="font-medium">{member.firstName} {member.lastName}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">ID Number</p>
-                  <p className="font-medium font-mono">{member.idNumber}</p>
-                </div>
-                {member.dateOfBirth && (
-                  <div>
-                    <p className="text-sm text-gray-600">Date of Birth</p>
-                    <p className="font-medium">{new Date(member.dateOfBirth).toLocaleDateString()}</p>
-                  </div>
-                )}
-                {member.gender && (
-                  <div>
-                    <p className="text-sm text-gray-600">Gender</p>
-                    <p className="font-medium capitalize">{member.gender}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm text-gray-600">Join Date</p>
-                  <p className="font-medium">{new Date(member.joinDate).toLocaleDateString()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium">{member.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Phone</p>
-                  <p className="font-medium">{member.phone}</p>
-                </div>
-                {member.addressLine1 && (
-                  <div>
-                    <p className="text-sm text-gray-600">Address</p>
-                    <p className="font-medium">{member.addressLine1}</p>
-                    {member.city && member.postalCode && (
-                      <p className="font-medium">{member.city}, {member.postalCode}</p>
+        <div className="grid grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div style={{ maxWidth: '521px' }}>
+            <Card>
+              <CardContent className="p-0">
+                <CollapseGroup>
+                  <Collapse title="Personal Information" size="small" showEdit onEdit={() => handleEditSection('personal')}>
+                    {editingSection === 'personal' ? (
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">First Name</label>
+                          <input
+                            type="text"
+                            value={editedData.firstName || ''}
+                            onChange={(e) => handleFieldChange('firstName', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Last Name</label>
+                          <input
+                            type="text"
+                            value={editedData.lastName || ''}
+                            onChange={(e) => handleFieldChange('lastName', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">ID Number</label>
+                          <input
+                            type="text"
+                            value={editedData.idNumber || ''}
+                            onChange={(e) => handleFieldChange('idNumber', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Date of Birth</label>
+                          <input
+                            type="date"
+                            value={editedData.dateOfBirth ? new Date(editedData.dateOfBirth).toISOString().split('T')[0] : ''}
+                            onChange={(e) => handleFieldChange('dateOfBirth', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Gender</label>
+                          <select
+                            value={editedData.gender || ''}
+                            onChange={(e) => handleFieldChange('gender', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          >
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button size="sm" onClick={handleSaveEdit}>Save</Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-600">Full Name</p>
+                          <p className="font-medium">{member.firstName} {member.lastName}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">ID Number</p>
+                          <p className="font-medium font-mono text-xs">{member.idNumber}</p>
+                        </div>
+                        {member.dateOfBirth && (
+                          <div>
+                            <p className="text-xs text-gray-600">Date of Birth</p>
+                            <p className="font-medium">{new Date(member.dateOfBirth).toLocaleDateString()}</p>
+                          </div>
+                        )}
+                        {member.gender && (
+                          <div>
+                            <p className="text-xs text-gray-600">Gender</p>
+                            <p className="font-medium capitalize">{member.gender}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs text-gray-600">Join Date</p>
+                          <p className="font-medium">{member.joinDate ? new Date(member.joinDate).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                      </div>
                     )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  </Collapse>
 
-          {/* Policy Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Policy Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-600">Policy Number</p>
-                  <p className="font-medium font-mono">{member.policyNumber || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Plan</p>
-                  <p className="font-medium">{member.product || <span className="text-red-500">No Plan Assigned</span>}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Monthly Premium</p>
-                  <p className="font-medium text-green-600">R {member.monthlyPremium}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Payment Method</p>
-                  <p className="font-medium">{member.paymentMethod}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  <Collapse title="Contact Information" size="small" showEdit onEdit={() => handleEditSection('contact')}>
+                    {editingSection === 'contact' ? (
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Email</label>
+                          <input
+                            type="email"
+                            value={editedData.email || ''}
+                            onChange={(e) => handleFieldChange('email', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Mobile</label>
+                          <input
+                            type="tel"
+                            value={editedData.mobile || ''}
+                            onChange={(e) => handleFieldChange('mobile', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Phone (Landline)</label>
+                          <input
+                            type="tel"
+                            value={editedData.phone || ''}
+                            onChange={(e) => handleFieldChange('phone', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Address</label>
+                          <input
+                            type="text"
+                            value={editedData.addressLine1 || ''}
+                            onChange={(e) => handleFieldChange('addressLine1', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">City</label>
+                          <input
+                            type="text"
+                            value={editedData.city || ''}
+                            onChange={(e) => handleFieldChange('city', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Postal Code</label>
+                          <input
+                            type="text"
+                            value={editedData.postalCode || ''}
+                            onChange={(e) => handleFieldChange('postalCode', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button size="sm" onClick={handleSaveEdit}>Save</Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-600">Email</p>
+                          <p className="font-medium">{member.email}</p>
+                        </div>
+                        {member.mobile && (
+                          <div>
+                            <p className="text-xs text-gray-600">Mobile</p>
+                            <p className="font-medium">{member.mobile}</p>
+                          </div>
+                        )}
+                        {member.phone && (
+                          <div>
+                            <p className="text-xs text-gray-600">Phone (Landline)</p>
+                            <p className="font-medium">{member.phone}</p>
+                          </div>
+                        )}
+                        {member.addressLine1 && (
+                          <div>
+                            <p className="text-xs text-gray-600">Address</p>
+                            <p className="font-medium">{member.addressLine1}</p>
+                            {member.city && member.postalCode && (
+                              <p className="font-medium">{member.city}, {member.postalCode}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Collapse>
 
-          {/* Broker Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Broker Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-600">Broker Code</p>
-                  <p className="font-medium font-mono">{member.brokerCode}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Broker Name</p>
-                  <p className="font-medium">{member.brokerName}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  <Collapse title="Policy Information" size="small" showEdit onEdit={() => handleEditSection('policy')}>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <p className="text-xs text-gray-600">Policy Number</p>
+                        <p className="font-medium font-mono text-xs">{member.policyNumber || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Plan</p>
+                        <p className="font-medium">{member.product || <span className="text-red-500">No Plan Assigned</span>}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Monthly Premium</p>
+                        <p className="font-medium text-green-600">R {member.monthlyPremium}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Payment Method</p>
+                        <p className="font-medium">{member.paymentMethod}</p>
+                      </div>
+                    </div>
+                  </Collapse>
+
+                  <Collapse title="Banking Details" size="small" showEdit onEdit={() => handleEditSection('banking')}>
+                    {editingSection === 'banking' ? (
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Bank Name</label>
+                          <input
+                            type="text"
+                            value={editedData.bankName || ''}
+                            onChange={(e) => handleFieldChange('bankName', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Account Number</label>
+                          <input
+                            type="text"
+                            value={editedData.accountNumber || ''}
+                            onChange={(e) => handleFieldChange('accountNumber', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Branch Code</label>
+                          <input
+                            type="text"
+                            value={editedData.branchCode || ''}
+                            onChange={(e) => handleFieldChange('branchCode', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Debit Order Day</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="31"
+                            value={editedData.debitOrderDay || ''}
+                            onChange={(e) => handleFieldChange('debitOrderDay', parseInt(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button size="sm" onClick={handleSaveEdit}>Save</Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-600">Bank Name</p>
+                          <p className="font-medium">{member.bankName || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">Account Number</p>
+                          <p className="font-medium font-mono text-xs">{member.accountNumber || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">Branch Code</p>
+                          <p className="font-medium font-mono text-xs">{member.branchCode || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">Debit Order Day</p>
+                          <p className="font-medium">{member.debitOrderDay ? `${member.debitOrderDay} of each month` : 'N/A'}</p>
+                        </div>
+                      </div>
+                    )}
+                  </Collapse>
+                </CollapseGroup>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column */}
+          <div style={{ maxWidth: '521px' }}>
+            <Card>
+              <CardContent className="p-0">
+                <CollapseGroup>
+                  {member.brokerCode && member.brokerName && (
+                    <Collapse title="Broker Information" size="small" showEdit onEdit={() => handleEditSection('broker')}>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-600">Broker Code</p>
+                          <p className="font-medium font-mono text-xs">{member.brokerCode}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">Broker Name</p>
+                          <p className="font-medium">{member.brokerName}</p>
+                        </div>
+                      </div>
+                    </Collapse>
+                  )}
+
+                  <Collapse title="Payments" size="small">
+                    <div className="space-y-2 text-sm">
+                      <p className="text-gray-600">Payment history and transactions will be displayed here.</p>
+                    </div>
+                  </Collapse>
+
+                  <Collapse title="Claims" size="small">
+                    <div className="space-y-2 text-sm">
+                      <p className="text-gray-600">Claims history and status will be displayed here.</p>
+                    </div>
+                  </Collapse>
+
+                  <Collapse title="Documents" size="small">
+                    <div className="space-y-2 text-sm">
+                      <p className="text-gray-600">Member documents will be displayed here.</p>
+                    </div>
+                  </Collapse>
+                </CollapseGroup>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="w-full">
-                <CreditCard className="w-4 h-4 mr-2" />
-                View Payments
-              </Button>
-              <Button variant="outline" className="w-full">
-                <Activity className="w-4 h-4 mr-2" />
-                View Claims
-              </Button>
-              <Button variant="outline" className="w-full">
-                <FileText className="w-4 h-4 mr-2" />
-                View Documents
-              </Button>
-              <Button variant="outline" className="w-full">
-                <Edit className="w-4 h-4 mr-2" />
-                Update Details
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </SidebarLayout>
   );
 }
+
+    
