@@ -66,30 +66,34 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform data for frontend
-    const transformedTransactions = (members || []).map(member => ({
-      id: member.id,
-      member_id: member.id,
-      member_number: member.member_number,
-      member_name: `${member.first_name} ${member.last_name}`,
-      first_name: member.first_name,
-      last_name: member.last_name,
-      email: member.email,
-      mobile: member.mobile,
-      phone: member.phone,
-      amount: member.monthly_premium,
-      bank_name: member.bank_name,
-      account_number: member.account_number,
-      branch_code: member.branch_code,
-      account_holder_name: member.account_holder_name,
-      collection_method: member.collection_method,
-      payment_group_id: member.payment_group_id,
-      group_name: member.payment_groups?.group_name || null,
-      group_code: member.payment_groups?.group_code || null,
-      status: 'pending', // Default status - will be updated after processing
-      netcash_reference: member.netcash_account_reference,
-      debit_order_day: member.debit_order_day,
-      debit_order_status: member.debit_order_status,
-    }));
+    const transformedTransactions = (members || []).map((member: any) => {
+      const paymentGroup = member.payment_groups as { id: any; group_name: any; group_code: any } | null;
+      
+      return {
+        id: member.id,
+        member_id: member.id,
+        member_number: member.member_number,
+        member_name: `${member.first_name} ${member.last_name}`,
+        first_name: member.first_name,
+        last_name: member.last_name,
+        email: member.email,
+        mobile: member.mobile,
+        phone: member.phone,
+        amount: member.monthly_premium,
+        bank_name: member.bank_name,
+        account_number: member.account_number,
+        branch_code: member.branch_code,
+        account_holder_name: member.account_holder_name,
+        collection_method: member.collection_method,
+        payment_group_id: member.payment_group_id,
+        group_name: paymentGroup?.group_name || null,
+        group_code: paymentGroup?.group_code || null,
+        status: 'pending', // Default status - will be updated after processing
+        netcash_reference: member.netcash_account_reference,
+        debit_order_day: member.debit_order_day,
+        debit_order_status: member.debit_order_status,
+      };
+    });
 
     // Calculate summary stats
     const summary = {
