@@ -1,71 +1,96 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile, writeFile, rename, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { feedbackId, status, comment, currentStatus } = body;
 
-    if (!feedbackId || !currentStatus) {
+    if (!feedbackId) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing feedback ID' },
         { status: 400 }
       );
     }
 
-    // Find the feedback file
-    const currentDir = path.join(process.cwd(), '.kiro', 'feedback', currentStatus);
-    const currentPath = path.join(currentDir, `${feedbackId}.json`);
-
-    if (!existsSync(currentPath)) {
-      return NextResponse.json(
-        { error: 'Feedback not found' },
-        { status: 404 }
-      );
-    }
-
-    // Read current feedback
-    const content = await readFile(currentPath, 'utf-8');
-    const feedback = JSON.parse(content);
-
-    // Update feedback
+    // Add comment if provided
     if (comment) {
-      feedback.developerComments.push({
-        comment,
-        timestamp: new Date().toISOString(),
-        author: 'developer', // Can be enhanced with actual user info
-      });
-    }
+      const { error: commentError } = await supabase
+        .from('feedback_comments')
+        .insert({
+          feedback_id: feedbackId,
+          comment,
+          author: 'developer',
+        });
 
-    if (status && status !== currentStatus) {
-      feedback.status = status;
-      feedback.updatedAt = new Date().toISOString();
-
-      // Move file to new status directory
-      const newDir = path.join(process.cwd(), '.kiro', 'feedback', status);
-      if (!existsSync(newDir)) {
-        await mkdir(newDir, { recursive: true });
+      if (commentError) {
+        console.error('Comment error:', commentError);
+        return NextResponse.json(
+          { error: 'Failed to add comment' },
+          { status: 500 }
+        );
       }
-      const newPath = path.join(newDir, `${feedbackId}.json`);
-
-      // Write updated feedback to new location
-      await writeFile(newPath, JSON.stringify(feedback, null, 2), 'utf-8');
-
-      // Delete old file
-      const { unlink } = await import('fs/promises');
-      await unlink(currentPath);
-    } else {
-      // Just update the file in place
-      feedback.updatedAt = new Date().toISOString();
-      await writeFile(currentPath, JSON.stringify(feedback, null, 2), 'utf-8');
     }
+
+    // Update status if provided
+    if (status) {
+      const { error: updateError } = await supabase
+        .from('feedback')
+        .update({
+          status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', feedbackId);
+
+      if (updateError) {
+        console.error('Update error:', updateError);
+        return NextResponse.json(
+          { error: 'Failed to update status' },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Fetch updated feedback with comments
+    const { data: feedback, error: fetchError } = await supabase
+      .from('feedback')
+      .select('*')
+      .eq('id', feedbackId)
+      .single();
+
+    if (fetchError) {
+      console.error('Fetch error:', fetchError);
+    }
+
+    const { data: comments } = await supabase
+      .from('feedback_comments')
+      .select('*')
+      .eq('feedback_id', feedbackId)
+      .order('created_at', { ascending: true });
+
+    const result = {
+      ...feedback,
+      pageName: feedback?.page_name,
+      userRole: feedback?.user_role,
+      submittedAt: feedback?.submitted_at,
+      submittedBy: feedback?.submitted_by,
+      updatedAt: feedback?.updated_at,
+      developerComments: comments?.map(c => ({
+        comment: c.comment,
+        timestamp: c.created_at,
+        author: c.author,
+      })) || [],
+    };
 
     return NextResponse.json({
       success: true,
       message: 'Feedback updated successfully',
-      feedback,
+      feedback: result,
     });
   } catch (error) {
     console.error('Error updating feedback:', error);

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,37 +19,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create feedback directory structure
-    const feedbackDir = path.join(process.cwd(), '.kiro', 'feedback', 'pending');
-    
-    if (!existsSync(feedbackDir)) {
-      await mkdir(feedbackDir, { recursive: true });
+    // Insert feedback into database
+    const { data: feedback, error } = await supabase
+      .from('feedback')
+      .insert({
+        status: 'pending',
+        category,
+        priority,
+        title,
+        description,
+        page_name: pageName,
+        user_role: userRole || 'unknown',
+        submitted_by: 'user',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Database error:', error);
+      return NextResponse.json(
+        { error: 'Failed to submit feedback' },
+        { status: 500 }
+      );
     }
-
-    // Generate unique filename
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const sanitizedPage = pageName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const filename = `${timestamp}-${sanitizedPage}.json`;
-    const filepath = path.join(feedbackDir, filename);
-
-    // Create feedback object
-    const feedback = {
-      id: filename.replace('.json', ''),
-      status: 'pending',
-      category,
-      priority,
-      title,
-      description,
-      pageName,
-      userRole: userRole || 'unknown',
-      submittedAt: new Date().toISOString(),
-      submittedBy: 'user', // Can be enhanced with actual user info
-      developerComments: [],
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Write feedback to file
-    await writeFile(filepath, JSON.stringify(feedback, null, 2), 'utf-8');
 
     return NextResponse.json({
       success: true,
