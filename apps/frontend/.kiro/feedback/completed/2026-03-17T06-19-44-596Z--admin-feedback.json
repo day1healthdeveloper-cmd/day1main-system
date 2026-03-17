@@ -1,0 +1,30 @@
+{
+  "id": "2026-03-17T06-19-44-596Z--admin-feedback",
+  "status": "completed",
+  "category": "filter",
+  "priority": "medium",
+  "title": "user dependants button in sidebar",
+  "description": "i want to view main user dependants easily for relation check",
+  "pageName": "/admin/feedback",
+  "userRole": "system_admin",
+  "submittedAt": "2026-03-17T06:19:44.597Z",
+  "submittedBy": "user",
+  "developerComments": [
+    {
+      "comment": "ok.. ill look into it\ngood idea. im adding it",
+      "timestamp": "2026-03-17T06:22:10.516Z",
+      "author": "developer"
+    },
+    {
+      "comment": "should be done soon",
+      "timestamp": "2026-03-17T06:24:38.217Z",
+      "author": "developer"
+    },
+    {
+      "comment": "added as requested",
+      "timestamp": "2026-03-17T06:25:12.688Z",
+      "author": "developer"
+    }
+  ],
+  "updatedAt": "2026-03-17T06:25:20.153Z"
+}
