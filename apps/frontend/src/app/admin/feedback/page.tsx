@@ -31,10 +31,38 @@ export default function FeedbackManagementPage() {
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
   const [comment, setComment] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [counts, setCounts] = useState({
+    pending: 0,
+    'in-progress': 0,
+    completed: 0,
+    archived: 0,
+  });
 
   useEffect(() => {
     fetchFeedback();
+    fetchCounts();
   }, [statusFilter]);
+
+  const fetchCounts = async () => {
+    try {
+      const statuses = ['pending', 'in-progress', 'completed', 'archived'];
+      const countPromises = statuses.map(async (status) => {
+        const response = await fetch(`/api/feedback/list?status=${status}`);
+        const data = await response.json();
+        return { status, count: data.feedback?.length || 0 };
+      });
+      
+      const results = await Promise.all(countPromises);
+      const newCounts = results.reduce((acc, { status, count }) => {
+        acc[status as keyof typeof counts] = count;
+        return acc;
+      }, {} as typeof counts);
+      
+      setCounts(newCounts);
+    } catch (error) {
+      console.error('Failed to fetch counts:', error);
+    }
+  };
 
   const fetchFeedback = async () => {
     try {
@@ -64,6 +92,7 @@ export default function FeedbackManagementPage() {
 
       if (response.ok) {
         fetchFeedback();
+        fetchCounts();
         setSelectedFeedback(null);
       }
     } catch (error) {
@@ -93,6 +122,7 @@ export default function FeedbackManagementPage() {
         setSelectedFeedback(data.feedback);
         setComment('');
         fetchFeedback();
+        fetchCounts();
       }
     } catch (error) {
       console.error('Failed to add comment:', error);
@@ -162,7 +192,7 @@ export default function FeedbackManagementPage() {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              {status.replace('-', ' ').toUpperCase()}
+              {status.replace('-', ' ').toUpperCase()} ({counts[status as keyof typeof counts]})
             </button>
           ))}
         </div>
