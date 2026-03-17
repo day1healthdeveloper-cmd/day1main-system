@@ -16,6 +16,7 @@ interface Member {
   idNumber: string;
   email: string;
   phone: string;
+  mobile?: string;
   status: 'active' | 'pending' | 'suspended' | 'cancelled' | 'in_waiting';
   brokerCode: string;
   brokerName: string;
@@ -45,6 +46,41 @@ export default function OperationsMemberDetailPage() {
   
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [editedData, setEditedData] = useState<Partial<Member>>({});
+
+  const handleEditSection = (section: string) => {
+    setEditingSection(section);
+    setEditedData(member || {});
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSection(null);
+    setEditedData({});
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const response = await fetch(`/api/admin/members/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editedData),
+      });
+      
+      if (response.ok) {
+        const updated = await response.json();
+        setMember(updated);
+        setEditingSection(null);
+        setEditedData({});
+      }
+    } catch (error) {
+      console.error('Failed to update member:', error);
+    }
+  };
+
+  const handleFieldChange = (field: keyof Member, value: any) => {
+    setEditedData(prev => ({ ...prev, [field]: value }));
+  };
 
   useEffect(() => {
     fetchMemberDetails();
@@ -184,55 +220,185 @@ export default function OperationsMemberDetailPage() {
             <Card>
               <CardContent className="p-0">
                 <CollapseGroup>
-                  <Collapse title="Personal Information" size="small">
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <p className="text-xs text-gray-600">Full Name</p>
-                        <p className="font-medium">{member.firstName} {member.lastName}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600">ID Number</p>
-                        <p className="font-medium font-mono text-xs">{member.idNumber}</p>
-                      </div>
-                      {member.dateOfBirth && (
+                  <Collapse title="Personal Information" size="small" showEdit onEdit={() => handleEditSection('personal')}>
+                    {editingSection === 'personal' ? (
+                      <div className="space-y-3 text-sm">
                         <div>
-                          <p className="text-xs text-gray-600">Date of Birth</p>
-                          <p className="font-medium">{new Date(member.dateOfBirth).toLocaleDateString()}</p>
+                          <label className="text-xs text-gray-600 block mb-1">First Name</label>
+                          <input
+                            type="text"
+                            value={editedData.firstName || ''}
+                            onChange={(e) => handleFieldChange('firstName', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
                         </div>
-                      )}
-                      {member.gender && (
                         <div>
-                          <p className="text-xs text-gray-600">Gender</p>
-                          <p className="font-medium capitalize">{member.gender}</p>
+                          <label className="text-xs text-gray-600 block mb-1">Last Name</label>
+                          <input
+                            type="text"
+                            value={editedData.lastName || ''}
+                            onChange={(e) => handleFieldChange('lastName', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
                         </div>
-                      )}
-                      <div>
-                        <p className="text-xs text-gray-600">Join Date</p>
-                        <p className="font-medium">{member.joinDate ? new Date(member.joinDate).toLocaleDateString() : 'N/A'}</p>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">ID Number</label>
+                          <input
+                            type="text"
+                            value={editedData.idNumber || ''}
+                            onChange={(e) => handleFieldChange('idNumber', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Date of Birth</label>
+                          <input
+                            type="date"
+                            value={editedData.dateOfBirth || ''}
+                            onChange={(e) => handleFieldChange('dateOfBirth', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Gender</label>
+                          <select
+                            value={editedData.gender || ''}
+                            onChange={(e) => handleFieldChange('gender', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          >
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                          </select>
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button size="sm" onClick={handleSaveEdit}>Save</Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-600">Full Name</p>
+                          <p className="font-medium">{member.firstName} {member.lastName}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">ID Number</p>
+                          <p className="font-medium font-mono text-xs">{member.idNumber}</p>
+                        </div>
+                        {member.dateOfBirth && (
+                          <div>
+                            <p className="text-xs text-gray-600">Date of Birth</p>
+                            <p className="font-medium">{new Date(member.dateOfBirth).toLocaleDateString()}</p>
+                          </div>
+                        )}
+                        {member.gender && (
+                          <div>
+                            <p className="text-xs text-gray-600">Gender</p>
+                            <p className="font-medium capitalize">{member.gender}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-xs text-gray-600">Join Date</p>
+                          <p className="font-medium">{member.joinDate ? new Date(member.joinDate).toLocaleDateString() : 'N/A'}</p>
+                        </div>
+                      </div>
+                    )}
                   </Collapse>
 
-                  <Collapse title="Contact Information" size="small">
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <p className="text-xs text-gray-600">Email</p>
-                        <p className="font-medium">{member.email}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600">Phone</p>
-                        <p className="font-medium">{member.phone}</p>
-                      </div>
-                      {member.addressLine1 && (
+                  <Collapse title="Contact Information" size="small" showEdit onEdit={() => handleEditSection('contact')}>
+                    {editingSection === 'contact' ? (
+                      <div className="space-y-3 text-sm">
                         <div>
-                          <p className="text-xs text-gray-600">Address</p>
-                          <p className="font-medium">{member.addressLine1}</p>
-                          {member.city && member.postalCode && (
-                            <p className="font-medium">{member.city}, {member.postalCode}</p>
-                          )}
+                          <label className="text-xs text-gray-600 block mb-1">Email</label>
+                          <input
+                            type="email"
+                            value={editedData.email || ''}
+                            onChange={(e) => handleFieldChange('email', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
                         </div>
-                      )}
-                    </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Mobile</label>
+                          <input
+                            type="tel"
+                            value={editedData.mobile || ''}
+                            onChange={(e) => handleFieldChange('mobile', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            placeholder="Cell phone number"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Phone (Landline)</label>
+                          <input
+                            type="tel"
+                            value={editedData.phone || ''}
+                            onChange={(e) => handleFieldChange('phone', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            placeholder="Landline number"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Address</label>
+                          <input
+                            type="text"
+                            value={editedData.addressLine1 || ''}
+                            onChange={(e) => handleFieldChange('addressLine1', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">City</label>
+                          <input
+                            type="text"
+                            value={editedData.city || ''}
+                            onChange={(e) => handleFieldChange('city', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Postal Code</label>
+                          <input
+                            type="text"
+                            value={editedData.postalCode || ''}
+                            onChange={(e) => handleFieldChange('postalCode', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button size="sm" onClick={handleSaveEdit}>Save</Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-600">Email</p>
+                          <p className="font-medium">{member.email}</p>
+                        </div>
+                        {member.mobile && (
+                          <div>
+                            <p className="text-xs text-gray-600">Mobile</p>
+                            <p className="font-medium">{member.mobile}</p>
+                          </div>
+                        )}
+                        {member.phone && (
+                          <div>
+                            <p className="text-xs text-gray-600">Phone (Landline)</p>
+                            <p className="font-medium">{member.phone}</p>
+                          </div>
+                        )}
+                        {member.addressLine1 && (
+                          <div>
+                            <p className="text-xs text-gray-600">Address</p>
+                            <p className="font-medium">{member.addressLine1}</p>
+                            {member.city && member.postalCode && (
+                              <p className="font-medium">{member.city}, {member.postalCode}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </Collapse>
 
                   <Collapse title="Policy Information" size="small">
@@ -256,25 +422,72 @@ export default function OperationsMemberDetailPage() {
                     </div>
                   </Collapse>
 
-                  <Collapse title="Banking Details" size="small">
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <p className="text-xs text-gray-600">Bank Name</p>
-                        <p className="font-medium">{member.bankName || 'N/A'}</p>
+                  <Collapse title="Banking Details" size="small" showEdit onEdit={() => handleEditSection('banking')}>
+                    {editingSection === 'banking' ? (
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Bank Name</label>
+                          <input
+                            type="text"
+                            value={editedData.bankName || ''}
+                            onChange={(e) => handleFieldChange('bankName', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Account Number</label>
+                          <input
+                            type="text"
+                            value={editedData.accountNumber || ''}
+                            onChange={(e) => handleFieldChange('accountNumber', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Branch Code</label>
+                          <input
+                            type="text"
+                            value={editedData.branchCode || ''}
+                            onChange={(e) => handleFieldChange('branchCode', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600 block mb-1">Debit Order Day</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="26"
+                            value={editedData.debitOrderDay || ''}
+                            onChange={(e) => handleFieldChange('debitOrderDay', parseInt(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button size="sm" onClick={handleSaveEdit}>Save</Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-600">Account Number</p>
-                        <p className="font-medium font-mono text-xs">{member.accountNumber || 'N/A'}</p>
+                    ) : (
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <p className="text-xs text-gray-600">Bank Name</p>
+                          <p className="font-medium">{member.bankName || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">Account Number</p>
+                          <p className="font-medium font-mono text-xs">{member.accountNumber || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">Branch Code</p>
+                          <p className="font-medium font-mono text-xs">{member.branchCode || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600">Debit Order Day</p>
+                          <p className="font-medium">{member.debitOrderDay ? `${member.debitOrderDay} of each month` : 'N/A'}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-600">Branch Code</p>
-                        <p className="font-medium font-mono text-xs">{member.branchCode || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600">Debit Order Day</p>
-                        <p className="font-medium">{member.debitOrderDay ? `${member.debitOrderDay} of each month` : 'N/A'}</p>
-                      </div>
-                    </div>
+                    )}
                   </Collapse>
                 </CollapseGroup>
               </CardContent>
