@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { GlowingButton } from '@/components/ui/glowing-button';
+import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1144,6 +1145,12 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           {children}
         </main>
       </div>
+
+      {/* Feedback Widget - Shows on all pages */}
+      <FeedbackWidget 
+        pageName={pathname || 'Unknown Page'} 
+        userRole={user?.roles?.[0] || 'user'} 
+      />
     </div>
   );
 }
