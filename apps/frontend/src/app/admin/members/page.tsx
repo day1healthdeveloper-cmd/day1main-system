@@ -400,9 +400,14 @@ export default function AdminMembersPage() {
                   Showing {startIndex + 1}-{Math.min(endIndex, filteredMembers.length)} of {filteredMembers.length} members
                 </CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={filteredMembers.length === 0}>
-                Export to CSV
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => router.push('/admin/data-import')}>
+                  Bulk Upload
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={filteredMembers.length === 0}>
+                  Export to CSV
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
