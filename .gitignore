@@ -53,3 +53,6 @@ prisma/migrations/
 # Misc
 .turbo/
 .cache/
+
+# Feedback files (optional - remove if you want to track feedback in Git)
+# .kiro/feedback/

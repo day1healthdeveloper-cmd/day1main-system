@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { FeedbackWidget } from '@/components/feedback/feedback-widget';
 
 interface SystemStats {
   totalMembers: number;
@@ -737,6 +738,9 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Feedback Widget */}
+      <FeedbackWidget pageName="Admin Dashboard" userRole="admin" />
     </SidebarLayout>
   );
 }
