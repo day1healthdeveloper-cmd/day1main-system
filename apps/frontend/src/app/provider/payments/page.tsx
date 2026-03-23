@@ -38,7 +38,8 @@ export default function ProviderPaymentsPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
@@ -173,12 +174,22 @@ export default function ProviderPaymentsPage() {
     );
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredPayments = payments.filter((payment) => {
     const matchesSearch =
       payment.paymentNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.referenceNumber.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
+    const matchesStatus = !statusFilter || payment.status === statusFilter;
 
     const matchesDateFrom = !dateFrom || payment.paymentDate >= dateFrom;
     const matchesDateTo = !dateTo || payment.paymentDate <= dateTo;
@@ -269,12 +280,18 @@ export default function ProviderPaymentsPage() {
                 <label htmlFor="search" className="text-sm font-medium">
                   Search
                 </label>
-                <Input
-                  id="search"
-                  placeholder="Payment number, reference..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="search"
+                    placeholder="Payment number, reference..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label htmlFor="status" className="text-sm font-medium">
@@ -286,7 +303,7 @@ export default function ProviderPaymentsPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="pending">Pending</option>
                   <option value="processing">Processing</option>
                   <option value="paid">Paid</option>

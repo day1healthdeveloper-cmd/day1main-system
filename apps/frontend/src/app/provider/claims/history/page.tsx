@@ -25,7 +25,8 @@ export default function ClaimsHistoryPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -142,13 +143,23 @@ export default function ClaimsHistoryPage() {
     );
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredClaims = claims.filter((claim) => {
     const matchesSearch =
       claim.claimNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       claim.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       claim.memberNumber.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || claim.status === statusFilter;
+    const matchesStatus = !statusFilter || claim.status === statusFilter;
 
     const matchesDateFrom = !dateFrom || claim.serviceDate >= dateFrom;
     const matchesDateTo = !dateTo || claim.serviceDate <= dateTo;
@@ -227,12 +238,18 @@ export default function ClaimsHistoryPage() {
                 <label htmlFor="search" className="text-sm font-medium">
                   Search
                 </label>
-                <Input
-                  id="search"
-                  placeholder="Claim number, patient, member..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="search"
+                    placeholder="Claim number, patient, member..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label htmlFor="status" className="text-sm font-medium">
@@ -244,7 +261,7 @@ export default function ClaimsHistoryPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="submitted">Submitted</option>
                   <option value="pending">Pending</option>
                   <option value="approved">Approved</option>
