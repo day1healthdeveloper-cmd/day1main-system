@@ -30,8 +30,9 @@ export default function BrokerPoliciesPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [productFilter, setProductFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [productFilter, setProductFilter] = useState('');
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const [showPolicyDetails, setShowPolicyDetails] = useState(false);
 
@@ -176,14 +177,24 @@ export default function BrokerPoliciesPage() {
     );
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredPolicies = policies.filter((policy) => {
     const matchesSearch =
       policy.policyNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       policy.memberName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       policy.memberEmail.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || policy.status === statusFilter;
-    const matchesProduct = productFilter === 'all' || policy.product === productFilter;
+    const matchesStatus = !statusFilter || policy.status === statusFilter;
+    const matchesProduct = !productFilter || policy.product === productFilter;
 
     return matchesSearch && matchesStatus && matchesProduct;
   });
@@ -283,12 +294,18 @@ export default function BrokerPoliciesPage() {
                 <label htmlFor="search" className="text-sm font-medium">
                   Search
                 </label>
-                <Input
-                  id="search"
-                  placeholder="Policy number, member name, email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="search"
+                    placeholder="Policy number, member name, email..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label htmlFor="statusFilter" className="text-sm font-medium">
@@ -300,7 +317,7 @@ export default function BrokerPoliciesPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="active">Active</option>
                   <option value="lapsed">Lapsed</option>
                   <option value="cancelled">Cancelled</option>
@@ -317,7 +334,7 @@ export default function BrokerPoliciesPage() {
                   onChange={(e) => setProductFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Products</option>
+                  <option value="">Click to select</option>
                   <option value="Premium Plan">Premium Plan</option>
                   <option value="Family Plan">Family Plan</option>
                   <option value="Standard Plan">Standard Plan</option>

@@ -38,7 +38,8 @@ export default function BrokerCommissionsPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [selectedStatement, setSelectedStatement] = useState<CommissionStatement | null>(null);
   const [showStatementDetails, setShowStatementDetails] = useState(false);
 
@@ -186,12 +187,22 @@ export default function BrokerCommissionsPage() {
     );
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredStatements = statements.filter((statement) => {
     const matchesSearch =
       statement.statementNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       statement.period.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || statement.status === statusFilter;
+    const matchesStatus = !statusFilter || statement.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -298,12 +309,18 @@ export default function BrokerCommissionsPage() {
                 <label htmlFor="search" className="text-sm font-medium">
                   Search
                 </label>
-                <Input
-                  id="search"
-                  placeholder="Statement number, period..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="search"
+                    placeholder="Statement number, period..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label htmlFor="statusFilter" className="text-sm font-medium">
@@ -315,7 +332,7 @@ export default function BrokerCommissionsPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="pending">Pending</option>
                   <option value="approved">Approved</option>
                   <option value="paid">Paid</option>
