@@ -29,8 +29,9 @@ export default function BrokerLeadsPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [sourceFilter, setSourceFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('');
   const [showCaptureForm, setShowCaptureForm] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showLeadDetails, setShowLeadDetails] = useState(false);
@@ -198,6 +199,16 @@ export default function BrokerLeadsPage() {
     );
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredLeads = leads.filter((lead) => {
     const matchesSearch =
       lead.leadNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -206,8 +217,8 @@ export default function BrokerLeadsPage() {
       lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.phone.includes(searchTerm);
 
-    const matchesStatus = statusFilter === 'all' || lead.status === statusFilter;
-    const matchesSource = sourceFilter === 'all' || lead.source === sourceFilter;
+    const matchesStatus = !statusFilter || lead.status === statusFilter;
+    const matchesSource = !sourceFilter || lead.source === sourceFilter;
 
     return matchesSearch && matchesStatus && matchesSource;
   });
@@ -524,12 +535,18 @@ export default function BrokerLeadsPage() {
                 <label htmlFor="search" className="text-sm font-medium">
                   Search
                 </label>
-                <Input
-                  id="search"
-                  placeholder="Name, email, phone, lead number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="search"
+                    placeholder="Name, email, phone, lead number..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label htmlFor="statusFilter" className="text-sm font-medium">
@@ -541,7 +558,7 @@ export default function BrokerLeadsPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="new">New</option>
                   <option value="contacted">Contacted</option>
                   <option value="qualified">Qualified</option>
@@ -560,7 +577,7 @@ export default function BrokerLeadsPage() {
                   onChange={(e) => setSourceFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Sources</option>
+                  <option value="">Click to select</option>
                   <option value="website">Website</option>
                   <option value="referral">Referral</option>
                   <option value="walk-in">Walk-in</option>

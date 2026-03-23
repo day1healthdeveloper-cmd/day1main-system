@@ -365,11 +365,17 @@ export default function AdminProvidersPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search</label>
-                <Input 
-                  placeholder="Name, provider number, practice..." 
-                  value={searchTerm} 
-                  onChange={(e) => setSearchTerm(e.target.value)} 
-                />
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Name, provider number, practice..." 
+                    value={searchInput} 
+                    onChange={(e) => setSearchInput(e.target.value)} 
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
@@ -378,7 +384,7 @@ export default function AdminProvidersPage() {
                   onChange={(e) => setStatusFilter(e.target.value)} 
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="active">Active</option>
                   <option value="pending">Pending</option>
                   <option value="inactive">Inactive</option>
