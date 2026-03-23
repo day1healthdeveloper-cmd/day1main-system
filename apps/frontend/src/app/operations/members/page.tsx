@@ -38,11 +38,12 @@ interface FilterOptions {
 export default function OperationsMembersPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [kycFilter, setKycFilter] = useState('all');
-  const [brokerFilter, setBrokerFilter] = useState('all');
-  const [planFilter, setPlanFilter] = useState('all');
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [kycFilter, setKycFilter] = useState('');
+  const [brokerFilter, setBrokerFilter] = useState('');
+  const [planFilter, setPlanFilter] = useState('');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
   const [members, setMembers] = useState<Member[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
@@ -61,11 +62,7 @@ export default function OperationsMembersPage() {
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchMembers();
-    }, 300);
-    
-    return () => clearTimeout(timeoutId);
+    fetchMembers();
   }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, kycFilter, searchTerm]);
 
   const fetchMembers = async () => {
@@ -73,11 +70,11 @@ export default function OperationsMembersPage() {
       setDataLoading(true);
       
       const params = new URLSearchParams();
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (brokerFilter !== 'all') params.append('broker', brokerFilter);
-      if (planFilter !== 'all') params.append('plan', planFilter);
-      if (paymentMethodFilter !== 'all') params.append('payment_method', paymentMethodFilter);
-      if (kycFilter !== 'all') params.append('kyc_status', kycFilter);
+      if (statusFilter && statusFilter !== '') params.append('status', statusFilter);
+      if (brokerFilter && brokerFilter !== '') params.append('broker', brokerFilter);
+      if (planFilter && planFilter !== '') params.append('plan', planFilter);
+      if (paymentMethodFilter && paymentMethodFilter !== '') params.append('payment_method', paymentMethodFilter);
+      if (kycFilter && kycFilter !== '') params.append('kyc_status', kycFilter);
       if (searchTerm) params.append('search', searchTerm);
       
       const response = await fetch(`/api/admin/members?${params.toString()}`, {
@@ -97,6 +94,16 @@ export default function OperationsMembersPage() {
       console.error('Failed to fetch members:', error);
     } finally {
       setDataLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
@@ -181,14 +188,20 @@ export default function OperationsMembersPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-1">
                 <label htmlFor="search" className="text-sm font-medium">Search</label>
-                <Input
-                  id="search"
-                  placeholder="Name, member number, email, ID number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="search"
+                    placeholder="Name, member number, email, ID number..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label htmlFor="statusFilter" className="text-sm font-medium">Status</label>
@@ -198,7 +211,7 @@ export default function OperationsMembersPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="active">Active</option>
                   <option value="pending">Pending</option>
                   <option value="suspended">Suspended</option>
@@ -213,7 +226,7 @@ export default function OperationsMembersPage() {
                   onChange={(e) => setBrokerFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Brokers</option>
+                  <option value="">Click to select</option>
                   {filterOptions.brokers.map(broker => (
                     <option key={broker.code} value={broker.code}>
                       {broker.code} - {broker.name}
@@ -231,7 +244,7 @@ export default function OperationsMembersPage() {
                   onChange={(e) => setPlanFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Plans</option>
+                  <option value="">Click to select</option>
                   {filterOptions.plans.map(plan => (
                     <option key={plan} value={plan}>{plan}</option>
                   ))}
@@ -245,7 +258,7 @@ export default function OperationsMembersPage() {
                   onChange={(e) => setPaymentMethodFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Payment Methods</option>
+                  <option value="">Click to select</option>
                   {filterOptions.paymentMethods.map(method => (
                     <option key={method} value={method}>{method}</option>
                   ))}
