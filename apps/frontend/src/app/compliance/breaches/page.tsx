@@ -127,7 +127,7 @@ export default function BreachesPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
-                  <option>All Statuses</option>
+                  <option value="">Click to select</option>
                   <option>Investigating</option>
                   <option>Contained</option>
                   <option>Resolved</option>

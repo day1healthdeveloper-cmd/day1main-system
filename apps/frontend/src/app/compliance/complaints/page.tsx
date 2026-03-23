@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 
 export default function ComplaintsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const complaints = [
     { id: 'CMP-001', date: '2026-01-10', complainant: 'John Smith', category: 'Privacy', priority: 'high', status: 'open', assignedTo: 'Sarah Jones' },
@@ -45,11 +46,21 @@ export default function ComplaintsPage() {
     }
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredComplaints = complaints.filter(complaint => {
     const matchesSearch = complaint.complainant.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          complaint.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          complaint.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = statusFilter === 'all' || complaint.status === statusFilter;
+    const matchesFilter = !statusFilter || complaint.status === statusFilter;
     return matchesSearch && matchesFilter;
   });
 
@@ -106,11 +117,17 @@ export default function ComplaintsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search</label>
-                <Input
-                  placeholder="Complaint ID, name, category..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Complaint ID, name, category..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
@@ -119,7 +136,7 @@ export default function ComplaintsPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="open">Open</option>
                   <option value="in_progress">In Progress</option>
                   <option value="escalated">Escalated</option>

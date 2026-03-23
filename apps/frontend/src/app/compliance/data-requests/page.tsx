@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 
 export default function DataRequestsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const requests = [
     { id: 'DSR-001', date: '2026-01-10', requester: 'John Smith', email: 'john@example.com', type: 'Access', status: 'pending', dueDate: '2026-01-25' },
@@ -34,11 +35,21 @@ export default function DataRequestsPage() {
     }
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredRequests = requests.filter(req => {
     const matchesSearch = req.requester.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          req.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          req.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = statusFilter === 'all' || req.status === statusFilter;
+    const matchesFilter = !statusFilter || req.status === statusFilter;
     return matchesSearch && matchesFilter;
   });
 
@@ -95,11 +106,17 @@ export default function DataRequestsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search</label>
-                <Input
-                  placeholder="Name, email, request ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Name, email, request ID..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
@@ -108,7 +125,7 @@ export default function DataRequestsPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="pending">Pending</option>
                   <option value="in_progress">In Progress</option>
                   <option value="completed">Completed</option>
