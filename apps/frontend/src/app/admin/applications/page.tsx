@@ -90,7 +90,8 @@ export default function AdminApplicationsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [reviewNotes, setReviewNotes] = useState('');
@@ -150,6 +151,16 @@ export default function AdminApplicationsPage() {
     }
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredApplications = applications.filter(app => {
     const matchesSearch = 
       app.application_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -157,7 +168,7 @@ export default function AdminApplicationsPage() {
       app.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.id_number.includes(searchTerm);
-    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+    const matchesStatus = !statusFilter || app.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -251,11 +262,17 @@ export default function AdminApplicationsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search</label>
-                <Input 
-                  placeholder="Application number, name, email, ID..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Application number, name, email, ID..." 
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
@@ -264,7 +281,7 @@ export default function AdminApplicationsPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="submitted">Submitted</option>
                   <option value="under_review">Under Review</option>
                   <option value="approved">Approved</option>

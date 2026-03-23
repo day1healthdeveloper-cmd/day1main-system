@@ -31,7 +31,8 @@ export default function AdminProvidersPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [providers, setProviders] = useState<Provider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -179,12 +180,22 @@ export default function AdminProvidersPage() {
     );
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredProviders = providers.filter((p) => {
     const matchesSearch = 
       p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       p.provider_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.practice_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
+    const matchesStatus = !statusFilter || p.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 

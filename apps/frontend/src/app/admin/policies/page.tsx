@@ -26,7 +26,8 @@ export default function AdminPoliciesPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [selectedPolicy, setSelectedPolicy] = useState<Policy | null>(null);
   const [showPolicyDetails, setShowPolicyDetails] = useState(false);
   const [showEndorsementForm, setShowEndorsementForm] = useState(false);
@@ -90,6 +91,16 @@ export default function AdminPoliciesPage() {
     return null;
   }
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const getStatusBadge = (status: Policy['status']) => {
     const styles = {
       active: 'bg-green-100 text-green-800',
@@ -109,7 +120,7 @@ export default function AdminPoliciesPage() {
       policy.policyNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       policy.memberName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       policy.memberNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || policy.status === statusFilter;
+    const matchesStatus = !statusFilter || policy.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -171,12 +182,18 @@ export default function AdminPoliciesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="search" className="text-sm font-medium">Search</label>
-                <Input
-                  id="search"
-                  placeholder="Policy number, member name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="search"
+                    placeholder="Policy number, member name..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label htmlFor="statusFilter" className="text-sm font-medium">Status</label>
@@ -186,7 +203,7 @@ export default function AdminPoliciesPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="active">Active</option>
                   <option value="lapsed">Lapsed</option>
                   <option value="cancelled">Cancelled</option>
