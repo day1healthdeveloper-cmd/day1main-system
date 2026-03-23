@@ -26,7 +26,8 @@ export default function AdminBrokersPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [brokers, setBrokers] = useState<Broker[]>([]);
   const [loadingBrokers, setLoadingBrokers] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -177,10 +178,20 @@ export default function AdminBrokersPage() {
     return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] || styles.inactive}`}>{status.toUpperCase()}</span>;
   };
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const filteredBrokers = brokers.filter((b) => {
     const matchesSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          (b.code && b.code.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = statusFilter === 'all' || b.status === statusFilter;
+    const matchesStatus = !statusFilter || b.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -307,12 +318,22 @@ export default function AdminBrokersPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search</label>
-                <Input placeholder="Name, broker number, email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Name, broker number, email..." 
+                    value={searchInput} 
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
                 <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md">
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="active">Active</option>
                   <option value="pending">Pending</option>
                   <option value="suspended">Suspended</option>

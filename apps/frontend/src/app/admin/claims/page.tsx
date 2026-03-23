@@ -26,7 +26,8 @@ export default function AdminClaimsPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('pending');
+  const [searchInput, setSearchInput] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [showClaimDetails, setShowClaimDetails] = useState(false);
 
@@ -67,6 +68,16 @@ export default function AdminClaimsPage() {
 
   if (loading || !user) return <div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>;
 
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   const getStatusBadge = (status: Claim['status']) => {
     const styles = {
       pending: 'bg-yellow-100 text-yellow-800',
@@ -79,7 +90,7 @@ export default function AdminClaimsPage() {
 
   const filteredClaims = claims.filter((claim) => {
     const matchesSearch = claim.claimNumber.toLowerCase().includes(searchTerm.toLowerCase()) || claim.memberName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || claim.status === statusFilter;
+    const matchesStatus = !statusFilter || claim.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -134,12 +145,22 @@ export default function AdminClaimsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Search</label>
-                <Input placeholder="Claim number, member name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Claim number, member name..." 
+                    value={searchInput} 
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
                 <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md">
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="pending">Pending</option>
                   <option value="pended">Pended</option>
                   <option value="approved">Approved</option>
