@@ -41,11 +41,11 @@ export default function AdminMembersPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [kycFilter, setKycFilter] = useState('all');
-  const [brokerFilter, setBrokerFilter] = useState('all');
-  const [planFilter, setPlanFilter] = useState('all');
-  const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [kycFilter, setKycFilter] = useState('');
+  const [brokerFilter, setBrokerFilter] = useState('');
+  const [planFilter, setPlanFilter] = useState('');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [showMemberDetails, setShowMemberDetails] = useState(false);
   const [showEditPlanModal, setShowEditPlanModal] = useState(false);
@@ -83,11 +83,11 @@ export default function AdminMembersPage() {
       console.log('🔄 Fetching members from API...');
       
       const params = new URLSearchParams();
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (brokerFilter !== 'all') params.append('broker', brokerFilter);
-      if (planFilter !== 'all') params.append('plan', planFilter);
-      if (paymentMethodFilter !== 'all') params.append('payment_method', paymentMethodFilter);
-      if (kycFilter !== 'all') params.append('kyc_status', kycFilter);
+      if (statusFilter && statusFilter !== '') params.append('status', statusFilter);
+      if (brokerFilter && brokerFilter !== '') params.append('broker', brokerFilter);
+      if (planFilter && planFilter !== '') params.append('plan', planFilter);
+      if (paymentMethodFilter && paymentMethodFilter !== '') params.append('payment_method', paymentMethodFilter);
+      if (kycFilter && kycFilter !== '') params.append('kyc_status', kycFilter);
       if (searchTerm) params.append('search', searchTerm);
       
       const response = await fetch(`/api/admin/members?${params.toString()}`, {
@@ -114,11 +114,11 @@ export default function AdminMembersPage() {
 
   const handleClearFilters = () => {
     setSearchTerm('');
-    setStatusFilter('all');
-    setKycFilter('all');
-    setBrokerFilter('all');
-    setPlanFilter('all');
-    setPaymentMethodFilter('all');
+    setStatusFilter('');
+    setKycFilter('');
+    setBrokerFilter('');
+    setPlanFilter('');
+    setPaymentMethodFilter('');
     setCurrentPage(1);
   };
 
@@ -315,7 +315,7 @@ export default function AdminMembersPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="active">Active</option>
                   <option value="pending">Pending</option>
                   <option value="suspended">Suspended</option>
@@ -330,7 +330,7 @@ export default function AdminMembersPage() {
                   onChange={(e) => setBrokerFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Brokers</option>
+                  <option value="">Click to select</option>
                   {filterOptions.brokers.map(broker => (
                     <option key={broker.code} value={broker.code}>
                       {broker.code} - {broker.name}
@@ -348,7 +348,7 @@ export default function AdminMembersPage() {
                   onChange={(e) => setPlanFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Plans</option>
+                  <option value="">Click to select</option>
                   {filterOptions.plans.map(plan => (
                     <option key={plan} value={plan}>{plan}</option>
                   ))}
@@ -362,7 +362,7 @@ export default function AdminMembersPage() {
                   onChange={(e) => setPaymentMethodFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All Payment Methods</option>
+                  <option value="">Click to select</option>
                   {filterOptions.paymentMethods.map(method => (
                     <option key={method} value={method}>{method}</option>
                   ))}
@@ -376,7 +376,7 @@ export default function AdminMembersPage() {
                   onChange={(e) => setKycFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="all">All KYC Statuses</option>
+                  <option value="">Click to select</option>
                   <option value="verified">Verified</option>
                   <option value="pending">Pending</option>
                   <option value="failed">Failed</option>
