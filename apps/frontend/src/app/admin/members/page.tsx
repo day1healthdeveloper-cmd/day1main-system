@@ -41,6 +41,7 @@ export default function AdminMembersPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState(''); // Separate state for input field
   const [statusFilter, setStatusFilter] = useState('');
   const [kycFilter, setKycFilter] = useState('');
   const [brokerFilter, setBrokerFilter] = useState('');
@@ -70,11 +71,7 @@ export default function AdminMembersPage() {
   const [itemsPerPage] = useState(20);
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchMembers();
-    }, 300);
-    
-    return () => clearTimeout(timeoutId);
+    fetchMembers();
   }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, kycFilter, searchTerm]);
 
   const fetchMembers = async () => {
@@ -114,12 +111,24 @@ export default function AdminMembersPage() {
 
   const handleClearFilters = () => {
     setSearchTerm('');
+    setSearchInput('');
     setStatusFilter('');
     setKycFilter('');
     setBrokerFilter('');
     setPlanFilter('');
     setPaymentMethodFilter('');
     setCurrentPage(1);
+  };
+
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+    setCurrentPage(1);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   const handleExportCSV = () => {
@@ -298,14 +307,20 @@ export default function AdminMembersPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-1">
                 <label htmlFor="search" className="text-sm font-medium">Search</label>
-                <Input
-                  id="search"
-                  placeholder="Name, member number, email, ID number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="search"
+                    placeholder="Name, member number, email, ID number..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                  />
+                  <Button onClick={handleSearch} className="whitespace-nowrap">
+                    Search
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label htmlFor="statusFilter" className="text-sm font-medium">Status</label>
