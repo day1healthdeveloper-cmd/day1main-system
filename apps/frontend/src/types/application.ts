@@ -48,6 +48,8 @@ export interface ApplicationData {
   branchCode?: string
   accountHolderName?: string
   debitOrderDay?: number
+  collection_method?: 'individual_debit_order' | 'group_debit_order' | 'eft'
+  preferEFT?: boolean // Legacy field
   
   // Step 8: Terms & Marketing Consent
   voiceRecordingUrl?: string
@@ -75,12 +77,63 @@ export interface Dependent {
 }
 
 export interface MedicalHistory {
-  hasPreExisting: boolean
+  // Old fields (keeping for backward compatibility)
+  hasPreExisting?: boolean
   preExistingConditions?: string
   currentMedications?: string
-  hasPreviousInsurer: boolean
+  hasPreviousInsurer?: boolean
   previousInsurer?: string
   reasonForSwitching?: string
+  
+  // New comprehensive medical history fields
+  chronicMedication?: 'yes' | 'no' | ''
+  chronicEntries?: Array<{
+    person: string
+    condition: string
+    medication: string
+  }>
+  
+  otherTreatment?: 'yes' | 'no' | ''
+  otherEntries?: Array<{
+    person: string
+    condition: string
+    medication: string
+  }>
+  
+  dentalTreatment?: 'yes' | 'no' | ''
+  dentalEntries?: Array<{
+    person: string
+    condition: string
+    medication: string
+  }>
+  
+  futureConcerns?: 'yes' | 'no' | ''
+  futureEntries?: Array<{
+    person: string
+    condition: string
+    medication: string
+  }>
+  
+  majorOperations?: 'yes' | 'no' | ''
+  operationEntries?: Array<{
+    person: string
+    procedure: string
+    date: string
+  }>
+  
+  hospitalAdmissions?: 'yes' | 'no' | ''
+  hospitalEntries?: Array<{
+    person: string
+    reason: string
+    date: string
+  }>
+  
+  medicalAidMember?: 'yes' | 'no' | ''
+  medicalAidEntries?: Array<{
+    person: string
+    schemeName: string
+    inceptionDate: string
+  }>
 }
 
 export interface PlanSelection {
