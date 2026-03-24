@@ -50,17 +50,33 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
 
   const getModalContent = (type: string) => {
     switch(type) {
-      case 'agreement':
-        return `By signing this application, you agree to the terms and conditions of Day1Health medical insurance.\n\nThis agreement is legally binding and covers all aspects of your medical insurance policy with Day1Health.`
+      case 'brochure':
+        return `View the complete plan brochure for ${data.planName || 'your selected plan'}.\n\nThis brochure contains detailed information about your coverage, benefits, waiting periods, and terms.`
       case 'coverage':
         return `Selected Plan: ${data.planName || 'N/A'}\nMonthly Premium: R${data.monthlyPrice || 'N/A'}\n\nYour coverage begins on the plan start date after approval and first payment. Waiting periods apply as specified in your plan.`
       case 'payment':
         return `Bank: ${data.bankName || 'N/A'}\nAccount Holder: ${data.accountHolderName || 'N/A'}\nDebit Order Day: ${data.debitOrderDay || 'N/A'} of each month\n\nMonthly premiums are due on the debit order day you selected. Failure to pay may result in suspension of cover.`
-      case 'privacy':
-        return `Your information is protected under POPIA (Protection of Personal Information Act).\n\nWe will not share your data without consent except as required by law.`
       default:
         return ''
     }
+  }
+
+  const getBrochureUrl = () => {
+    // Map plan names to brochure filenames
+    const planName = data.planName?.toLowerCase() || ''
+    
+    // Match the actual brochure filenames in the brochures folder
+    if (planName.includes('value plus hospital')) return '/brochures/Day 1 Health Value Plus Hospital Plan 2025.pdf'
+    if (planName.includes('value plus senior hospital')) return '/brochures/Day1 Health Value Plus Senior Hospital Plan 2025.pdf'
+    if (planName.includes('value plus')) return '/brochures/Day1 Health Value Plus Plan 2025.pdf'
+    if (planName.includes('executive hospital')) return '/brochures/Day1 Health Executive Hospital Plan 2025.pdf'
+    if (planName.includes('executive')) return '/brochures/Day1 Health Executive Plan 2025.pdf'
+    if (planName.includes('platinum hospital')) return '/brochures/Day1 Health Platinum Hospital Plan 2025.pdf'
+    if (planName.includes('platinum')) return '/brochures/Day1 Health Platinum Plan 2025.pdf'
+    if (planName.includes('senior comprehensive')) return '/brochures/Day1 Health Senior Comprehensive Plan 2025.pdf'
+    
+    // Default fallback to Value Plus Hospital
+    return '/brochures/Day 1 Health Value Plus Hospital Plan 2025.pdf'
   }
 
   const startRecording = async () => {
@@ -248,12 +264,188 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
                 <span className={data.proofOfAddressUrl ? 'text-green-600' : 'text-gray-400'}>{data.proofOfAddressUrl ? '✓' : '○'}</span>
                 <span>Proof of Address</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={data.selfieUrl ? 'text-green-600' : 'text-gray-400'}>{data.selfieUrl ? '✓' : '○'}</span>
-                <span>Selfie</span>
-              </div>
             </div>
           </div>
+
+          {/* Dependents */}
+          {data.dependents && data.dependents.length > 0 && (
+            <div className="bg-white rounded p-2 mb-2">
+              <div className="flex justify-between items-start mb-1">
+                <h4 className="text-xs font-bold">Dependents</h4>
+                <button onClick={() => goToStep(3)} className="text-green-600 hover:text-green-700 text-xs font-medium">Edit</button>
+              </div>
+              <div className="space-y-1 text-xs">
+                {data.dependents.map((dep, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="text-green-600">✓</span>
+                    <span>{dep.firstName} {dep.lastName} ({dep.relationship})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Medical History */}
+          {data.medicalHistory && (
+            <div className="bg-white rounded p-2 mb-2">
+              <div className="flex justify-between items-start mb-1">
+                <h4 className="text-xs font-bold">Medical History</h4>
+                <button onClick={() => goToStep(4)} className="text-green-600 hover:text-green-700 text-xs font-medium">Edit</button>
+              </div>
+              <div className="space-y-2 text-xs">
+                {/* Chronic Medication */}
+                <div>
+                  <p className="font-medium text-gray-700">Chronic Medication:</p>
+                  <p className="text-gray-600">{data.medicalHistory.chronicMedication === 'yes' ? 'Yes' : 'No'}</p>
+                  {data.medicalHistory.chronicMedication === 'yes' && data.medicalHistory.chronicEntries && data.medicalHistory.chronicEntries.length > 0 && (
+                    <div className="ml-2 mt-1 space-y-1">
+                      {data.medicalHistory.chronicEntries.map((entry: any, idx: number) => (
+                        <div key={idx} className="text-xs bg-gray-50 p-1 rounded">
+                          <p><strong>{entry.person}:</strong> {entry.condition} - {entry.medication}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Other Treatment */}
+                <div>
+                  <p className="font-medium text-gray-700">Other Medical Treatment:</p>
+                  <p className="text-gray-600">{data.medicalHistory.otherTreatment === 'yes' ? 'Yes' : 'No'}</p>
+                  {data.medicalHistory.otherTreatment === 'yes' && data.medicalHistory.otherEntries && data.medicalHistory.otherEntries.length > 0 && (
+                    <div className="ml-2 mt-1 space-y-1">
+                      {data.medicalHistory.otherEntries.map((entry: any, idx: number) => (
+                        <div key={idx} className="text-xs bg-gray-50 p-1 rounded">
+                          <p><strong>{entry.person}:</strong> {entry.condition} - {entry.medication}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Dental Treatment */}
+                <div>
+                  <p className="font-medium text-gray-700">Dental Treatment:</p>
+                  <p className="text-gray-600">{data.medicalHistory.dentalTreatment === 'yes' ? 'Yes' : 'No'}</p>
+                  {data.medicalHistory.dentalTreatment === 'yes' && data.medicalHistory.dentalEntries && data.medicalHistory.dentalEntries.length > 0 && (
+                    <div className="ml-2 mt-1 space-y-1">
+                      {data.medicalHistory.dentalEntries.map((entry: any, idx: number) => (
+                        <div key={idx} className="text-xs bg-gray-50 p-1 rounded">
+                          <p><strong>{entry.person}:</strong> {entry.condition} - {entry.medication}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Future Concerns */}
+                <div>
+                  <p className="font-medium text-gray-700">Future Medical Concerns:</p>
+                  <p className="text-gray-600">{data.medicalHistory.futureConcerns === 'yes' ? 'Yes' : 'No'}</p>
+                  {data.medicalHistory.futureConcerns === 'yes' && data.medicalHistory.futureEntries && data.medicalHistory.futureEntries.length > 0 && (
+                    <div className="ml-2 mt-1 space-y-1">
+                      {data.medicalHistory.futureEntries.map((entry: any, idx: number) => (
+                        <div key={idx} className="text-xs bg-gray-50 p-1 rounded">
+                          <p><strong>{entry.person}:</strong> {entry.condition} - {entry.medication}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Major Operations */}
+                <div>
+                  <p className="font-medium text-gray-700">Major Operations (past 5 years):</p>
+                  <p className="text-gray-600">{data.medicalHistory.majorOperations === 'yes' ? 'Yes' : 'No'}</p>
+                  {data.medicalHistory.majorOperations === 'yes' && data.medicalHistory.operationEntries && data.medicalHistory.operationEntries.length > 0 && (
+                    <div className="ml-2 mt-1 space-y-1">
+                      {data.medicalHistory.operationEntries.map((entry: any, idx: number) => (
+                        <div key={idx} className="text-xs bg-gray-50 p-1 rounded">
+                          <p><strong>{entry.person}:</strong> {entry.procedure} ({entry.date})</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Hospital Admissions */}
+                <div>
+                  <p className="font-medium text-gray-700">Hospital Admissions (past 5 years):</p>
+                  <p className="text-gray-600">{data.medicalHistory.hospitalAdmissions === 'yes' ? 'Yes' : 'No'}</p>
+                  {data.medicalHistory.hospitalAdmissions === 'yes' && data.medicalHistory.hospitalEntries && data.medicalHistory.hospitalEntries.length > 0 && (
+                    <div className="ml-2 mt-1 space-y-1">
+                      {data.medicalHistory.hospitalEntries.map((entry: any, idx: number) => (
+                        <div key={idx} className="text-xs bg-gray-50 p-1 rounded">
+                          <p><strong>{entry.person}:</strong> {entry.reason} ({entry.date})</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Medical Aid Membership */}
+                <div>
+                  <p className="font-medium text-gray-700">Medical Aid/Hospital Plan Member:</p>
+                  <p className="text-gray-600">{data.medicalHistory.medicalAidMember === 'yes' ? 'Yes' : 'No'}</p>
+                  {data.medicalHistory.medicalAidMember === 'yes' && data.medicalHistory.medicalAidEntries && data.medicalHistory.medicalAidEntries.length > 0 && (
+                    <div className="ml-2 mt-1 space-y-1">
+                      {data.medicalHistory.medicalAidEntries.map((entry: any, idx: number) => (
+                        <div key={idx} className="text-xs bg-gray-50 p-1 rounded">
+                          <p><strong>{entry.person}:</strong> {entry.schemeName} (since {entry.inceptionDate})</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Banking Details */}
+          {data.bankName && (
+            <div className="bg-white rounded p-2 mb-2">
+              <div className="flex justify-between items-start mb-1">
+                <h4 className="text-xs font-bold">Banking Details</h4>
+                <button onClick={() => goToStep(5)} className="text-green-600 hover:text-green-700 text-xs font-medium">Edit</button>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="bg-green-50 border border-green-200 rounded p-2">
+                  <p className="text-gray-600 mb-0.5">Payment Method</p>
+                  <p className="font-bold text-green-700">
+                    {data.collection_method === 'eft' ? '💳 EFT Payment' : '🏦 Debit Order'}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {data.collection_method === 'eft' 
+                      ? 'You will receive payment notifications and upload proof of payment'
+                      : 'Your account will be debited automatically each month'
+                    }
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="text-gray-600">Bank</p>
+                    <p className="font-medium">{data.bankName}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Account Holder</p>
+                    <p className="font-medium">{data.accountHolderName}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Account Number</p>
+                    <p className="font-medium">{data.accountNumber ? `****${data.accountNumber.slice(-4)}` : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Branch Code</p>
+                    <p className="font-medium">{data.branchCode || 'N/A'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-gray-600">{data.collection_method === 'eft' ? 'Payment Date' : 'Debit Order Day'}</p>
+                    <p className="font-medium">{data.debitOrderDay}{data.debitOrderDay === 1 ? 'st' : data.debitOrderDay === 2 ? 'nd' : data.debitOrderDay === 3 ? 'rd' : 'th'} of each month</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Plan Info */}
           {data.planName && (
@@ -274,20 +466,32 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
           <div className="border border-gray-300 rounded p-2 max-h-32 overflow-y-auto bg-gray-50 text-xs mb-2">
             <p className="font-bold mb-1">Day1Health Terms and Conditions</p>
             <p className="mb-1 flex justify-between items-center">
-              <span><strong>1. Agreement:</strong> By signing, you agree to Day1Health terms.</span>
-              <button onClick={() => setViewModal('agreement')} className="ml-2 px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">View</button>
+              <span><strong>1. Plan Brochure:</strong> View the cover plan brochure</span>
+              <a
+                href={getBrochureUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-2 px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                View
+              </a>
             </p>
             <p className="mb-1 flex justify-between items-center">
-              <span><strong>2. Coverage:</strong> Begins after approval and first payment.</span>
-              <button onClick={() => setViewModal('coverage')} className="ml-2 px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">View</button>
+              <span><strong>2. Product Guide:</strong> View the complete product guide</span>
+              <a
+                href="/brochures/Day1 Health Product Guide.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-2 px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                View
+              </a>
             </p>
-            <p className="mb-1 flex justify-between items-center">
-              <span><strong>3. Payment:</strong> Monthly premiums due on selected day.</span>
-              <button onClick={() => setViewModal('payment')} className="ml-2 px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">View</button>
+            <p className="mb-1">
+              <span><strong>3. Coverage:</strong> Begins after approval and first payment.</span>
             </p>
-            <p className="flex justify-between items-center">
-              <span><strong>4. Privacy:</strong> Protected under POPIA.</span>
-              <button onClick={() => setViewModal('privacy')} className="ml-2 px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">View</button>
+            <p>
+              <span><strong>4. Payment:</strong> Monthly premiums due on selected day.</span>
             </p>
           </div>
 

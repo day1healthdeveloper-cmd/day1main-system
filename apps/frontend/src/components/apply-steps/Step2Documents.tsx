@@ -48,20 +48,12 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
   // Proof of Address
   const [addressDocs, setAddressDocs] = useState<DocumentItem[]>([])
   
-  // Selfie
-  const [selfie, setSelfie] = useState<string | null>(data.selfieUrl || null)
-  const [cameraActive, setCameraActive] = useState(false)
-  
   // Error states
   const [idError, setIdError] = useState<string | null>(null)
   const [addressError, setAddressError] = useState<string | null>(null)
-  const [selfieError, setSelfieError] = useState<string | null>(null)
   
   const idFileInputRef = useRef<HTMLInputElement>(null)
   const addressFileInputRef = useRef<HTMLInputElement>(null)
-  const selfieFileInputRef = useRef<HTMLInputElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const rotateImage = (imageUrl: string, degrees: number): Promise<string> => {
     return new Promise((resolve) => {
@@ -263,80 +255,6 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
     })
   }
 
-  // Selfie Handlers
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        setCameraActive(true)
-      }
-    } catch (err) {
-      alert('Unable to access camera. Please upload a photo instead.')
-    }
-  }
-
-  const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream
-      stream.getTracks().forEach(track => track.stop())
-      setCameraActive(false)
-    }
-  }
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const canvas = canvasRef.current
-      const video = videoRef.current
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext('2d')
-      ctx?.drawImage(video, 0, 0)
-      const imageUrl = canvas.toDataURL('image/jpeg')
-      setSelfie(imageUrl)
-      updateData({ selfieUrl: imageUrl })
-      stopCamera()
-    }
-  }
-
-  const handleSelfieFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif']
-    if (!validTypes.includes(file.type.toLowerCase())) {
-      setSelfieError('Invalid file format. Please upload JPG, PNG, or HEIC images only.')
-      e.target.value = ''
-      return
-    }
-
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setSelfieError('File too large. Maximum size is 10MB.')
-      e.target.value = ''
-      return
-    }
-
-    setSelfieError(null)
-
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const result = reader.result as string
-      setSelfie(result)
-      updateData({ selfieUrl: result })
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const handleSelfieRotate = async (direction: 'left' | 'right') => {
-    if (!selfie) return
-    const degrees = direction === 'left' ? -90 : 90
-    const rotatedUrl = await rotateImage(selfie, degrees)
-    setSelfie(rotatedUrl)
-    updateData({ selfieUrl: rotatedUrl })
-  }
-
   const handleConfirm = () => {
     updateData({
       idNumber: extractedData.idNumber,
@@ -354,10 +272,6 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
     }
     if (addressDocs.length === 0) {
       alert('Please upload proof of address')
-      return
-    }
-    if (!selfie) {
-      alert('Please take a selfie or upload a photo')
       return
     }
     nextStep()
@@ -646,125 +560,20 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
           )}
         </div>
 
-        {/* 3. Selfie Verification */}
-        <div className="border-2 border-gray-200 rounded-lg p-3 bg-gray-50">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${selfie ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-600'}`}>
-                {selfie ? '✓' : '3'}
-              </div>
-              <h3 className="text-sm font-bold">Selfie Verification</h3>
-            </div>
-            {selfie && <span className="text-xs text-green-600 font-medium">✓ Captured</span>}
-          </div>
-
-          {!selfie && !cameraActive && (
-            <div className="space-y-2">
-              <button
-                onClick={startCamera}
-                className="w-full px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 font-medium"
-              >
-                📸 Take Selfie
-              </button>
-              <div className="text-center text-xs text-gray-500">or</div>
-              <button
-                onClick={() => selfieFileInputRef.current?.click()}
-                className="w-full px-3 py-2 text-sm border-2 border-gray-300 text-gray-700 rounded hover:bg-gray-50 font-medium"
-              >
-                📁 Upload Photo
-              </button>
-              <input
-                ref={selfieFileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleSelfieFileChange}
-                className="hidden"
-              />
-              <p className="text-xs text-gray-500 text-center">Face camera directly • Good lighting • No glasses/hats</p>
-              <p className="text-xs text-blue-600 font-medium text-center">Accepted: JPG, PNG, HEIC (Max 10MB)</p>
-              {selfieError && (
-                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-                  <p className="text-xs text-red-600 font-medium">❌ {selfieError}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {cameraActive && (
-            <div className="space-y-2">
-              <div className="relative bg-black rounded overflow-hidden aspect-square">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={capturePhoto}
-                  className="flex-1 px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 font-medium"
-                >
-                  📸 Capture
-                </button>
-                <button
-                  onClick={stopCamera}
-                  className="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {selfie && (
-            <div className="space-y-2">
-              <div className="border-2 border-gray-300 rounded overflow-hidden aspect-square">
-                <img src={selfie} alt="Selfie" className="w-full h-full object-cover" />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleSelfieRotate('left')}
-                  className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
-                >
-                  ↺ Rotate
-                </button>
-                <button
-                  onClick={() => handleSelfieRotate('right')}
-                  className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
-                >
-                  Rotate ↻
-                </button>
-                <button
-                  onClick={() => {
-                    setSelfie(null)
-                    updateData({ selfieUrl: undefined })
-                  }}
-                  className="flex-1 px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                >
-                  Retake
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <canvas ref={canvasRef} className="hidden" />
-
         {/* Progress Indicator */}
         <div className="bg-blue-50 border border-blue-200 rounded p-2">
           <div className="flex items-center justify-between text-xs">
             <span className="font-medium text-blue-900">
-              {[idDocument, addressDocs.length > 0, selfie].filter(Boolean).length} of 3 documents uploaded
+              {[idDocument, addressDocs.length > 0].filter(Boolean).length} of 2 documents uploaded
             </span>
             <span className="text-blue-700">
-              {Math.round(([idDocument, addressDocs.length > 0, selfie].filter(Boolean).length / 3) * 100)}%
+              {Math.round(([idDocument, addressDocs.length > 0].filter(Boolean).length / 2) * 100)}%
             </span>
           </div>
           <div className="w-full bg-blue-200 rounded-full h-1.5 mt-1">
             <div 
               className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-              style={{ width: `${([idDocument, addressDocs.length > 0, selfie].filter(Boolean).length / 3) * 100}%` }}
+              style={{ width: `${([idDocument, addressDocs.length > 0].filter(Boolean).length / 2) * 100}%` }}
             />
           </div>
         </div>

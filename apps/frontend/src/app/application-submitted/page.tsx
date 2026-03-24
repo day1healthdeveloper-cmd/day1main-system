@@ -104,7 +104,7 @@ export default function ApplicationSubmittedPage() {
           )}
 
           {/* What Happens Next */}
-          <div className="text-left mb-8">
+          <div className="text-left mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">What happens next?</h2>
             <div className="space-y-4">
               <div className="flex gap-4">
@@ -143,8 +143,25 @@ export default function ApplicationSubmittedPage() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Welcome Pack</h3>
-                  <p className="text-sm text-gray-600">You'll receive your member card, policy documents, and welcome pack via email and post.</p>
+                  <p className="text-sm text-gray-600">Your member card, policy documents, and welcome pack will be sent via email and post once your policy is officially accepted.</p>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Office Hours Notice */}
+          <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium text-blue-900 mb-1">Office Hours</h3>
+                <p className="text-sm text-blue-800">
+                  Applications submitted outside our office hours (Weekdays: 8:00 AM - 4:30 PM, Saturdays: 8:00 AM - 1:00 PM) will be processed at the earliest available time during business hours.
+                </p>
               </div>
             </div>
           </div>
@@ -160,9 +177,8 @@ export default function ApplicationSubmittedPage() {
           <div className="border-t border-gray-200 pt-6 mb-6">
             <h3 className="font-medium text-gray-900 mb-3">Need help?</h3>
             <div className="text-sm text-gray-600 space-y-1">
-              <p>📞 Call us: 0800 DAY1 HEALTH</p>
-              <p>📧 Email: applications@day1health.co.za</p>
-              <p>⏰ Monday - Friday: 8:00 AM - 5:00 PM</p>
+              <p>📞 Call us: 0876 100 600</p>
+              <p>📧 Email: sales@day1.co.za</p>
             </div>
           </div>
 

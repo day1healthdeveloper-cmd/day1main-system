@@ -36,6 +36,9 @@ export default function Step7Banking({ data, updateData, nextStep, prevStep }: P
     debitOrderDay: data.debitOrderDay || 1,
   })
 
+  const [paymentMethod, setPaymentMethod] = useState<'debit_order' | 'eft'>(
+    data.collection_method === 'eft' ? 'eft' : 'debit_order'
+  )
   const [verifying, setVerifying] = useState(false)
   const [verificationStatus, setVerificationStatus] = useState<'idle' | 'success' | 'failed'>('idle')
   const [verificationMessage, setVerificationMessage] = useState('')
@@ -90,16 +93,91 @@ export default function Step7Banking({ data, updateData, nextStep, prevStep }: P
   }
 
   const handleNext = () => {
-    updateData(formData)
+    updateData({ 
+      ...formData, 
+      collection_method: paymentMethod === 'eft' ? 'eft' : 'individual_debit_order'
+    })
     nextStep()
   }
 
   return (
     <div>
       <h2 className="text-lg font-bold mb-1">Banking Details</h2>
-      <p className="text-xs text-gray-600 mb-2">For monthly debit order payments</p>
+      <p className="text-xs text-gray-600 mb-3">For monthly premium payments</p>
 
       <div className="space-y-2">
+        {/* Payment Method Selector */}
+        <div className="border-2 border-gray-300 rounded-lg p-3 bg-gray-50">
+          <label className="block text-xs font-medium text-gray-700 mb-2">
+            Payment Method *
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('debit_order')}
+              className={`p-3 rounded-lg border-2 transition-all ${
+                paymentMethod === 'debit_order'
+                  ? 'border-green-600 bg-green-50'
+                  : 'border-gray-300 bg-white hover:border-green-400'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                  paymentMethod === 'debit_order' ? 'border-green-600' : 'border-gray-300'
+                }`}>
+                  {paymentMethod === 'debit_order' && (
+                    <div className="w-2 h-2 rounded-full bg-green-600"></div>
+                  )}
+                </div>
+                <span className="text-sm font-bold">Debit Order</span>
+              </div>
+              <p className="text-xs text-gray-600 text-left">
+                Automatic monthly deduction from your account
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('eft')}
+              className={`p-3 rounded-lg border-2 transition-all ${
+                paymentMethod === 'eft'
+                  ? 'border-green-600 bg-green-50'
+                  : 'border-gray-300 bg-white hover:border-green-400'
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                  paymentMethod === 'eft' ? 'border-green-600' : 'border-gray-300'
+                }`}>
+                  {paymentMethod === 'eft' && (
+                    <div className="w-2 h-2 rounded-full bg-green-600"></div>
+                  )}
+                </div>
+                <span className="text-sm font-bold">EFT Payment</span>
+              </div>
+              <p className="text-xs text-gray-600 text-left">
+                Manual transfer with payment notification
+              </p>
+            </button>
+          </div>
+
+          {/* Payment Method Info */}
+          {paymentMethod === 'debit_order' && (
+            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-xs text-blue-800">
+                ℹ️ <strong>Debit Order:</strong> Your account will be debited automatically on your selected day each month. Convenient and hassle-free.
+              </p>
+            </div>
+          )}
+
+          {paymentMethod === 'eft' && (
+            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-xs text-blue-800">
+                ℹ️ <strong>EFT Payment:</strong> You'll receive SMS/email notifications on your payment date with banking details and a link to upload your proof of payment.
+              </p>
+            </div>
+          )}
+        </div>
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-0.5">
             Bank Name *
@@ -187,16 +265,21 @@ export default function Step7Banking({ data, updateData, nextStep, prevStep }: P
 
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
-            Debit Order Day *
+            {paymentMethod === 'debit_order' ? 'Debit Order Day *' : 'Payment Date *'}
           </label>
-          <p className="text-xs text-gray-500 mb-2">Select the day of the month for your debit order</p>
+          <p className="text-xs text-gray-500 mb-2">
+            {paymentMethod === 'debit_order' 
+              ? 'Select the day of the month for your debit order'
+              : 'Select the day you will make your EFT payment each month'
+            }
+          </p>
           <div className="grid grid-cols-7 gap-1 p-2 bg-gray-50 border border-gray-300 rounded">
             {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
               <button
                 key={day}
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, debitOrderDay: day }))}
-                className={`aspect-square flex items-center justify-center text-sm font-medium rounded transition-colors ${
+                className={`h-8 w-8 flex items-center justify-center text-xs font-medium rounded transition-colors ${
                   formData.debitOrderDay === day
                     ? 'bg-green-600 text-white shadow-md'
                     : 'bg-white text-gray-700 border border-gray-200 hover:border-green-500 hover:bg-green-50'
@@ -209,7 +292,12 @@ export default function Step7Banking({ data, updateData, nextStep, prevStep }: P
           <p className="text-xs text-gray-500 mt-1">
             Selected: <span className="font-medium text-green-600">{formData.debitOrderDay}{formData.debitOrderDay === 1 ? 'st' : formData.debitOrderDay === 2 ? 'nd' : formData.debitOrderDay === 3 ? 'rd' : 'th'}</span> of each month
           </p>
-          <p className="text-xs text-gray-500 mt-0.5">Choose a day when you know you'll have funds available</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {paymentMethod === 'debit_order'
+              ? 'Choose a day when you know you\'ll have funds available'
+              : 'You\'ll receive an SMS/email notification on the morning of this date'
+            }
+          </p>
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded p-2">

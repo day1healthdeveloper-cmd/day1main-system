@@ -104,7 +104,7 @@ export default function Step5Dependents({ data, updateData, nextStep, prevStep }
   return (
     <div>
       <h2 className="text-lg font-bold mb-1">Dependents</h2>
-      <p className="text-xs text-gray-600 mb-2">Add your spouse and/or children (optional)</p>
+      <p className="text-xs text-gray-600 mb-2">Add your spouse/partner and/or children (optional)</p>
 
       <div className="space-y-2">
         {dependents.length > 0 && (
@@ -158,7 +158,7 @@ export default function Step5Dependents({ data, updateData, nextStep, prevStep }
                 required
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500"
               >
-                <option value="spouse">Spouse</option>
+                <option value="spouse">Spouse/Partner</option>
                 <option value="child">Child</option>
               </select>
             </div>

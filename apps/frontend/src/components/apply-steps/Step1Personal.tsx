@@ -351,14 +351,7 @@ export default function Step1Personal({ data, updateData, nextStep }: Props) {
         <div className="grid grid-cols-2 gap-2">
           <div className="relative">
             <div className="flex items-center justify-between mb-0.5">
-              <label className="block text-xs font-medium text-gray-700">ID Number *</label>
-              <button
-                type="button"
-                onClick={() => setShowIdScanner(true)}
-                className="text-xs px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
-              >
-                📷 Scan ID
-              </button>
+              <label className="block text-xs font-medium text-gray-700">ID Number/Passport Number *</label>
             </div>
             <input 
               type="text" 
@@ -368,7 +361,7 @@ export default function Step1Personal({ data, updateData, nextStep }: Props) {
               readOnly
               required 
               maxLength={13} 
-              placeholder="Click to enter ID"
+              placeholder="Click to enter ID/Passport"
               className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 cursor-pointer" 
             />
             
