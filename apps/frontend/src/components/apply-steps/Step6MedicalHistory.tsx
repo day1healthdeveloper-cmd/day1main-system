@@ -76,6 +76,11 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
   const [showFutureForm, setShowFutureForm] = useState(false)
   const [futureForm, setFutureForm] = useState<MedicalEntry>({ person: '', condition: '', medication: '' })
 
+  const [pregnancy, setPregnancy] = useState<'yes' | 'no' | ''>('')
+  const [pregnancyEntries, setPregnancyEntries] = useState<Array<{ person: string; dueDate: string }>>([])
+  const [showPregnancyForm, setShowPregnancyForm] = useState(false)
+  const [pregnancyForm, setPregnancyForm] = useState<{ person: string; dueDate: string }>({ person: '', dueDate: '' })
+
   const [majorOperations, setMajorOperations] = useState<'yes' | 'no' | ''>('')
   const [operationEntries, setOperationEntries] = useState<OperationEntry[]>([])
   const [showOperationForm, setShowOperationForm] = useState(false)
@@ -102,6 +107,8 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
         dentalEntries,
         futureConcerns,
         futureEntries,
+        pregnancy,
+        pregnancyEntries,
         majorOperations,
         operationEntries,
         hospitalAdmissions,
@@ -607,7 +614,119 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
           )}
         </div>
 
-        {/* 5. Major Operations */}
+        {/* 5. Pregnancy */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+          <p className="text-sm font-medium mb-2">Are you or any of your dependants pregnant?</p>
+          <div className="flex gap-3 mb-2">
+            <label className="flex items-center gap-1.5">
+              <input
+                type="radio"
+                checked={pregnancy === 'yes'}
+                onChange={() => {
+                  setPregnancy('yes')
+                  setShowPregnancyForm(false)
+                }}
+                className="w-4 h-4"
+              />
+              <span className="text-sm">Yes</span>
+            </label>
+            <label className="flex items-center gap-1.5">
+              <input
+                type="radio"
+                checked={pregnancy === 'no'}
+                onChange={() => {
+                  setPregnancy('no')
+                  setPregnancyEntries([])
+                  setShowPregnancyForm(false)
+                }}
+                className="w-4 h-4"
+              />
+              <span className="text-sm">No</span>
+            </label>
+          </div>
+
+          {pregnancy === 'yes' && (
+            <div className="space-y-2">
+              {pregnancyEntries.map((entry, idx) => (
+                <div key={idx} className="bg-white border border-gray-300 rounded p-2 text-xs">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p><strong>Person:</strong> {entry.person}</p>
+                      <p><strong>Due Date:</strong> {entry.dueDate}</p>
+                    </div>
+                    <button
+                      onClick={() => setPregnancyEntries(pregnancyEntries.filter((_, i) => i !== idx))}
+                      className="text-red-600 hover:text-red-700 text-xs"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {!showPregnancyForm && (
+                <button
+                  onClick={() => setShowPregnancyForm(true)}
+                  className="w-full px-3 py-1.5 text-xs border-2 border-dashed border-gray-300 text-gray-700 rounded hover:bg-gray-100"
+                >
+                  + Add Entry
+                </button>
+              )}
+
+              {showPregnancyForm && (
+                <div className="bg-white border border-gray-300 rounded p-2 space-y-2">
+                  <div>
+                    <label className="block text-xs font-medium mb-0.5">Person *</label>
+                    <select
+                      value={pregnancyForm.person}
+                      onChange={(e) => setPregnancyForm({ ...pregnancyForm, person: e.target.value })}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                    >
+                      <option value="">Select person</option>
+                      {people.map((p, i) => (
+                        <option key={i} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-0.5">Expected Due Date *</label>
+                    <input
+                      type="date"
+                      value={pregnancyForm.dueDate}
+                      onChange={(e) => setPregnancyForm({ ...pregnancyForm, dueDate: e.target.value })}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        if (pregnancyForm.person && pregnancyForm.dueDate) {
+                          setPregnancyEntries([...pregnancyEntries, pregnancyForm])
+                          setPregnancyForm({ person: '', dueDate: '' })
+                          setShowPregnancyForm(false)
+                        }
+                      }}
+                      className="flex-1 px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Add
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowPregnancyForm(false)
+                        setPregnancyForm({ person: '', dueDate: '' })
+                      }}
+                      className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 6. Major Operations */}
         <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
           <p className="text-sm font-medium mb-2">Have you or any of your dependants undergone any major operations in the past 5 years?</p>
           <div className="flex gap-3 mb-2">

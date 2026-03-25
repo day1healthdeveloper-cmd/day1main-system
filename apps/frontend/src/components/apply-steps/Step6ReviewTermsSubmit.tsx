@@ -353,6 +353,21 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
                   )}
                 </div>
 
+                {/* Pregnancy */}
+                <div>
+                  <p className="font-medium text-gray-700">Pregnancy:</p>
+                  <p className="text-gray-600">{data.medicalHistory.pregnancy === 'yes' ? 'Yes' : 'No'}</p>
+                  {data.medicalHistory.pregnancy === 'yes' && data.medicalHistory.pregnancyEntries && data.medicalHistory.pregnancyEntries.length > 0 && (
+                    <div className="ml-2 mt-1 space-y-1">
+                      {data.medicalHistory.pregnancyEntries.map((entry: any, idx: number) => (
+                        <div key={idx} className="text-xs bg-gray-50 p-1 rounded">
+                          <p><strong>{entry.person}:</strong> Due Date: {entry.dueDate}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Major Operations */}
                 <div>
                   <p className="font-medium text-gray-700">Major Operations (past 5 years):</p>

@@ -114,6 +114,12 @@ export interface MedicalHistory {
     medication: string
   }>
   
+  pregnancy?: 'yes' | 'no' | ''
+  pregnancyEntries?: Array<{
+    person: string
+    dueDate: string
+  }>
+  
   majorOperations?: 'yes' | 'no' | ''
   operationEntries?: Array<{
     person: string
