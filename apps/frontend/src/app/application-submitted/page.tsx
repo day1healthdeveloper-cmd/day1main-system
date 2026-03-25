@@ -143,7 +143,7 @@ export default function ApplicationSubmittedPage() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Welcome Pack</h3>
-                  <p className="text-sm text-gray-600">Your member card, policy documents, and welcome pack will be sent via email and post once your policy is officially accepted.</p>
+                  <p className="text-sm text-gray-600">Your membership card, policy documents, and welcome pack will be sent via email and post once your policy is officially accepted.</p>
                 </div>
               </div>
             </div>
