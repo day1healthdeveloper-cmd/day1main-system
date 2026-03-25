@@ -578,20 +578,58 @@ export default function AdminApplicationsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <span className="text-sm">ID Document</span>
-                        {selectedApplication.id_document_url ? (
-                          <Button size="sm" variant="outline" onClick={() => window.open(selectedApplication.id_document_url, '_blank')}>View</Button>
-                        ) : (
-                          <span className="text-sm text-gray-500">Not uploaded</span>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">ID Document</span>
+                          {selectedApplication.id_document_url ? (
+                            <Button size="sm" variant="outline" onClick={() => window.open(selectedApplication.id_document_url, '_blank')}>View</Button>
+                          ) : (
+                            <span className="text-sm text-gray-500">Not uploaded</span>
+                          )}
+                        </div>
+                        {selectedApplication.id_document_url && (
+                          <div className="border border-gray-300 rounded bg-white p-2 mt-2">
+                            <img 
+                              src={selectedApplication.id_document_url} 
+                              alt="ID Document" 
+                              className="max-w-full h-auto max-h-96 mx-auto"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Unable to display image. <a href="' + selectedApplication.id_document_url + '" target="_blank" class="text-blue-600 underline">Click here to open</a></p>';
+                                }
+                              }}
+                            />
+                          </div>
                         )}
                       </div>
-                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <span className="text-sm">Proof of Address</span>
-                        {selectedApplication.proof_of_address_url ? (
-                          <Button size="sm" variant="outline" onClick={() => window.open(selectedApplication.proof_of_address_url, '_blank')}>View</Button>
-                        ) : (
-                          <span className="text-sm text-gray-500">Not uploaded</span>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">Proof of Address</span>
+                          {selectedApplication.proof_of_address_url ? (
+                            <Button size="sm" variant="outline" onClick={() => window.open(selectedApplication.proof_of_address_url, '_blank')}>View</Button>
+                          ) : (
+                            <span className="text-sm text-gray-500">Not uploaded</span>
+                          )}
+                        </div>
+                        {selectedApplication.proof_of_address_url && (
+                          <div className="border border-gray-300 rounded bg-white p-2 mt-2">
+                            <img 
+                              src={selectedApplication.proof_of_address_url} 
+                              alt="Proof of Address" 
+                              className="max-w-full h-auto max-h-96 mx-auto"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Unable to display image. <a href="' + selectedApplication.proof_of_address_url + '" target="_blank" class="text-blue-600 underline">Click here to open</a></p>';
+                                }
+                              }}
+                            />
+                          </div>
                         )}
                       </div>
                     </div>
