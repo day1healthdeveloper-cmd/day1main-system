@@ -668,7 +668,7 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
               className="mt-0.5"
             />
             <span className="text-xs font-medium">
-              I confirm that I have read, understood, and accept the terms and conditions. I authorize Day1Health to process my application and debit my bank account for monthly premiums.
+              I confirm that I have read, understood, and accept the terms and conditions. I authorize Day1Health to process my application and collect monthly premiums via debit order or EFT payment from my bank account.
             </span>
           </label>
         </div>
