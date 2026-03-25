@@ -327,7 +327,7 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
                 <div>
                   <p className="font-medium text-gray-700">Dental Treatment:</p>
                   <p className="text-gray-600">{data.medicalHistory.dentalTreatment === 'yes' ? 'Yes' : 'No'}</p>
-                  {data.medicalHistory.dentalEntries && data.medicalHistory.dentalEntries.length > 0 && (
+                  {data.medicalHistory.dentalTreatment === 'yes' && data.medicalHistory.dentalEntries && data.medicalHistory.dentalEntries.length > 0 && (
                     <div className="ml-2 mt-1 space-y-1">
                       {data.medicalHistory.dentalEntries.map((entry: any, idx: number) => (
                         <div key={idx} className="text-xs bg-gray-50 p-1 rounded">

@@ -97,6 +97,40 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
   const [medicalAidForm, setMedicalAidForm] = useState<MedicalAidEntry>({ person: '', schemeName: '', inceptionDate: '' })
 
   const handleNext = () => {
+    // Validate all questions are answered
+    if (!chronicMedication) {
+      alert('Please answer the chronic medication question')
+      return
+    }
+    if (!otherTreatment) {
+      alert('Please answer the other medical treatment question')
+      return
+    }
+    if (!dentalTreatment) {
+      alert('Please answer the dental treatment question')
+      return
+    }
+    if (!futureConcerns) {
+      alert('Please answer the future medical concerns question')
+      return
+    }
+    if (!pregnancy) {
+      alert('Please answer the pregnancy question')
+      return
+    }
+    if (!majorOperations) {
+      alert('Please answer the major operations question')
+      return
+    }
+    if (!hospitalAdmissions) {
+      alert('Please answer the hospital admissions question')
+      return
+    }
+    if (!medicalAidMember) {
+      alert('Please answer the medical aid membership question')
+      return
+    }
+
     updateData({ 
       medicalHistory: {
         chronicMedication,
