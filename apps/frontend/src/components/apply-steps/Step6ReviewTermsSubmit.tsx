@@ -79,6 +79,25 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
     return '/brochures/Day 1 Health Value Plus Hospital Plan 2025.pdf'
   }
 
+  const getPolicyWordingUrl = () => {
+    // Map plan names to policy wording filenames
+    const planName = data.planName?.toLowerCase() || ''
+    
+    // Match the actual policy wording filenames in the plan exact wording folder
+    if (planName.includes('value plus hospital')) return '/plan exact wording/Value Plus Hospital Plan -Exact Policy Wording - Final.pdf'
+    if (planName.includes('value plus senior hospital')) return '/plan exact wording/Value Plus Senior Hospital Plan - Exact Policy Wording - Final.pdf'
+    if (planName.includes('value plus')) return '/plan exact wording/Value Plus Plan - Exact Policy Wording - Final.pdf'
+    if (planName.includes('executive hospital')) return '/plan exact wording/Executive Hospital Plan - Exact Policy Wording - Final.pdf'
+    if (planName.includes('executive junior')) return '/plan exact wording/Executive Junior Plan - Exact Policy Wording - Final.pdf'
+    if (planName.includes('executive')) return '/plan exact wording/Executive Plan - Exact Policy Wording - Final.pdf'
+    if (planName.includes('platinum hospital')) return '/plan exact wording/Platinum Hospital Plan - Exact Policy Wording - Final.pdf'
+    if (planName.includes('platinum')) return '/plan exact wording/Platinum Plan -Exact Policy Wording - Final.pdf'
+    if (planName.includes('senior comprehensive')) return '/plan exact wording/Senior Comprehensive Plan -Exact Policy Wording - Final.pdf'
+    
+    // Default fallback to Value Plus Hospital
+    return '/plan exact wording/Value Plus Hospital Plan -Exact Policy Wording - Final.pdf'
+  }
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -505,7 +524,7 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
             <p className="mb-1 flex justify-between items-center">
               <span><strong>3. Exact Policy Wording:</strong> View the exact policy wording</span>
               <a
-                href="/brochures/Day1 Health Policy Wording.pdf"
+                href={getPolicyWordingUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ml-2 px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
