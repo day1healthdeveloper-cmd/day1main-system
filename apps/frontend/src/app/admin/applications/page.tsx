@@ -55,6 +55,7 @@ interface Application {
   }
   id_document_url: string
   proof_of_address_url: string
+  proof_of_address_urls: string[]
   selfie_url: string
   bank_name: string
   account_number: string
@@ -101,6 +102,8 @@ export default function AdminApplicationsPage() {
   const [reviewNotes, setReviewNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [showIdDocument, setShowIdDocument] = useState(false);
+  const [showProofOfAddress, setShowProofOfAddress] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -420,7 +423,11 @@ export default function AdminApplicationsPage() {
                   <h2 className="text-2xl font-bold">Member Application Details</h2>
                   <p className="text-gray-600">{selectedApplication.application_number}</p>
                 </div>
-                <Button variant="outline" onClick={() => setShowDetails(false)}>Close</Button>
+                <Button variant="outline" onClick={() => {
+                  setShowDetails(false);
+                  setShowIdDocument(false);
+                  setShowProofOfAddress(false);
+                }}>Close</Button>
               </div>
 
               <div className="p-6 space-y-6">
@@ -578,16 +585,34 @@ export default function AdminApplicationsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
+                      {/* ID Document */}
                       <div className="p-3 bg-gray-50 rounded">
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">ID Document</span>
-                          {selectedApplication.id_document_url ? (
-                            <Button size="sm" variant="outline" onClick={() => window.open(selectedApplication.id_document_url, '_blank')}>View</Button>
-                          ) : (
-                            <span className="text-sm text-gray-500">Not uploaded</span>
-                          )}
+                          <div className="flex gap-2">
+                            {selectedApplication.id_document_url ? (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => setShowIdDocument(!showIdDocument)}
+                                >
+                                  {showIdDocument ? 'Hide' : 'Show'}
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => window.open(selectedApplication.id_document_url, '_blank')}
+                                >
+                                  Open
+                                </Button>
+                              </>
+                            ) : (
+                              <span className="text-sm text-gray-500">Not uploaded</span>
+                            )}
+                          </div>
                         </div>
-                        {selectedApplication.id_document_url && (
+                        {showIdDocument && selectedApplication.id_document_url && (
                           <div className="border border-gray-300 rounded bg-white p-2 mt-2">
                             <img 
                               src={selectedApplication.id_document_url} 
@@ -605,30 +630,80 @@ export default function AdminApplicationsPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* Proof of Address */}
                       <div className="p-3 bg-gray-50 rounded">
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">Proof of Address</span>
-                          {selectedApplication.proof_of_address_url ? (
-                            <Button size="sm" variant="outline" onClick={() => window.open(selectedApplication.proof_of_address_url, '_blank')}>View</Button>
-                          ) : (
-                            <span className="text-sm text-gray-500">Not uploaded</span>
-                          )}
+                          <div className="flex gap-2">
+                            {(selectedApplication.proof_of_address_url || (selectedApplication.proof_of_address_urls && selectedApplication.proof_of_address_urls.length > 0)) ? (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => setShowProofOfAddress(!showProofOfAddress)}
+                                >
+                                  {showProofOfAddress ? 'Hide' : 'Show'}
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => {
+                                    const url = selectedApplication.proof_of_address_url || selectedApplication.proof_of_address_urls?.[0];
+                                    if (url) window.open(url, '_blank');
+                                  }}
+                                >
+                                  Open
+                                </Button>
+                              </>
+                            ) : (
+                              <span className="text-sm text-gray-500">Not uploaded</span>
+                            )}
+                          </div>
                         </div>
-                        {selectedApplication.proof_of_address_url && (
-                          <div className="border border-gray-300 rounded bg-white p-2 mt-2">
-                            <img 
-                              src={selectedApplication.proof_of_address_url} 
-                              alt="Proof of Address" 
-                              className="max-w-full h-auto max-h-96 mx-auto"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Unable to display image. <a href="' + selectedApplication.proof_of_address_url + '" target="_blank" class="text-blue-600 underline">Click here to open</a></p>';
-                                }
-                              }}
-                            />
+                        {showProofOfAddress && (
+                          <div className="space-y-2 mt-2">
+                            {/* Single proof of address URL */}
+                            {selectedApplication.proof_of_address_url && (
+                              <div className="border border-gray-300 rounded bg-white p-2">
+                                <img 
+                                  src={selectedApplication.proof_of_address_url} 
+                                  alt="Proof of Address" 
+                                  className="max-w-full h-auto max-h-96 mx-auto"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      parent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Unable to display image. <a href="' + selectedApplication.proof_of_address_url + '" target="_blank" class="text-blue-600 underline">Click here to open</a></p>';
+                                    }
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {/* Multiple proof of address URLs */}
+                            {selectedApplication.proof_of_address_urls && selectedApplication.proof_of_address_urls.length > 0 && (
+                              <>
+                                {selectedApplication.proof_of_address_urls.map((url, idx) => (
+                                  <div key={idx} className="border border-gray-300 rounded bg-white p-2">
+                                    <p className="text-xs text-gray-600 mb-1">Document {idx + 1}</p>
+                                    <img 
+                                      src={url} 
+                                      alt={`Proof of Address ${idx + 1}`} 
+                                      className="max-w-full h-auto max-h-96 mx-auto"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                          parent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Unable to display image. <a href="' + url + '" target="_blank" class="text-blue-600 underline">Click here to open</a></p>';
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                ))}
+                              </>
+                            )}
                           </div>
                         )}
                       </div>
