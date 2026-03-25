@@ -58,6 +58,10 @@ interface Application {
   selfie_url: string
   bank_name: string
   account_number: string
+  branch_code: string
+  account_holder_name: string
+  debit_order_day: number
+  collection_method: string
   medical_history: any
   marketing_consent: boolean
   review_notes: string
@@ -528,14 +532,40 @@ export default function AdminApplicationsPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-600">Bank</p>
-                        <p className="font-medium">{selectedApplication.bank_name || 'N/A'}</p>
+                    <div className="space-y-3">
+                      <div className="bg-green-50 border border-green-200 rounded p-3">
+                        <p className="text-sm text-gray-600 mb-1">Payment Method</p>
+                        <p className="font-bold text-green-700">
+                          {selectedApplication.collection_method === 'eft' ? '💳 EFT Payment' : '🏦 Debit Order'}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {selectedApplication.collection_method === 'eft' 
+                            ? 'Member will receive payment notifications and upload proof of payment'
+                            : 'Account will be debited automatically each month'
+                          }
+                        </p>
                       </div>
-                      <div>
-                        <p className="text-gray-600">Account Number</p>
-                        <p className="font-medium">****{selectedApplication.account_number?.slice(-4) || 'N/A'}</p>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-600">Bank</p>
+                          <p className="font-medium">{selectedApplication.bank_name || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Account Holder</p>
+                          <p className="font-medium">{selectedApplication.account_holder_name || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Account Number</p>
+                          <p className="font-medium">****{selectedApplication.account_number?.slice(-4) || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Branch Code</p>
+                          <p className="font-medium">{selectedApplication.branch_code || 'N/A'}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-gray-600">{selectedApplication.collection_method === 'eft' ? 'Payment Date' : 'Debit Order Day'}</p>
+                          <p className="font-medium">{selectedApplication.debit_order_day}{selectedApplication.debit_order_day === 1 ? 'st' : selectedApplication.debit_order_day === 2 ? 'nd' : selectedApplication.debit_order_day === 3 ? 'rd' : 'th'} of each month</p>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -551,7 +581,7 @@ export default function AdminApplicationsPage() {
                       <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
                         <span className="text-sm">ID Document</span>
                         {selectedApplication.id_document_url ? (
-                          <Button size="sm" variant="outline">View</Button>
+                          <Button size="sm" variant="outline" onClick={() => window.open(selectedApplication.id_document_url, '_blank')}>View</Button>
                         ) : (
                           <span className="text-sm text-gray-500">Not uploaded</span>
                         )}
@@ -559,15 +589,7 @@ export default function AdminApplicationsPage() {
                       <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
                         <span className="text-sm">Proof of Address</span>
                         {selectedApplication.proof_of_address_url ? (
-                          <Button size="sm" variant="outline">View</Button>
-                        ) : (
-                          <span className="text-sm text-gray-500">Not uploaded</span>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <span className="text-sm">Selfie</span>
-                        {selectedApplication.selfie_url ? (
-                          <Button size="sm" variant="outline">View</Button>
+                          <Button size="sm" variant="outline" onClick={() => window.open(selectedApplication.proof_of_address_url, '_blank')}>View</Button>
                         ) : (
                           <span className="text-sm text-gray-500">Not uploaded</span>
                         )}
@@ -575,6 +597,141 @@ export default function AdminApplicationsPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Medical History */}
+                {selectedApplication.medical_history && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Heart className="w-5 h-5" />
+                        Medical History
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4 text-sm">
+                        {/* Chronic Medication */}
+                        <div>
+                          <p className="font-medium text-gray-700">Chronic Medication:</p>
+                          <p className="text-gray-600">{selectedApplication.medical_history.chronicMedication === 'yes' ? 'Yes' : 'No'}</p>
+                          {selectedApplication.medical_history.chronicMedication === 'yes' && selectedApplication.medical_history.chronicEntries && selectedApplication.medical_history.chronicEntries.length > 0 && (
+                            <div className="ml-2 mt-1 space-y-1">
+                              {selectedApplication.medical_history.chronicEntries.map((entry: any, idx: number) => (
+                                <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
+                                  <p><strong>{entry.person}:</strong> {entry.condition} - {entry.medication}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Other Treatment */}
+                        <div>
+                          <p className="font-medium text-gray-700">Other Medical Treatment:</p>
+                          <p className="text-gray-600">{selectedApplication.medical_history.otherTreatment === 'yes' ? 'Yes' : 'No'}</p>
+                          {selectedApplication.medical_history.otherTreatment === 'yes' && selectedApplication.medical_history.otherEntries && selectedApplication.medical_history.otherEntries.length > 0 && (
+                            <div className="ml-2 mt-1 space-y-1">
+                              {selectedApplication.medical_history.otherEntries.map((entry: any, idx: number) => (
+                                <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
+                                  <p><strong>{entry.person}:</strong> {entry.condition} - {entry.medication}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Dental Treatment */}
+                        <div>
+                          <p className="font-medium text-gray-700">Dental Treatment:</p>
+                          <p className="text-gray-600">{selectedApplication.medical_history.dentalTreatment === 'yes' ? 'Yes' : 'No'}</p>
+                          {selectedApplication.medical_history.dentalTreatment === 'yes' && selectedApplication.medical_history.dentalEntries && selectedApplication.medical_history.dentalEntries.length > 0 && (
+                            <div className="ml-2 mt-1 space-y-1">
+                              {selectedApplication.medical_history.dentalEntries.map((entry: any, idx: number) => (
+                                <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
+                                  <p><strong>{entry.person}:</strong> {entry.condition} - {entry.medication}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Future Concerns */}
+                        <div>
+                          <p className="font-medium text-gray-700">Future Medical Concerns:</p>
+                          <p className="text-gray-600">{selectedApplication.medical_history.futureConcerns === 'yes' ? 'Yes' : 'No'}</p>
+                          {selectedApplication.medical_history.futureConcerns === 'yes' && selectedApplication.medical_history.futureEntries && selectedApplication.medical_history.futureEntries.length > 0 && (
+                            <div className="ml-2 mt-1 space-y-1">
+                              {selectedApplication.medical_history.futureEntries.map((entry: any, idx: number) => (
+                                <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
+                                  <p><strong>{entry.person}:</strong> {entry.condition} - {entry.medication}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Pregnancy */}
+                        <div>
+                          <p className="font-medium text-gray-700">Pregnancy:</p>
+                          <p className="text-gray-600">{selectedApplication.medical_history.pregnancy === 'yes' ? 'Yes' : 'No'}</p>
+                          {selectedApplication.medical_history.pregnancy === 'yes' && selectedApplication.medical_history.pregnancyEntries && selectedApplication.medical_history.pregnancyEntries.length > 0 && (
+                            <div className="ml-2 mt-1 space-y-1">
+                              {selectedApplication.medical_history.pregnancyEntries.map((entry: any, idx: number) => (
+                                <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
+                                  <p><strong>{entry.person}:</strong> Due Date: {entry.dueDate}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Major Operations */}
+                        <div>
+                          <p className="font-medium text-gray-700">Major Operations (past 5 years):</p>
+                          <p className="text-gray-600">{selectedApplication.medical_history.majorOperations === 'yes' ? 'Yes' : 'No'}</p>
+                          {selectedApplication.medical_history.majorOperations === 'yes' && selectedApplication.medical_history.operationEntries && selectedApplication.medical_history.operationEntries.length > 0 && (
+                            <div className="ml-2 mt-1 space-y-1">
+                              {selectedApplication.medical_history.operationEntries.map((entry: any, idx: number) => (
+                                <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
+                                  <p><strong>{entry.person}:</strong> {entry.procedure} ({entry.date})</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Hospital Admissions */}
+                        <div>
+                          <p className="font-medium text-gray-700">Hospital Admissions (past 5 years):</p>
+                          <p className="text-gray-600">{selectedApplication.medical_history.hospitalAdmissions === 'yes' ? 'Yes' : 'No'}</p>
+                          {selectedApplication.medical_history.hospitalAdmissions === 'yes' && selectedApplication.medical_history.hospitalEntries && selectedApplication.medical_history.hospitalEntries.length > 0 && (
+                            <div className="ml-2 mt-1 space-y-1">
+                              {selectedApplication.medical_history.hospitalEntries.map((entry: any, idx: number) => (
+                                <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
+                                  <p><strong>{entry.person}:</strong> {entry.reason} ({entry.date})</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Medical Aid Membership */}
+                        <div>
+                          <p className="font-medium text-gray-700">Medical Aid/Hospital Plan Member:</p>
+                          <p className="text-gray-600">{selectedApplication.medical_history.medicalAidMember === 'yes' ? 'Yes' : 'No'}</p>
+                          {selectedApplication.medical_history.medicalAidMember === 'yes' && selectedApplication.medical_history.medicalAidEntries && selectedApplication.medical_history.medicalAidEntries.length > 0 && (
+                            <div className="ml-2 mt-1 space-y-1">
+                              {selectedApplication.medical_history.medicalAidEntries.map((entry: any, idx: number) => (
+                                <div key={idx} className="text-xs bg-gray-50 p-2 rounded">
+                                  <p><strong>{entry.person}:</strong> {entry.schemeName} (since {entry.inceptionDate})</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Voice Recording & Digital Signature */}
                 <Card>
