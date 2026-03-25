@@ -558,7 +558,7 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
           <div className="border border-gray-300 rounded p-2 mb-2">
             <h4 className="text-xs font-bold mb-1">🎤 Voice Acceptance (Required)</h4>
             <p className="text-xs text-gray-600 mb-2">
-              Record: "I, {data.firstName} {data.lastName}, accept the terms and conditions of Day1Health"
+              Record: "I, {data.firstName} {data.lastName}, confirm that I have read the Terms and Conditions of the brochure, product guide and exact policy wording and understand the contents thereof."
             </p>
             
             {!voiceRecorded ? (
