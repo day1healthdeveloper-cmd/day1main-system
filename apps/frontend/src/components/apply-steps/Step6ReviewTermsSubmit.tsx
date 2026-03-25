@@ -502,11 +502,22 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
                 View
               </a>
             </p>
+            <p className="mb-1 flex justify-between items-center">
+              <span><strong>3. Exact Policy Wording:</strong> View the exact policy wording</span>
+              <a
+                href="/brochures/Day1 Health Policy Wording.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-2 px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                View
+              </a>
+            </p>
             <p className="mb-1">
-              <span><strong>3. Coverage:</strong> Begins after approval and first payment.</span>
+              <span><strong>4. Coverage:</strong> Begins after approval and first payment.</span>
             </p>
             <p>
-              <span><strong>4. Payment:</strong> Monthly premiums due on selected day.</span>
+              <span><strong>5. Payment:</strong> Monthly premiums due on selected day.</span>
             </p>
           </div>
 
