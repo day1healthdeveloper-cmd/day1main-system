@@ -9,12 +9,60 @@ export async function GET(request: NextRequest) {
     
     // Get query parameters for filtering
     const searchParams = request.nextUrl.searchParams
+    const statsOnly = searchParams.get('stats_only') === 'true'
+    const includeDependants = searchParams.get('include_dependants') === 'true'
     const status = searchParams.get('status')
     const broker = searchParams.get('broker')
     const plan = searchParams.get('plan')
     const paymentMethod = searchParams.get('payment_method')
     const kycStatus = searchParams.get('kyc_status')
     const search = searchParams.get('search')
+    
+    // If only stats are requested, return them quickly
+    if (statsOnly) {
+      const { count: totalMembersCount } = await supabaseAdmin
+        .from('members')
+        .select('*', { count: 'exact', head: true })
+      
+      const { count: totalDependantsCount } = await supabaseAdmin
+        .from('member_dependants')
+        .select('*', { count: 'exact', head: true })
+      
+      const { count: activeMembersCount } = await supabaseAdmin
+        .from('members')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+      
+      const { count: activeDependantsCount } = await supabaseAdmin
+        .from('member_dependants')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+      
+      const { count: pendingCount } = await supabaseAdmin
+        .from('members')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+      
+      const { count: suspendedMembersCount } = await supabaseAdmin
+        .from('members')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'suspended')
+      
+      const { count: suspendedDependantsCount } = await supabaseAdmin
+        .from('member_dependants')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'suspended')
+
+      const stats = {
+        total: (totalMembersCount || 0) + (totalDependantsCount || 0),
+        active: (activeMembersCount || 0) + (activeDependantsCount || 0),
+        pending: pendingCount || 0,
+        suspended: (suspendedMembersCount || 0) + (suspendedDependantsCount || 0),
+        kycPending: pendingCount || 0,
+      }
+
+      return NextResponse.json({ stats })
+    }
     
     // Build query with filters
     let query = supabaseAdmin
@@ -53,35 +101,84 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
 
-    // Transform members to match the expected format
-    const transformedMembers = (members || []).map(member => ({
-      id: member.id,
-      memberNumber: member.member_number,
-      firstName: member.first_name,
-      lastName: member.last_name,
-      idNumber: member.id_number || 'N/A',
-      email: member.email || 'N/A',
-      phone: member.mobile || 'N/A',
-      status: member.status,
-      brokerCode: member.broker_code,
-      brokerName: member.brokers?.name || 'N/A',
-      policyNumber: member.member_number,
-      product: member.plan_name || 'No Plan Assigned',
-      planId: member.plan_id,
-      paymentMethod: member.payment_method || 'N/A',
-      monthlyPremium: member.monthly_premium || 0,
-      joinDate: member.activated_at || member.created_at,
-      kycStatus: member.status === 'active' ? 'verified' : 'pending',
-      riskScore: 0,
+    // Transform members and fetch dependants if requested
+    const transformedMembers = await Promise.all((members || []).map(async (member) => {
+      const transformedMember: any = {
+        id: member.id,
+        memberNumber: member.member_number,
+        firstName: member.first_name,
+        lastName: member.last_name,
+        idNumber: member.id_number || 'N/A',
+        email: member.email || 'N/A',
+        phone: member.mobile || 'N/A',
+        status: member.status,
+        brokerCode: member.broker_code,
+        brokerName: member.brokers?.name || 'N/A',
+        policyNumber: member.member_number,
+        product: member.plan_name || 'No Plan Assigned',
+        planId: member.plan_id,
+        paymentMethod: member.payment_method || 'N/A',
+        monthlyPremium: member.monthly_premium || 0,
+        joinDate: member.activated_at || member.created_at,
+        kycStatus: member.status === 'active' ? 'verified' : 'pending',
+        riskScore: 0,
+        dependants: []
+      }
+
+      // Fetch dependants if requested
+      if (includeDependants) {
+        const { data: dependants } = await supabaseAdmin
+          .from('member_dependants')
+          .select('*')
+          .eq('member_number', member.member_number)
+          .order('dependant_code')
+
+        if (dependants && dependants.length > 0) {
+          transformedMember.dependants = dependants.map((dep: any) => ({
+            id: dep.id,
+            memberNumber: dep.member_number,
+            firstName: dep.first_name,
+            lastName: dep.last_name,
+            idNumber: dep.id_number || 'N/A',
+            email: 'N/A',
+            phone: 'N/A',
+            status: dep.status,
+            brokerCode: member.broker_code,
+            brokerName: member.brokers?.name || 'N/A',
+            policyNumber: dep.member_number,
+            product: member.plan_name || 'No Plan Assigned',
+            planId: member.plan_id,
+            paymentMethod: 'N/A',
+            monthlyPremium: 0,
+            joinDate: dep.created_at,
+            kycStatus: dep.status === 'active' ? 'verified' : 'pending',
+            riskScore: 0,
+            isDependant: true,
+            dependantType: dep.dependant_type,
+            dependantCode: dep.dependant_code
+          }))
+        }
+      }
+
+      return transformedMember
     }))
 
-    // Get all stats (unfiltered)
-    const { count: totalCount } = await supabaseAdmin
+    // Get all stats (unfiltered) - include dependants
+    const { count: totalMembersCount } = await supabaseAdmin
       .from('members')
       .select('*', { count: 'exact', head: true })
     
-    const { count: activeCount } = await supabaseAdmin
+    const { count: totalDependantsCount } = await supabaseAdmin
+      .from('member_dependants')
+      .select('*', { count: 'exact', head: true })
+    
+    const { count: activeMembersCount } = await supabaseAdmin
       .from('members')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'active')
+    
+    const { count: activeDependantsCount } = await supabaseAdmin
+      .from('member_dependants')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active')
     
@@ -90,16 +187,21 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending')
     
-    const { count: suspendedCount } = await supabaseAdmin
+    const { count: suspendedMembersCount } = await supabaseAdmin
       .from('members')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'suspended')
+    
+    const { count: suspendedDependantsCount } = await supabaseAdmin
+      .from('member_dependants')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'suspended')
 
     const stats = {
-      total: totalCount || 0,
-      active: activeCount || 0,
+      total: (totalMembersCount || 0) + (totalDependantsCount || 0),
+      active: (activeMembersCount || 0) + (activeDependantsCount || 0),
       pending: pendingCount || 0,
-      suspended: suspendedCount || 0,
+      suspended: (suspendedMembersCount || 0) + (suspendedDependantsCount || 0),
       kycPending: pendingCount || 0,
     }
 

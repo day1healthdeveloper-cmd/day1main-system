@@ -32,10 +32,11 @@ export default function LoginPage() {
     { dept: 'Compliance', email: 'compliance@day1main.com', password: 'compliance123', color: 'blue' },
     { dept: 'Finance', email: 'finance@day1main.com', password: 'finance123', color: 'cyan' },
     { dept: 'Claims', email: 'assessor@day1main.com', password: 'assessor123', color: 'green' },
-    { dept: 'Provider', email: 'provider@day1main.com', password: 'provider123', color: 'orange' },
+    { dept: 'Provider (NXAMALO)', email: 'nxamalo1@gmail.com', password: '223344', color: 'orange' },
     { dept: 'Call Centre', email: 'callcentre@day1main.com', password: 'callcentre123', color: 'teal' },
     { dept: 'Ambulance', email: 'ambulance@day1main.com', password: 'ambulance123', color: 'rose' },
     { dept: 'Member', email: 'member@day1main.com', password: 'member123', color: 'lime' },
+    { dept: 'Onboarding', email: 'onboarding@day1main.com', password: 'onboarding123', color: 'orange' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -213,7 +213,7 @@ export default function Step4Selfie({ data, updateData, nextStep, prevStep }: Pr
             onClick={handleNext}
             className="px-4 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 font-medium"
           >
-            Next: Dependents
+            Next: Dependants
           </button>
         </div>
       </div>

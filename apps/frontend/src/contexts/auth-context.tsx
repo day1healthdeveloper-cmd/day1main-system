@@ -59,6 +59,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadUser = async () => {
     console.log('🔄 Loading user...');
     try {
+      // Check for provider session first (custom auth)
+      if (typeof window !== 'undefined') {
+        const providerSession = localStorage.getItem('provider_session');
+        if (providerSession) {
+          const { provider, timestamp } = JSON.parse(providerSession);
+          // Check if session is less than 24 hours old
+          if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+            console.log('✅ Provider session found');
+            setUser(provider);
+            setLoading(false);
+            return;
+          } else {
+            // Session expired
+            localStorage.removeItem('provider_session');
+          }
+        }
+      }
+
       // Get Supabase session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
@@ -161,14 +179,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      // First, try Supabase Auth (for department users)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (!error) {
+        // Supabase Auth succeeded
+        await loadUser();
+        return;
+      }
 
-      await loadUser();
+      // Supabase Auth failed, check if it's a provider login
+      console.log('🔄 Checking provider credentials...');
+      const { data: provider, error: providerError } = await supabase
+        .from('providers')
+        .select('id, name, login_email, provider_number, practice_name')
+        .eq('login_email', email)
+        .eq('login_password', password)
+        .eq('is_active', true)
+        .single();
+
+      if (providerError || !provider) {
+        console.error('❌ Provider login failed:', providerError);
+        throw new Error('Invalid email or password');
+      }
+
+      // Provider login successful - create custom session
+      console.log('✅ Provider login successful:', provider);
+      const nameParts = provider.name.split(' ');
+      const providerUser: User = {
+        id: provider.id, // Use provider ID directly
+        email: provider.login_email,
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        roles: ['provider'],
+        permissions: [],
+      };
+
+      // Store provider session in localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('provider_session', JSON.stringify({
+          provider: providerUser,
+          timestamp: Date.now()
+        }));
+      }
+
+      setUser(providerUser);
     } catch (error: any) {
       console.error('Login error:', error);
       throw new Error(error.message || 'Login failed');
@@ -177,6 +235,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      // Clear provider session
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('provider_session');
+      }
+      
       await supabase.auth.signOut();
       setUser(null);
       // Clear any cached data

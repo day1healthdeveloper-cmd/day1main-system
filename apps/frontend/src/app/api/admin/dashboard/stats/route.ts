@@ -11,9 +11,14 @@ export async function GET(request: NextRequest) {
     // Fetch all statistics in parallel
     const [
       membersResult,
+      dependantsResult,
       activeMembersResult,
+      activeDependantsResult,
       pendingMembersResult,
       suspendedMembersResult,
+      suspendedDependantsResult,
+      inactiveMembersResult,
+      inactiveDependantsResult,
       policiesResult,
       claimsResult,
       preauthsResult,
@@ -23,14 +28,29 @@ export async function GET(request: NextRequest) {
       // Total members
       supabase.from('members').select('id', { count: 'exact', head: true }),
       
+      // Total dependants
+      supabase.from('member_dependants').select('id', { count: 'exact', head: true }),
+      
       // Active members
       supabase.from('members').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      
+      // Active dependants
+      supabase.from('member_dependants').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       
       // Pending members
       supabase.from('members').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       
       // Suspended members
       supabase.from('members').select('id', { count: 'exact', head: true }).eq('status', 'suspended'),
+      
+      // Suspended dependants
+      supabase.from('member_dependants').select('id', { count: 'exact', head: true }).eq('status', 'suspended'),
+      
+      // Inactive members
+      supabase.from('members').select('id', { count: 'exact', head: true }).eq('status', 'inactive'),
+      
+      // Inactive dependants
+      supabase.from('member_dependants').select('id', { count: 'exact', head: true }).eq('status', 'inactive'),
       
       // Active policies
       supabase.from('policies').select('id', { count: 'exact', head: true }).eq('status', 'active'),
@@ -44,38 +64,36 @@ export async function GET(request: NextRequest) {
       // Total providers
       supabase.from('providers').select('id', { count: 'exact', head: true }),
       
-      // Active brokers (count distinct broker_code from members)
-      supabase.from('members').select('broker_code'),
+      // Total brokers
+      supabase.from('brokers').select('id', { count: 'exact', head: true }),
     ]);
 
     // Check for errors
     if (membersResult.error) throw membersResult.error;
+    if (dependantsResult.error) throw dependantsResult.error;
     if (activeMembersResult.error) throw activeMembersResult.error;
+    if (activeDependantsResult.error) throw activeDependantsResult.error;
     if (pendingMembersResult.error) throw pendingMembersResult.error;
     if (suspendedMembersResult.error) throw suspendedMembersResult.error;
+    if (suspendedDependantsResult.error) throw suspendedDependantsResult.error;
+    if (inactiveMembersResult.error) throw inactiveMembersResult.error;
+    if (inactiveDependantsResult.error) throw inactiveDependantsResult.error;
     if (policiesResult.error) throw policiesResult.error;
     if (claimsResult.error) throw claimsResult.error;
     if (preauthsResult.error) throw preauthsResult.error;
     if (providersResult.error) throw providersResult.error;
     if (brokersResult.error) throw brokersResult.error;
 
-    // Count unique broker codes
-    const uniqueBrokers = new Set(
-      brokersResult.data
-        ?.map((m: any) => m.broker_code)
-        .filter((code: string | null) => code && code.trim() !== '')
-    );
-
     const stats = {
-      totalMembers: membersResult.count || 0,
-      activeMembers: activeMembersResult.count || 0,
+      totalMembers: (membersResult.count || 0) + (dependantsResult.count || 0),
+      activeMembers: (activeMembersResult.count || 0) + (activeDependantsResult.count || 0),
       pendingMembers: pendingMembersResult.count || 0,
-      suspendedMembers: suspendedMembersResult.count || 0,
+      suspendedMembers: (suspendedMembersResult.count || 0) + (suspendedDependantsResult.count || 0) + (inactiveMembersResult.count || 0) + (inactiveDependantsResult.count || 0),
       activePolicies: policiesResult.count || 0,
       pendingClaims: claimsResult.count || 0,
       pendingPreauths: preauthsResult.count || 0,
       totalProviders: providersResult.count || 0,
-      activeBrokers: uniqueBrokers.size,
+      activeBrokers: brokersResult.count || 0,
     };
 
     return NextResponse.json(stats);

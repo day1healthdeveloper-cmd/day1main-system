@@ -45,7 +45,7 @@ async function testDashboard(dashboard) {
       details = text.substring(0, 100);
     } else if (status === 503) {
       result = '⚠️  503';
-      details = 'Service Unavailable (Expected for netcash)';
+      details = 'Service Unavailable';
     } else {
       result = `❌ ${status}`;
       details = await response.text();

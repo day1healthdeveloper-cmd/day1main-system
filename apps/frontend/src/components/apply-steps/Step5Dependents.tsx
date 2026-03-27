@@ -1,11 +1,11 @@
 /**
- * Step 3 of 6: Dependents
+ * Step 3 of 6: Dependants
  * 
  * Allows users to add spouse and children to their medical insurance application.
- * - Add/Edit/Remove dependents
+ * - Add/Edit/Remove dependants
  * - Spouse requires ID number
  * - Children require birth certificate
- * - Optional step - can proceed without dependents
+ * - Optional step - can proceed without dependants
  * 
  * Part of Day1Health 6-step application flow
  */
@@ -103,7 +103,7 @@ export default function Step5Dependents({ data, updateData, nextStep, prevStep }
 
   return (
     <div>
-      <h2 className="text-lg font-bold mb-1">Dependents</h2>
+      <h2 className="text-lg font-bold mb-1">Dependants</h2>
       <p className="text-xs text-gray-600 mb-2">Add your spouse/partner and/or children (optional)</p>
 
       <div className="space-y-2">
@@ -139,13 +139,13 @@ export default function Step5Dependents({ data, updateData, nextStep, prevStep }
             onClick={() => setShowForm(true)}
             className="w-full px-4 py-2 text-sm border-2 border-dashed border-gray-300 text-gray-700 rounded hover:bg-gray-50 font-medium"
           >
-            + Add Dependent
+            + Add Dependant
           </button>
         )}
 
         {showForm && (
           <div className="border border-gray-300 rounded p-3 space-y-2">
-            <h3 className="text-sm font-medium">Add Dependent</h3>
+            <h3 className="text-sm font-medium">Add Dependant</h3>
             
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-0.5">
@@ -276,7 +276,7 @@ export default function Step5Dependents({ data, updateData, nextStep, prevStep }
                 disabled={!formData.firstName || !formData.lastName || !formData.dateOfBirth}
                 className="flex-1 px-4 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-300"
               >
-                {editIndex !== null ? 'Update' : 'Add'} Dependent
+                {editIndex !== null ? 'Update' : 'Add'} Dependant
               </button>
               <button
                 onClick={() => {

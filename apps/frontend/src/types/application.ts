@@ -36,7 +36,7 @@ export interface ApplicationData {
   selfieUrl?: string
   faceVerificationResult?: any
   
-  // Step 5: Dependents
+  // Step 5: Dependants
   dependents?: Dependent[]
   
   // Step 6: Medical History

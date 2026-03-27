@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
@@ -10,6 +10,15 @@ import { FileText, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 export default function ClaimsAssessorDashboardPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
+  const [stats, setStats] = useState({
+    pendingClaims: 0,
+    preauthRequests: 0,
+    fraudCases: 0,
+    approvedToday: 0,
+    approvedTodayAmount: 0
+  });
+  const [recentClaims, setRecentClaims] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -17,7 +26,33 @@ export default function ClaimsAssessorDashboardPage() {
     }
   }, [loading, isAuthenticated, router]);
 
-  if (loading) {
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoadingData(true);
+      const [statsRes, claimsRes] = await Promise.all([
+        fetch('/api/claims-assessor/dashboard'),
+        fetch('/api/claims-assessor/claims?limit=5')
+      ]);
+      
+      const statsData = await statsRes.json();
+      const claimsData = await claimsRes.json();
+      
+      setStats(statsData);
+      setRecentClaims(claimsData.claims || []);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  if (loading || loadingData) {
     return (
       <SidebarLayout>
         <div className="flex items-center justify-center h-96">
@@ -59,8 +94,8 @@ export default function ClaimsAssessorDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Pending Claims</p>
-                  <p className="text-3xl font-bold mt-1">0</p>
-                  <p className="text-xs text-gray-600 mt-1">No claims yet</p>
+                  <p className="text-3xl font-bold mt-1">{stats.pendingClaims}</p>
+                  <p className="text-xs text-gray-600 mt-1">{stats.pendingClaims === 0 ? 'No claims yet' : 'Awaiting review'}</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <FileText className="w-6 h-6 text-green-600" />
@@ -83,8 +118,8 @@ export default function ClaimsAssessorDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Pre-Auth Requests</p>
-                  <p className="text-3xl font-bold mt-1 text-yellow-600">0</p>
-                  <p className="text-xs text-gray-600 mt-1">No requests</p>
+                  <p className="text-3xl font-bold mt-1 text-yellow-600">{stats.preauthRequests}</p>
+                  <p className="text-xs text-gray-600 mt-1">{stats.preauthRequests === 0 ? 'No requests' : 'Pending authorization'}</p>
                 </div>
                 <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                   <Clock className="w-6 h-6 text-yellow-600" />
@@ -107,8 +142,8 @@ export default function ClaimsAssessorDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Fraud Cases</p>
-                  <p className="text-3xl font-bold mt-1 text-red-600">0</p>
-                  <p className="text-xs text-gray-600 mt-1">No cases</p>
+                  <p className="text-3xl font-bold mt-1 text-red-600">{stats.fraudCases}</p>
+                  <p className="text-xs text-gray-600 mt-1">{stats.fraudCases === 0 ? 'No cases' : 'Requires investigation'}</p>
                 </div>
                 <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                   <AlertTriangle className="w-6 h-6 text-red-600" />
@@ -131,8 +166,8 @@ export default function ClaimsAssessorDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Approved Today</p>
-                  <p className="text-3xl font-bold mt-1 text-green-600">0</p>
-                  <p className="text-xs text-gray-600 mt-1">R 0 total</p>
+                  <p className="text-3xl font-bold mt-1 text-green-600">{stats.approvedToday}</p>
+                  <p className="text-xs text-gray-600 mt-1">R {stats.approvedTodayAmount.toLocaleString()} total</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 text-green-600" />
@@ -148,8 +183,11 @@ export default function ClaimsAssessorDashboardPage() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <button className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left group">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <button 
+                onClick={() => router.push('/claims-assessor/queue')}
+                className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left group"
+              >
                 <div className="w-10 h-10 bg-green-100 group-hover:bg-green-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <FileText className="w-5 h-5 text-green-600" />
                 </div>
@@ -157,7 +195,10 @@ export default function ClaimsAssessorDashboardPage() {
                 <p className="text-xs text-gray-500">Review claims</p>
               </button>
 
-              <button className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left group">
+              <button 
+                onClick={() => router.push('/claims-assessor/preauth')}
+                className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left group"
+              >
                 <div className="w-10 h-10 bg-green-100 group-hover:bg-green-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <Clock className="w-5 h-5 text-green-600" />
                 </div>
@@ -165,20 +206,15 @@ export default function ClaimsAssessorDashboardPage() {
                 <p className="text-xs text-gray-500">Authorization requests</p>
               </button>
 
-              <button className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left group">
+              <button 
+                onClick={() => router.push('/claims-assessor/fraud')}
+                className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left group"
+              >
                 <div className="w-10 h-10 bg-green-100 group-hover:bg-green-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <AlertTriangle className="w-5 h-5 text-green-600" />
                 </div>
                 <p className="font-medium">Fraud Cases</p>
                 <p className="text-xs text-gray-500">Investigate fraud</p>
-              </button>
-
-              <button className="p-4 border rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors text-left group">
-                <div className="w-10 h-10 bg-green-100 group-hover:bg-green-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
-                <p className="font-medium">My Claims</p>
-                <p className="text-xs text-gray-500">Assigned to me</p>
               </button>
             </div>
           </CardContent>
@@ -190,10 +226,37 @@ export default function ClaimsAssessorDashboardPage() {
             <CardTitle>Recent Claims</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8 text-gray-500">
-              <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No recent claims</p>
-            </div>
+            {recentClaims.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No recent claims</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentClaims.map((claim) => (
+                  <div key={claim.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                    <div className="flex-1">
+                      <p className="font-medium">{claim.claim_number}</p>
+                      <p className="text-sm text-gray-600">
+                        {claim.member?.first_name} {claim.member?.last_name} - {claim.provider?.name}
+                      </p>
+                      <p className="text-xs text-gray-500">{new Date(claim.submission_date).toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold">R{parseFloat(claim.claimed_amount).toLocaleString()}</p>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        claim.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        claim.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        claim.status === 'pended' ? 'bg-orange-100 text-orange-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {claim.status.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

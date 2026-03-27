@@ -17,7 +17,7 @@ export async function uploadToStorage(
   blob: Blob,
   path: string
 ): Promise<string> {
-  // Upload the file
+  // Upload the file with extended timeout
   const { data, error } = await supabase.storage
     .from(BUCKET_NAME)
     .upload(path, blob, {

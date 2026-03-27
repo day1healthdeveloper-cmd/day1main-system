@@ -102,6 +102,11 @@ export default function Home() {
                   Member
                 </GlowingButton>
               </Link>
+              <Link href="/login">
+                <GlowingButton glowColor="#f97316" className="w-full">
+                  Onboarding
+                </GlowingButton>
+              </Link>
             </div>
           </div>
         </div>

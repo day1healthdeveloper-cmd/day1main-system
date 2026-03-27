@@ -209,7 +209,7 @@ export default function AdminProvidersPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Provider Setup</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Provider Management</h1>
             <p className="text-gray-600 mt-1">Manage healthcare provider directory</p>
           </div>
           <Button onClick={() => setShowAddForm(!showAddForm)}>

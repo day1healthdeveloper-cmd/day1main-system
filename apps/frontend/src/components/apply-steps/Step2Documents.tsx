@@ -589,7 +589,7 @@ export default function Step2Documents({ data, updateData, nextStep, prevStep }:
             onClick={handleNext}
             className="px-4 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 font-medium"
           >
-            Next: Dependents
+            Next: Dependants
           </button>
         </div>
       </div>

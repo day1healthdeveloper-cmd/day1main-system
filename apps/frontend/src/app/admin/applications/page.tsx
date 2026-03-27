@@ -356,7 +356,7 @@ export default function AdminApplicationsPage() {
                         <p className="font-medium">R{app.monthly_price?.toFixed(2) || '0.00'}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Dependents</p>
+                        <p className="text-gray-600">Dependants</p>
                         <p className="font-medium">{app.dependents?.length || 0}</p>
                       </div>
                       <div>
@@ -508,16 +508,16 @@ export default function AdminApplicationsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Dependents */}
-                {selectedApplication.dependents && selectedApplication.dependents.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Users className="w-5 h-5" />
-                        Dependents ({selectedApplication.dependents.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                {/* Dependants */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Dependants
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedApplication.dependents && selectedApplication.dependents.length > 0 ? (
                       <div className="space-y-3">
                         {selectedApplication.dependents.map((dep, idx) => (
                           <div key={idx} className="p-3 bg-gray-50 rounded">
@@ -526,9 +526,11 @@ export default function AdminApplicationsPage() {
                           </div>
                         ))}
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    ) : (
+                      <p className="text-sm text-gray-500">No dependants added</p>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Banking */}
                 <Card>
@@ -591,22 +593,13 @@ export default function AdminApplicationsPage() {
                           <span className="text-sm font-medium">ID Document</span>
                           <div className="flex gap-2">
                             {selectedApplication.id_document_url ? (
-                              <>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => setShowIdDocument(!showIdDocument)}
-                                >
-                                  {showIdDocument ? 'Hide' : 'Show'}
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => window.open(selectedApplication.id_document_url, '_blank')}
-                                >
-                                  Open
-                                </Button>
-                              </>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => setShowIdDocument(!showIdDocument)}
+                              >
+                                {showIdDocument ? 'Hide' : 'Show'}
+                              </Button>
                             ) : (
                               <span className="text-sm text-gray-500">Not uploaded</span>
                             )}
@@ -614,19 +607,32 @@ export default function AdminApplicationsPage() {
                         </div>
                         {showIdDocument && selectedApplication.id_document_url && (
                           <div className="border border-gray-300 rounded bg-white p-2 mt-2">
-                            <img 
-                              src={selectedApplication.id_document_url} 
-                              alt="ID Document" 
-                              className="max-w-full h-auto max-h-96 mx-auto"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Unable to display image. <a href="' + selectedApplication.id_document_url + '" target="_blank" class="text-blue-600 underline">Click here to open</a></p>';
-                                }
-                              }}
-                            />
+                            {selectedApplication.id_document_url.toLowerCase().includes('.pdf') ? (
+                              <div className="text-center py-8">
+                                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                                <p className="text-sm text-gray-600 mb-3">PDF Document</p>
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => window.open(selectedApplication.id_document_url, '_blank')}
+                                >
+                                  Open PDF in New Tab
+                                </Button>
+                              </div>
+                            ) : (
+                              <img 
+                                src={selectedApplication.id_document_url} 
+                                alt="ID Document" 
+                                className="max-w-full h-auto max-h-96 mx-auto"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Unable to display image. <a href="' + selectedApplication.id_document_url + '" target="_blank" class="text-blue-600 underline">Click here to open</a></p>';
+                                  }
+                                }}
+                              />
+                            )}
                           </div>
                         )}
                       </div>
@@ -637,73 +643,69 @@ export default function AdminApplicationsPage() {
                           <span className="text-sm font-medium">Proof of Address</span>
                           <div className="flex gap-2">
                             {(selectedApplication.proof_of_address_url || (selectedApplication.proof_of_address_urls && selectedApplication.proof_of_address_urls.length > 0)) ? (
-                              <>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => setShowProofOfAddress(!showProofOfAddress)}
-                                >
-                                  {showProofOfAddress ? 'Hide' : 'Show'}
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  onClick={() => {
-                                    const url = selectedApplication.proof_of_address_url || selectedApplication.proof_of_address_urls?.[0];
-                                    if (url) window.open(url, '_blank');
-                                  }}
-                                >
-                                  Open
-                                </Button>
-                              </>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => setShowProofOfAddress(!showProofOfAddress)}
+                              >
+                                {showProofOfAddress ? 'Hide' : 'Show'}
+                              </Button>
                             ) : (
                               <span className="text-sm text-gray-500">Not uploaded</span>
                             )}
                           </div>
                         </div>
-                        {showProofOfAddress && (
+                        {showProofOfAddress && selectedApplication.proof_of_address_url && (
+                          <div className="border border-gray-300 rounded bg-white p-2 mt-2">
+                            <iframe
+                              src={selectedApplication.proof_of_address_url}
+                              className="w-full h-96 border-0"
+                              title="Proof of Address"
+                            />
+                            <div className="text-center mt-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => window.open(selectedApplication.proof_of_address_url, '_blank')}
+                              >
+                                Open in New Tab
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        {showProofOfAddress && selectedApplication.proof_of_address_urls && selectedApplication.proof_of_address_urls.length > 0 && (
                           <div className="space-y-2 mt-2">
-                            {/* Single proof of address URL */}
-                            {selectedApplication.proof_of_address_url && (
-                              <div className="border border-gray-300 rounded bg-white p-2">
-                                <img 
-                                  src={selectedApplication.proof_of_address_url} 
-                                  alt="Proof of Address" 
-                                  className="max-w-full h-auto max-h-96 mx-auto"
-                                  onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    const parent = target.parentElement;
-                                    if (parent) {
-                                      parent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Unable to display image. <a href="' + selectedApplication.proof_of_address_url + '" target="_blank" class="text-blue-600 underline">Click here to open</a></p>';
-                                    }
-                                  }}
-                                />
-                              </div>
-                            )}
-                            {/* Multiple proof of address URLs */}
-                            {selectedApplication.proof_of_address_urls && selectedApplication.proof_of_address_urls.length > 0 && (
-                              <>
-                                {selectedApplication.proof_of_address_urls.map((url, idx) => (
-                                  <div key={idx} className="border border-gray-300 rounded bg-white p-2">
-                                    <p className="text-xs text-gray-600 mb-1">Document {idx + 1}</p>
-                                    <img 
-                                      src={url} 
-                                      alt={`Proof of Address ${idx + 1}`} 
-                                      className="max-w-full h-auto max-h-96 mx-auto"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                        const parent = target.parentElement;
-                                        if (parent) {
-                                          parent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Unable to display image. <a href="' + url + '" target="_blank" class="text-blue-600 underline">Click here to open</a></p>';
-                                        }
-                                      }}
-                                    />
+                            {selectedApplication.proof_of_address_urls.map((url, idx) => (
+                              <div key={idx} className="border border-gray-300 rounded bg-white p-2">
+                                <p className="text-xs text-gray-600 mb-1">Document {idx + 1}</p>
+                                {url.toLowerCase().includes('.pdf') ? (
+                                  <div className="text-center py-8">
+                                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                                    <p className="text-sm text-gray-600 mb-3">PDF Document</p>
+                                    <Button 
+                                      size="sm" 
+                                      onClick={() => window.open(url, '_blank')}
+                                    >
+                                      Open PDF in New Tab
+                                    </Button>
                                   </div>
-                                ))}
-                              </>
-                            )}
+                                ) : (
+                                  <img 
+                                    src={url} 
+                                    alt={`Proof of Address ${idx + 1}`} 
+                                    className="max-w-full h-auto max-h-96 mx-auto"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      const parent = target.parentElement;
+                                      if (parent) {
+                                        parent.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Unable to display image. <a href="' + url + '" target="_blank" class="text-blue-600 underline">Click here to open</a></p>';
+                                      }
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -858,8 +860,8 @@ export default function AdminApplicationsPage() {
                         <p className="text-sm font-medium mb-2">Voice Recording</p>
                         {selectedApplication.voice_recording_url ? (
                           <div className="space-y-2">
-                            <audio controls className="w-full">
-                              <source src={selectedApplication.voice_recording_url} type="audio/webm" />
+                            <audio controls className="w-full" preload="metadata">
+                              <source src={selectedApplication.voice_recording_url} />
                               Your browser does not support the audio element.
                             </audio>
                             <p className="text-xs text-gray-600">

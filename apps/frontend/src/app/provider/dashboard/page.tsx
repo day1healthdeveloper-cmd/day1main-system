@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
@@ -10,6 +10,15 @@ import { Button } from '@/components/ui/button';
 export default function ProviderDashboardPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
+  const [stats, setStats] = useState({
+    totalClaims: 0,
+    pendingClaims: 0,
+    approvedClaims: 0,
+    totalApproved: 0,
+    totalPending: 0
+  });
+  const [recentClaims, setRecentClaims] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -17,10 +26,40 @@ export default function ProviderDashboardPage() {
     }
   }, [loading, isAuthenticated, router]);
 
-  if (loading) {
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchProviderClaims();
+    }
+  }, [isAuthenticated, user]);
+
+  const fetchProviderClaims = async () => {
+    try {
+      setLoadingData(true);
+      const response = await fetch(`/api/provider/claims?providerId=${user.id}&limit=5`);
+      const data = await response.json();
+      
+      setStats(data.stats || {
+        totalClaims: 0,
+        pendingClaims: 0,
+        approvedClaims: 0,
+        totalApproved: 0,
+        totalPending: 0
+      });
+      setRecentClaims(data.claims || []);
+    } catch (error) {
+      console.error('Error fetching claims:', error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  if (loading || loadingData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -30,27 +69,6 @@ export default function ProviderDashboardPage() {
   }
 
   const pendingItems: any[] = [];
-
-  const recentClaims = [
-    {
-      id: 'CLM-20260118-001',
-      patient: 'Sarah Williams',
-      service: 'General Consultation',
-      date: '18 Jan 2026',
-      amount: 850,
-      status: 'approved',
-      approvedAmount: 850,
-    },
-    {
-      id: 'CLM-20260115-002',
-      patient: 'David Brown',
-      service: 'Blood Test',
-      date: '15 Jan 2026',
-      amount: 450,
-      status: 'paid',
-      approvedAmount: 450,
-    },
-  ];
 
   return (
     <SidebarLayout>
@@ -68,11 +86,11 @@ export default function ProviderDashboardPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Claims This Month</CardDescription>
-              <CardTitle className="text-3xl">0</CardTitle>
+              <CardTitle className="text-3xl">{stats.totalClaims}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                No claims yet
+                {stats.totalClaims === 0 ? 'No claims yet' : 'Total submitted'}
               </p>
             </CardContent>
           </Card>
@@ -80,35 +98,35 @@ export default function ProviderDashboardPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Pending Claims</CardDescription>
-              <CardTitle className="text-3xl text-yellow-600">0</CardTitle>
+              <CardTitle className="text-3xl text-yellow-600">{stats.pendingClaims}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                No pending claims
+                {stats.pendingClaims === 0 ? 'No pending claims' : 'Awaiting review'}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Payments Received</CardDescription>
-              <CardTitle className="text-3xl">R0</CardTitle>
+              <CardDescription>Approved Amount</CardDescription>
+              <CardTitle className="text-3xl">R{stats.totalApproved.toLocaleString()}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                This month
+                {stats.approvedClaims} claims approved
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Outstanding</CardDescription>
-              <CardTitle className="text-3xl">R0</CardTitle>
+              <CardDescription>Pending Amount</CardDescription>
+              <CardTitle className="text-3xl">R{stats.totalPending.toLocaleString()}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-xs text-muted-foreground">
-                No outstanding
+                Under review
               </p>
             </CardContent>
           </Card>
@@ -122,7 +140,7 @@ export default function ProviderDashboardPage() {
               <CardDescription>Verify patient coverage</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">Check Now</Button>
+              <Button className="w-full" onClick={() => router.push('/provider/eligibility')}>Check Now</Button>
             </CardContent>
           </Card>
 
@@ -132,7 +150,7 @@ export default function ProviderDashboardPage() {
               <CardDescription>File a new claim</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">New Claim</Button>
+              <Button className="w-full" onClick={() => router.push('/provider/claims/submit')}>New Claim</Button>
             </CardContent>
           </Card>
 
@@ -142,7 +160,7 @@ export default function ProviderDashboardPage() {
               <CardDescription>Submit pre-authorization</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">New Request</Button>
+              <Button className="w-full" onClick={() => router.push('/provider/preauth/submit')}>New Request</Button>
             </CardContent>
           </Card>
         </div>
@@ -203,58 +221,69 @@ export default function ProviderDashboardPage() {
                 <CardTitle>Recent Claims</CardTitle>
                 <CardDescription>Your latest claim submissions</CardDescription>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => router.push('/provider/claims/history')}>
                 View All
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {recentClaims.map((claim) => (
-                <div
-                  key={claim.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <p className="font-medium">{claim.service}</p>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          claim.status === 'approved'
-                            ? 'bg-green-100 text-green-800'
-                            : claim.status === 'paid'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}
-                      >
-                        {claim.status === 'approved' ? 'Approved' : claim.status === 'paid' ? 'Paid' : 'Pending'}
-                      </span>
+            {recentClaims.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No claims submitted yet</p>
+                <Button className="mt-4" onClick={() => router.push('/provider/claims/submit')}>
+                  Submit Your First Claim
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentClaims.map((claim) => (
+                  <div
+                    key={claim.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <p className="font-medium">{claim.claim_type}</p>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            claim.status === 'approved'
+                              ? 'bg-green-100 text-green-800'
+                              : claim.status === 'rejected'
+                              ? 'bg-red-100 text-red-800'
+                              : claim.status === 'pended'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                        >
+                          {claim.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div>
+                          <p className="text-xs text-gray-500">Claim Number</p>
+                          <p className="font-mono">{claim.claim_number}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Patient</p>
+                          <p>{claim.member?.first_name} {claim.member?.last_name}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Date</p>
+                          <p>{new Date(claim.service_date).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Amount</p>
+                          <p className="font-medium">R{parseFloat(claim.claimed_amount).toLocaleString()}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div>
-                        <p className="text-xs text-gray-500">Claim Number</p>
-                        <p className="font-mono">{claim.id}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Patient</p>
-                        <p>{claim.patient}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Date</p>
-                        <p>{claim.date}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Amount</p>
-                        <p className="font-medium">R{claim.amount.toFixed(2)}</p>
-                      </div>
-                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => router.push(`/provider/claims/history`)}>
+                      View
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm">
-                    View
-                  </Button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

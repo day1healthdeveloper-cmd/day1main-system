@@ -120,35 +120,43 @@ export default function ClaimSubmissionPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/provider/claims/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          providerId: user.id,
+          memberNumber,
+          patientName,
+          idNumber,
+          serviceDate,
+          claimType,
+          claimLines,
+          totalAmount: calculateTotal()
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || 'Failed to submit claim');
+        setIsSubmitting(false);
+        return;
+      }
+
       setIsSubmitting(false);
       setShowSuccess(true);
       
       // Reset form after 3 seconds
       setTimeout(() => {
         setShowSuccess(false);
-        // Reset all fields
-        setMemberNumber('');
-        setPatientName('');
-        setIdNumber('');
-        setServiceDate('');
-        setClaimType('consultation');
-        setReferenceNumber('');
-        setClaimLines([
-          {
-            id: '1',
-            diagnosisCode: '',
-            procedureCode: '',
-            tariffCode: '',
-            quantity: 1,
-            unitPrice: 0,
-            totalAmount: 0,
-          },
-        ]);
-        setDocuments([]);
+        router.push('/provider/claims/history');
       }, 3000);
-    }, 1500);
+    } catch (error) {
+      console.error('Error submitting claim:', error);
+      alert('Failed to submit claim. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   return (

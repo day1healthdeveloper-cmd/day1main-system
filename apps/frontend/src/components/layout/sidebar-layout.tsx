@@ -106,6 +106,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Admin Dashboard',
           href: '/admin/dashboard',
+          glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -116,6 +117,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           name: 'Member Applications',
           href: '/admin/applications',
           badge: newApplicationsCount,
+          glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -125,6 +127,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Members',
           href: '/admin/members',
+          glowColor: '#8b5cf6', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -134,6 +137,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Policies',
           href: '/admin/policies',
+          glowColor: '#ec4899', // Pink
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -143,6 +147,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Policy Creator',
           href: '/admin/products',
+          glowColor: '#f59e0b', // Amber
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -152,6 +157,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Claims',
           href: '/admin/claims',
+          glowColor: '#10b981', // Emerald
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -159,8 +165,9 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           ),
         },
         {
-          name: 'Provider Setup',
+          name: 'Provider Management',
           href: '/admin/providers',
+          glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -170,6 +177,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Finance',
           href: '/admin/finance/ledger',
+          glowColor: '#22d3ee', // Cyan
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -179,6 +187,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Brokers',
           href: '/admin/brokers',
+          glowColor: '#6366f1', // Indigo
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -188,6 +197,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Group Setup',
           href: '/admin/group-setup',
+          glowColor: '#a855f7', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -197,6 +207,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Audit Log',
           href: '/admin/audit',
+          glowColor: '#ef4444', // Red
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -206,6 +217,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'KYC',
           href: '/admin/kyc',
+          glowColor: '#84cc16', // Lime
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -215,6 +227,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Roles',
           href: '/admin/roles',
+          glowColor: '#f97316', // Orange
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -224,6 +237,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Rules',
           href: '/admin/rules',
+          glowColor: '#06b6d4', // Sky
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 7h6m-6 4h6" />
@@ -233,6 +247,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'PMB',
           href: '/admin/pmb',
+          glowColor: '#d946ef', // Fuchsia
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -242,6 +257,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Regime',
           href: '/admin/regime',
+          glowColor: '#eab308', // Yellow
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -252,6 +268,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Data Import',
           href: '/admin/data-import',
+          glowColor: '#0ea5e9', // Sky blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -261,6 +278,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Feedback',
           href: '/admin/feedback',
+          glowColor: '#fb923c', // Orange
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -276,6 +294,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Dashboard',
           href: '/operations/dashboard',
+          glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -285,6 +304,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Debit Orders',
           href: '/operations/debit-orders',
+          glowColor: '#8b5cf6', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -294,6 +314,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Manage Groups',
           href: '/operations/manage-groups',
+          glowColor: '#ec4899', // Pink
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -303,6 +324,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Manage Members',
           href: '/operations/members',
+          glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -312,6 +334,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Call Centre',
           href: '/operations/call-centre',
+          glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -321,6 +344,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Provider Onboarding',
           href: '/operations/providers',
+          glowColor: '#f59e0b', // Amber
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -330,6 +354,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Arrears Management',
           href: '/operations/arrears',
+          glowColor: '#ef4444', // Red
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -339,6 +364,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Claims Oversight',
           href: '/operations/claims',
+          glowColor: '#10b981', // Emerald
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -348,6 +374,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Broker Communications',
           href: '/operations/broker-comms',
+          glowColor: '#6366f1', // Indigo
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -357,6 +384,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Reports',
           href: '/operations/reports',
+          glowColor: '#22d3ee', // Cyan
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -366,6 +394,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Feedback',
           href: '/admin/feedback',
+          glowColor: '#fb923c', // Orange
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -375,6 +404,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Profile',
           href: '/profile',
+          glowColor: '#a855f7', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -390,6 +420,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Dashboard',
           href: '/broker/dashboard',
+          glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -399,6 +430,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'My Clients',
           href: '/broker/clients',
+          glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -408,6 +440,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Quotes',
           href: '/broker/quotes',
+          glowColor: '#8b5cf6', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -417,6 +450,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Applications',
           href: '/broker/applications',
+          glowColor: '#ec4899', // Pink
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -426,6 +460,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Policies',
           href: '/broker/policies',
+          glowColor: '#f59e0b', // Amber
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -435,6 +470,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Commissions',
           href: '/broker/commissions',
+          glowColor: '#22d3ee', // Cyan
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -444,6 +480,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Feedback',
           href: '/admin/feedback',
+          glowColor: '#fb923c', // Orange
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -453,6 +490,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Profile',
           href: '/profile',
+          glowColor: '#a855f7', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -468,6 +506,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Dashboard',
           href: '/claims-assessor/dashboard',
+          glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -477,6 +516,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Claims Queue',
           href: '/claims-assessor/queue',
+          glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -486,6 +526,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Pre-Auth Queue',
           href: '/claims-assessor/preauth',
+          glowColor: '#8b5cf6', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -495,6 +536,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Fraud Cases',
           href: '/claims-assessor/fraud',
+          glowColor: '#ef4444', // Red
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -502,29 +544,12 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           ),
         },
         {
-          name: 'My Claims',
-          href: '/claims-assessor/my-claims',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          ),
-        },
-        {
           name: 'Feedback',
           href: '/admin/feedback',
+          glowColor: '#fb923c', // Orange
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-          ),
-        },
-        {
-          name: 'Profile',
-          href: '/profile',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           ),
         },
@@ -537,6 +562,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Dashboard',
           href: '/finance/dashboard',
+          glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -546,6 +572,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Ledger',
           href: '/finance/ledger',
+          glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -555,6 +582,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Journal Entries',
           href: '/finance/journal-entries',
+          glowColor: '#8b5cf6', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -564,6 +592,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Reconciliation',
           href: '/finance/reconciliation',
+          glowColor: '#ec4899', // Pink
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -573,6 +602,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Trial Balance',
           href: '/finance/trial-balance',
+          glowColor: '#f59e0b', // Amber
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -582,6 +612,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Payments',
           href: '/finance/payments',
+          glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -591,6 +622,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Feedback',
           href: '/admin/feedback',
+          glowColor: '#6366f1', // Indigo
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -600,6 +632,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Profile',
           href: '/profile',
+          glowColor: '#10b981', // Emerald
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -615,6 +648,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Dashboard',
           href: '/marketing/dashboard',
+          glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -624,6 +658,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Leads',
           href: '/marketing/leads',
+          glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -633,6 +668,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Lead Scoring',
           href: '/marketing/lead-scoring',
+          glowColor: '#8b5cf6', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -642,6 +678,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Campaigns',
           href: '/marketing/campaigns',
+          glowColor: '#ec4899', // Pink
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
@@ -651,6 +688,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Workflows',
           href: '/marketing/workflows',
+          glowColor: '#f59e0b', // Amber
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -660,6 +698,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Landing Pages',
           href: '/marketing/landing-pages',
+          glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -669,6 +708,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Content Library',
           href: '/marketing/content-library',
+          glowColor: '#6366f1', // Indigo
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -678,6 +718,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Referrals',
           href: '/marketing/referrals',
+          glowColor: '#10b981', // Emerald
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -687,6 +728,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Onboarding',
           href: '/marketing/onboarding',
+          glowColor: '#ef4444', // Red
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -696,6 +738,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'AI & Automation',
           href: '/marketing/ai-automation',
+          glowColor: '#22d3ee', // Cyan
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -705,6 +748,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Consent',
           href: '/marketing/consent',
+          glowColor: '#84cc16', // Lime
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -714,6 +758,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Analytics',
           href: '/marketing/analytics',
+          glowColor: '#a855f7', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -723,6 +768,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Budget & ROI',
           href: '/marketing/budget',
+          glowColor: '#eab308', // Yellow
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -732,6 +778,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Reports',
           href: '/marketing/reports',
+          glowColor: '#06b6d4', // Sky
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -741,6 +788,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Feedback',
           href: '/admin/feedback',
+          glowColor: '#fb923c', // Orange
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -750,6 +798,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Profile',
           href: '/profile',
+          glowColor: '#d946ef', // Fuchsia
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -765,6 +814,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Dashboard',
           href: '/compliance',
+          glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -774,6 +824,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'POPIA',
           href: '/compliance/popia',
+          glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -783,6 +834,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Data Requests',
           href: '/compliance/data-requests',
+          glowColor: '#8b5cf6', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -792,6 +844,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Breaches',
           href: '/compliance/breaches',
+          glowColor: '#ef4444', // Red
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -801,6 +854,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Complaints',
           href: '/compliance/complaints',
+          glowColor: '#f59e0b', // Amber
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -810,6 +864,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Reports',
           href: '/compliance/reports',
+          glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -819,6 +874,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Feedback',
           href: '/admin/feedback',
+          glowColor: '#ec4899', // Pink
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -828,6 +884,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Profile',
           href: '/profile',
+          glowColor: '#6366f1', // Indigo
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -843,6 +900,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Dashboard',
           href: '/provider/dashboard',
+          glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -852,6 +910,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Check Eligibility',
           href: '/provider/eligibility',
+          glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -861,6 +920,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Submit Claim',
           href: '/provider/claims',
+          glowColor: '#8b5cf6', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -870,6 +930,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Pre-Authorization',
           href: '/provider/preauth',
+          glowColor: '#ec4899', // Pink
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -879,6 +940,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Payments',
           href: '/provider/payments',
+          glowColor: '#f59e0b', // Amber
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -888,6 +950,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Feedback',
           href: '/admin/feedback',
+          glowColor: '#22d3ee', // Cyan
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -897,6 +960,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Profile',
           href: '/profile',
+          glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -912,6 +976,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Dashboard',
           href: '/dashboard',
+          glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -921,6 +986,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Member Support',
           href: '/call-centre/support',
+          glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -930,6 +996,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Member Lookup',
           href: '/call-centre/members',
+          glowColor: '#8b5cf6', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -939,6 +1006,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Tickets',
           href: '/call-centre/tickets',
+          glowColor: '#ec4899', // Pink
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
@@ -948,6 +1016,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Knowledge Base',
           href: '/call-centre/knowledge',
+          glowColor: '#f59e0b', // Amber
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -957,6 +1026,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Feedback',
           href: '/admin/feedback',
+          glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -966,6 +1036,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Profile',
           href: '/profile',
+          glowColor: '#6366f1', // Indigo
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -981,6 +1052,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Dashboard',
           href: '/dashboard',
+          glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -990,6 +1062,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Verify Eligibility',
           href: '/ambulance/verify',
+          glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -999,6 +1072,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Active Transports',
           href: '/ambulance/transports',
+          glowColor: '#8b5cf6', // Purple
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -1008,6 +1082,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Submit Claim',
           href: '/ambulance/claims',
+          glowColor: '#ec4899', // Pink
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -1017,6 +1092,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Trip History',
           href: '/ambulance/history',
+          glowColor: '#f59e0b', // Amber
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1026,6 +1102,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Feedback',
           href: '/admin/feedback',
+          glowColor: '#fb923c', // Orange
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -1035,6 +1112,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Profile',
           href: '/profile',
+          glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -1049,6 +1127,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       {
         name: 'Dashboard',
         href: '/dashboard',
+        glowColor: '#3b82f6', // Blue
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -1058,6 +1137,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       {
         name: 'My Policies',
         href: '/policies',
+        glowColor: '#22c55e', // Green
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1067,6 +1147,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       {
         name: 'My Claims',
         href: '/claims',
+        glowColor: '#8b5cf6', // Purple
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -1076,6 +1157,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       {
         name: 'Dependants',
         href: '/dependants',
+        glowColor: '#ec4899', // Pink
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -1085,6 +1167,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       {
         name: 'Payments',
         href: '/payments',
+        glowColor: '#f59e0b', // Amber
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -1094,6 +1177,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       {
         name: 'Documents',
         href: '/documents',
+        glowColor: '#14b8a6', // Teal
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -1103,6 +1187,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       {
         name: 'Consent',
         href: '/consent',
+        glowColor: '#6366f1', // Indigo
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -1112,6 +1197,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       {
         name: 'Feedback',
         href: '/admin/feedback',
+        glowColor: '#10b981', // Emerald
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -1121,6 +1207,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       {
         name: 'Profile',
         href: '/profile',
+        glowColor: '#ef4444', // Red
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -1196,6 +1283,24 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
+              
+              // Helper function to convert hex to rgba
+              const hexToRgba = (hex: string, alpha: number = 1): string => {
+                let hexValue = hex.replace("#", "");
+                if (hexValue.length === 3) {
+                  hexValue = hexValue.split("").map((char) => char + char).join("");
+                }
+                const r = parseInt(hexValue.substring(0, 2), 16);
+                const g = parseInt(hexValue.substring(2, 4), 16);
+                const b = parseInt(hexValue.substring(4, 6), 16);
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+              };
+              
+              const glowColor = (item as any).glowColor || '#22c55e'; // Default to green
+              const glowColorRgba = hexToRgba(glowColor);
+              const glowColorVia = hexToRgba(glowColor, 0.075);
+              const glowColorTo = hexToRgba(glowColor, 0.2);
+              
               return (
                 <Link
                   key={item.name}
@@ -1206,9 +1311,9 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
                   <div className="relative">
                     <div
                       style={{
-                        "--glow-color": isActive ? "rgba(22, 163, 74, 1)" : "rgba(107, 114, 128, 0.3)",
-                        "--glow-color-via": isActive ? "rgba(22, 163, 74, 0.075)" : "rgba(107, 114, 128, 0.05)",
-                        "--glow-color-to": isActive ? "rgba(22, 163, 74, 0.2)" : "rgba(107, 114, 128, 0.1)",
+                        "--glow-color": glowColorRgba,
+                        "--glow-color-via": glowColorVia,
+                        "--glow-color-to": glowColorTo,
                       } as React.CSSProperties}
                       className={`
                         w-full h-10 px-3 text-sm rounded-md border flex items-center gap-3 relative transition-colors overflow-hidden bg-gradient-to-t border-r-0 duration-200
@@ -1217,7 +1322,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
                           : 'from-background to-muted text-foreground hover:text-muted-foreground border-border'
                         }
                         after:inset-0 after:absolute after:rounded-[inherit] after:bg-gradient-to-r after:from-transparent after:from-40% after:via-[var(--glow-color-via)] after:to-[var(--glow-color-to)] after:via-70% after:shadow-[hsl(var(--foreground)/0.15)_0px_1px_0px_inset] z-20
-                        before:absolute before:w-[5px] hover:before:translate-x-full before:transition-all before:duration-200 before:h-[60%] before:bg-[var(--glow-color)] before:right-0 before:rounded-l before:shadow-[-2px_0_10px_var(--glow-color)] z-10
+                        before:absolute before:w-[5px] before:h-[60%] before:bg-[var(--glow-color)] before:right-0 before:top-1/2 before:-translate-y-1/2 before:rounded-l before:shadow-[-2px_0_10px_var(--glow-color)] before:transition-all before:duration-200 before:z-30
                         ${sidebarCollapsed ? 'justify-center' : ''}
                       `}
                     >

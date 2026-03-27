@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     if (appError) throw appError
 
-    // Step 3: Insert dependents if any
+    // Step 3: Insert dependants if any
     if (data.dependents && data.dependents.length > 0) {
       const dependentsData = data.dependents.map((dep: any) => ({
         application_id: application.id,

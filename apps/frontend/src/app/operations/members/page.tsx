@@ -26,6 +26,10 @@ interface Member {
   joinDate: string;
   kycStatus: 'pending' | 'verified' | 'failed';
   riskScore: number;
+  isDependant?: boolean;
+  dependantType?: string;
+  dependantCode?: number;
+  dependants?: Member[];
 }
 
 interface FilterOptions {
@@ -59,14 +63,61 @@ export default function OperationsMembersPage() {
     suspended: 0,
     kycPending: 0,
   });
-  const [dataLoading, setDataLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [statsLoaded, setStatsLoaded] = useState(false);
+
+  // Fetch stats on mount
+  useEffect(() => {
+    if (!statsLoaded) {
+      fetchStats();
+    }
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/admin/members?stats_only=true', {
+        cache: 'no-store',
+      });
+      const data = await response.json();
+      if (data.stats) {
+        setStats(data.stats);
+        setStatsLoaded(true);
+      }
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
 
   useEffect(() => {
+    // Restore search state from sessionStorage on mount
+    const savedState = sessionStorage.getItem('memberSearchState');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        setSearchInput(state.searchTerm || '');
+        setSearchTerm(state.searchTerm || '');
+        setStatusFilter(state.statusFilter || '');
+        setBrokerFilter(state.brokerFilter || '');
+        setPlanFilter(state.planFilter || '');
+        setPaymentMethodFilter(state.paymentMethodFilter || '');
+        setKycFilter(state.kycFilter || '');
+      } catch (e) {
+        console.error('Failed to restore search state:', e);
+      }
+    } else {
+      // No saved state, set loading to false immediately
+      setDataLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Always fetch members when search term or filters change
     fetchMembers();
   }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, kycFilter, searchTerm]);
 
   const fetchMembers = async () => {
     try {
+      console.log('fetchMembers called with searchTerm:', searchTerm);
       setDataLoading(true);
       
       const params = new URLSearchParams();
@@ -76,6 +127,9 @@ export default function OperationsMembersPage() {
       if (paymentMethodFilter && paymentMethodFilter !== '') params.append('payment_method', paymentMethodFilter);
       if (kycFilter && kycFilter !== '') params.append('kyc_status', kycFilter);
       if (searchTerm) params.append('search', searchTerm);
+      params.append('include_dependants', 'true'); // Always include dependants
+      
+      console.log('API URL:', `/api/admin/members?${params.toString()}`);
       
       const response = await fetch(`/api/admin/members?${params.toString()}`, {
         cache: 'no-store',
@@ -84,6 +138,8 @@ export default function OperationsMembersPage() {
         },
       });
       const data = await response.json();
+      console.log('API response:', data);
+      console.log('Members count:', data.members?.length);
       setMembers(data.members || []);
       setTotalCount(data.count || 0);
       setStats(data.stats || stats);
@@ -98,7 +154,17 @@ export default function OperationsMembersPage() {
   };
 
   const handleSearch = () => {
+    console.log('handleSearch called, searchInput:', searchInput);
     setSearchTerm(searchInput);
+    // Store search state in sessionStorage
+    sessionStorage.setItem('memberSearchState', JSON.stringify({
+      searchTerm: searchInput,
+      statusFilter,
+      brokerFilter,
+      planFilter,
+      paymentMethodFilter,
+      kycFilter
+    }));
   };
 
   const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -198,9 +264,22 @@ export default function OperationsMembersPage() {
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyPress={handleSearchKeyPress}
                   />
-                  <Button onClick={handleSearch} className="whitespace-nowrap">
-                    Search
-                  </Button>
+                  <div className="flex flex-col gap-1">
+                    <Button onClick={handleSearch} className="whitespace-nowrap">
+                      Search
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setSearchInput('');
+                        setSearchTerm('');
+                      }} 
+                      variant="outline" 
+                      size="sm" 
+                      className="whitespace-nowrap text-xs h-7"
+                    >
+                      Clear
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">
@@ -321,40 +400,71 @@ export default function OperationsMembersPage() {
                     </tr>
                   ) : (
                     filteredMembers.map((member) => (
-                      <tr key={member.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <p className="font-mono text-sm font-medium">{member.memberNumber}</p>
-                          <p className="text-xs text-gray-500">Joined: {new Date(member.joinDate).toLocaleDateString()}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="font-medium">{member.firstName} {member.lastName}</p>
-                          <p className="text-xs text-gray-500">{member.idNumber}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="text-sm">{member.product || <span className="text-red-500">No Plan</span>}</p>
-                        </td>
-                        <td className="py-3 px-4">{getStatusBadge(member.status)}</td>
-                        <td className="py-3 px-4">
-                          <Button variant="outline" size="sm" onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            router.push(`/operations/members/${member.id}`);
-                          }}>
-                            View
-                          </Button>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="text-sm">{member.email}</p>
-                          <p className="text-xs text-gray-500">{member.phone}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="text-sm font-medium">{member.brokerCode}</p>
-                          <p className="text-xs text-gray-500">{member.brokerName}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="text-sm font-medium">R {member.monthlyPremium}</p>
-                        </td>
-                      </tr>
+                      <>
+                        <tr key={member.id} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <p className="font-mono text-sm font-medium">{member.memberNumber}</p>
+                            <p className="text-xs text-gray-500">Joined: {new Date(member.joinDate).toLocaleDateString()}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="font-medium">{member.firstName} {member.lastName}</p>
+                            <p className="text-xs text-gray-500">{member.idNumber}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="text-sm">{member.product || <span className="text-red-500">No Plan</span>}</p>
+                          </td>
+                          <td className="py-3 px-4">{getStatusBadge(member.status)}</td>
+                          <td className="py-3 px-4">
+                            <Button variant="outline" size="sm" onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              router.push(`/operations/members/${member.id}`);
+                            }}>
+                              View
+                            </Button>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="text-sm">{member.email}</p>
+                            <p className="text-xs text-gray-500">{member.phone}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="text-sm font-medium">{member.brokerCode}</p>
+                            <p className="text-xs text-gray-500">{member.brokerName}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="text-sm font-medium">R {member.monthlyPremium}</p>
+                          </td>
+                        </tr>
+                        {member.dependants && member.dependants.length > 0 && member.dependants.map((dependant) => (
+                          <tr key={dependant.id} className="border-b bg-blue-50/30 hover:bg-blue-50/50">
+                            <td className="py-2 px-4 pl-8">
+                              <div className="flex items-center gap-2">
+                                <span className="text-blue-600">↳</span>
+                                <p className="font-mono text-xs text-gray-600">{dependant.memberNumber}-{dependant.dependantCode}</p>
+                              </div>
+                            </td>
+                            <td className="py-2 px-4">
+                              <p className="text-sm font-medium text-gray-700">{dependant.firstName} {dependant.lastName}</p>
+                              <p className="text-xs text-blue-600">{dependant.dependantType}</p>
+                            </td>
+                            <td className="py-2 px-4">
+                              <p className="text-xs text-gray-500">Covered under main</p>
+                            </td>
+                            <td className="py-2 px-4">{getStatusBadge(dependant.status)}</td>
+                            <td className="py-2 px-4">
+                              <Button variant="ghost" size="sm" className="text-xs">
+                                View
+                              </Button>
+                            </td>
+                            <td className="py-2 px-4">
+                              <p className="text-xs text-gray-500">ID: {dependant.idNumber}</p>
+                            </td>
+                            <td className="py-2 px-4" colSpan={2}>
+                              <p className="text-xs text-gray-400 italic">Dependant of main member</p>
+                            </td>
+                          </tr>
+                        ))}
+                      </>
                     ))
                   )}
                 </tbody>

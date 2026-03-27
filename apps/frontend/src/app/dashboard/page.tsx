@@ -32,6 +32,7 @@ export default function DashboardPage() {
         'ambulance_operator': '/dashboard',
         'provider': '/provider/dashboard',
         'member': '/dashboard',
+        'onboarding': '/onboarding',
       };
 
       const redirectPath = roleRoutes[role];

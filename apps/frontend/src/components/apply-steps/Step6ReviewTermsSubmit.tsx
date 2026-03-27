@@ -187,8 +187,21 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
       alert('Please record your voice acceptance')
       return
     }
+    if (uploadingVoice) {
+      alert('Please wait for voice recording to finish uploading')
+      return
+    }
+    // Check if voice recording URL is valid (not a blob URL)
+    if (data.voiceRecordingUrl?.startsWith('blob:')) {
+      alert('Voice recording upload incomplete. Please wait or try recording again.')
+      return
+    }
     if (!signatureSaved) {
       alert('Please provide your signature')
+      return
+    }
+    if (uploadingSignature) {
+      alert('Please wait for signature to finish uploading')
       return
     }
     if (!termsAccepted) {
@@ -286,11 +299,11 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
             </div>
           </div>
 
-          {/* Dependents */}
+          {/* Dependants */}
           {data.dependents && data.dependents.length > 0 && (
             <div className="bg-white rounded p-2 mb-2">
               <div className="flex justify-between items-start mb-1">
-                <h4 className="text-xs font-bold">Dependents</h4>
+                <h4 className="text-xs font-bold">Dependants</h4>
                 <button onClick={() => goToStep(3)} className="text-green-600 hover:text-green-700 text-xs font-medium">Edit</button>
               </div>
               <div className="space-y-1 text-xs">

@@ -19,6 +19,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     headers: {
       'x-application-name': 'day1health',
     },
+    fetch: (url, options = {}) => {
+      // Increase timeout for storage uploads
+      return fetch(url, {
+        ...options,
+        signal: options.signal || AbortSignal.timeout(60000), // 60 second timeout
+      });
+    },
   },
 });
 
