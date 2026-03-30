@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
         planId: member.plan_id,
         paymentMethod: member.payment_method || 'N/A',
         monthlyPremium: member.monthly_premium || 0,
-        joinDate: member.activated_at || member.created_at,
+        joinDate: member.start_date || member.activated_at || member.created_at,
         kycStatus: member.status === 'active' ? 'verified' : 'pending',
         riskScore: 0,
         dependants: []

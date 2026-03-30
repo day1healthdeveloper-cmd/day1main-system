@@ -427,7 +427,7 @@ export default function OperationsMembersPage() {
                         <tr key={member.id} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4">
                             <p className="font-mono text-sm font-medium">{member.memberNumber}</p>
-                            <p className="text-xs text-gray-500">Joined: {new Date(member.joinDate).toLocaleDateString()}</p>
+                            <p className="text-xs text-gray-500">Inception: {new Date(member.joinDate).toLocaleDateString()}</p>
                           </td>
                           <td className="py-3 px-4">
                             <p className="font-medium">{member.firstName} {member.lastName}</p>
