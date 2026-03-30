@@ -101,8 +101,32 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
 
+    // If searching and no members found, search dependants and get their main members
+    let additionalMembers: any[] = [];
+    if (search && (!members || members.length === 0)) {
+      const { data: dependants } = await supabaseAdmin
+        .from('member_dependants')
+        .select('member_number, first_name, last_name')
+        .or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`)
+        .limit(10);
+      
+      if (dependants && dependants.length > 0) {
+        const memberNumbers = [...new Set(dependants.map(d => d.member_number))];
+        const { data: mainMembers } = await supabaseAdmin
+          .from('members')
+          .select('*, brokers(code, name)')
+          .in('member_number', memberNumbers);
+        
+        if (mainMembers) {
+          additionalMembers = mainMembers;
+        }
+      }
+    }
+
+    const allMembers = [...(members || []), ...additionalMembers];
+
     // Transform members and fetch dependants if requested
-    const transformedMembers = await Promise.all((members || []).map(async (member) => {
+    const transformedMembers = await Promise.all((allMembers || []).map(async (member) => {
       const transformedMember: any = {
         id: member.id,
         memberNumber: member.member_number,
@@ -221,7 +245,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ 
       members: transformedMembers,
       stats,
-      count: count || 0,
+      count: transformedMembers.length,
       filters: {
         brokers: brokers || [],
         plans: uniquePlans.sort(),
