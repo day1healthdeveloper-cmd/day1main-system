@@ -94,7 +94,18 @@ export async function GET(request: NextRequest) {
     // Apply search AFTER filters (search within filtered results)
     if (search) {
       const cleanSearch = search.replace(/\s+/g, ''); // Remove spaces for ID number matching
-      query = query.or(`member_number.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,id_number.ilike.%${cleanSearch}%,mobile.ilike.%${search}%`)
+      const searchTerms = search.trim().split(/\s+/); // Split by whitespace
+      
+      if (searchTerms.length === 1) {
+        // Single term: search in all fields
+        query = query.or(`member_number.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,id_number.ilike.%${cleanSearch}%,mobile.ilike.%${search}%`)
+      } else {
+        // Multiple terms: search each term in first_name OR last_name
+        const orConditions = searchTerms.map(term => 
+          `first_name.ilike.%${term}%,last_name.ilike.%${term}%`
+        ).join(',');
+        query = query.or(orConditions);
+      }
     }
 
     const { data: members, error, count } = await query
@@ -104,11 +115,19 @@ export async function GET(request: NextRequest) {
     // If searching and no members found, search dependants and get their main members
     let additionalMembers: any[] = [];
     if (search && (!members || members.length === 0)) {
-      const { data: dependants } = await supabaseAdmin
-        .from('member_dependants')
-        .select('member_number, first_name, last_name')
-        .or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`)
-        .limit(10);
+      const searchTerms = search.trim().split(/\s+/);
+      let dependantsQuery = supabaseAdmin.from('member_dependants').select('member_number, first_name, last_name');
+      
+      if (searchTerms.length === 1) {
+        dependantsQuery = dependantsQuery.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%`);
+      } else {
+        const orConditions = searchTerms.map(term => 
+          `first_name.ilike.%${term}%,last_name.ilike.%${term}%`
+        ).join(',');
+        dependantsQuery = dependantsQuery.or(orConditions);
+      }
+      
+      const { data: dependants } = await dependantsQuery.limit(10);
       
       if (dependants && dependants.length > 0) {
         const memberNumbers = [...new Set(dependants.map(d => d.member_number))];

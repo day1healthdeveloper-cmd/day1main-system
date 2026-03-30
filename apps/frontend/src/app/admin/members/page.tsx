@@ -28,6 +28,10 @@ interface Member {
   joinDate: string;
   kycStatus: 'pending' | 'verified' | 'failed';
   riskScore: number;
+  isDependant?: boolean;
+  dependantType?: string;
+  dependantCode?: number;
+  dependants?: Member[];
 }
 
 interface FilterOptions {
@@ -86,6 +90,7 @@ export default function AdminMembersPage() {
       if (paymentMethodFilter && paymentMethodFilter !== '') params.append('payment_method', paymentMethodFilter);
       if (kycFilter && kycFilter !== '') params.append('kyc_status', kycFilter);
       if (searchTerm) params.append('search', searchTerm);
+      params.append('include_dependants', 'true');
       
       const response = await fetch(`/api/admin/members?${params.toString()}`, {
         cache: 'no-store',
@@ -450,41 +455,72 @@ export default function AdminMembersPage() {
                     </tr>
                   ) : (
                     filteredMembers.map((member) => (
-                      <tr key={member.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <p className="font-mono text-sm font-medium">{member.memberNumber}</p>
-                          <p className="text-xs text-gray-500">Joined: {new Date(member.joinDate).toLocaleDateString()}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="font-medium">{member.firstName} {member.lastName}</p>
-                          <p className="text-xs text-gray-500">{member.idNumber}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="text-sm">{member.product || <span className="text-red-500">No Plan</span>}</p>
-                        </td>
-                        <td className="py-3 px-4">{getStatusBadge(member.status)}</td>
-                        <td className="py-3 px-4">
-                          <Button variant="outline" size="sm" onClick={() => {
-                            router.push(`/admin/members/${member.id}`);
-                          }}>
-                            View
-                          </Button>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="text-sm">{member.email}</p>
-                          <p className="text-xs text-gray-500">{member.phone}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="text-sm font-medium">{member.brokerCode}</p>
-                          <p className="text-xs text-gray-500">{member.brokerName}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="text-sm font-medium">R {member.monthlyPremium}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="text-xs">{member.paymentMethod}</p>
-                        </td>
-                      </tr>
+                      <>
+                        <tr key={member.id} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <p className="font-mono text-sm font-medium">{member.memberNumber}</p>
+                            <p className="text-xs text-gray-500">Joined: {new Date(member.joinDate).toLocaleDateString()}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="font-medium">{member.firstName} {member.lastName}</p>
+                            <p className="text-xs text-gray-500">{member.idNumber}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="text-sm">{member.product || <span className="text-red-500">No Plan</span>}</p>
+                          </td>
+                          <td className="py-3 px-4">{getStatusBadge(member.status)}</td>
+                          <td className="py-3 px-4">
+                            <Button variant="outline" size="sm" onClick={() => {
+                              router.push(`/admin/members/${member.id}`);
+                            }}>
+                              View
+                            </Button>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="text-sm">{member.email}</p>
+                            <p className="text-xs text-gray-500">{member.phone}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="text-sm font-medium">{member.brokerCode}</p>
+                            <p className="text-xs text-gray-500">{member.brokerName}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="text-sm font-medium">R {member.monthlyPremium}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="text-xs">{member.paymentMethod}</p>
+                          </td>
+                        </tr>
+                        {member.dependants && member.dependants.length > 0 && member.dependants.map((dependant) => (
+                          <tr key={dependant.id} className="border-b bg-blue-50/30 hover:bg-blue-50/50">
+                            <td className="py-2 px-4 pl-8">
+                              <div className="flex items-center gap-2">
+                                <span className="text-blue-600">↳</span>
+                                <p className="font-mono text-xs text-gray-600">{dependant.memberNumber}-{dependant.dependantCode}</p>
+                              </div>
+                            </td>
+                            <td className="py-2 px-4">
+                              <p className="text-sm font-medium text-gray-700">{dependant.firstName} {dependant.lastName}</p>
+                              <p className="text-xs text-blue-600">{dependant.dependantType}</p>
+                            </td>
+                            <td className="py-2 px-4">
+                              <p className="text-xs text-gray-500">Covered under main</p>
+                            </td>
+                            <td className="py-2 px-4">{getStatusBadge(dependant.status)}</td>
+                            <td className="py-2 px-4">
+                              <Button variant="ghost" size="sm" className="text-xs">
+                                View
+                              </Button>
+                            </td>
+                            <td className="py-2 px-4">
+                              <p className="text-xs text-gray-500">ID: {dependant.idNumber}</p>
+                            </td>
+                            <td className="py-2 px-4" colSpan={3}>
+                              <p className="text-xs text-gray-400 italic">Dependant of main member</p>
+                            </td>
+                          </tr>
+                        ))}
+                      </>
                     ))
                   )}
                 </tbody>

@@ -1349,32 +1349,17 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           <div className="px-3 pb-3 border-t border-gray-200 pt-3">
             <button 
               onClick={handleLogout}
-              className="block w-full"
+              className={`
+                w-full h-10 px-3 text-sm rounded-md border flex items-center gap-3 transition-colors duration-200
+                text-red-600 hover:text-red-700 bg-white hover:bg-red-50 border-gray-200 hover:border-red-200
+                ${sidebarCollapsed ? 'justify-center' : ''}
+              `}
               title={sidebarCollapsed ? "Log out" : undefined}
             >
-              <div className="relative">
-                <div
-                  style={{
-                    "--glow-color": "rgba(220, 38, 38, 0.6)",
-                    "--glow-color-via": "rgba(220, 38, 38, 0.075)",
-                    "--glow-color-to": "rgba(220, 38, 38, 0.2)",
-                  } as React.CSSProperties}
-                  className={`
-                    w-full h-10 px-3 text-sm rounded-md border flex items-center gap-3 relative transition-colors overflow-hidden bg-gradient-to-t border-r-0 duration-200
-                    from-background to-muted text-red-600 hover:text-red-700 border-border hover:from-red-50 hover:to-red-100 hover:border-red-200
-                    after:inset-0 after:absolute after:rounded-[inherit] after:bg-gradient-to-r after:from-transparent after:from-40% after:via-[var(--glow-color-via)] after:to-[var(--glow-color-to)] after:via-70% after:shadow-[hsl(var(--foreground)/0.15)_0px_1px_0px_inset] z-20
-                    before:absolute before:w-[5px] hover:before:translate-x-full before:transition-all before:duration-200 before:h-[60%] before:bg-[var(--glow-color)] before:right-0 before:rounded-l before:shadow-[-2px_0_10px_var(--glow-color)] z-10
-                    ${sidebarCollapsed ? 'justify-center' : ''}
-                  `}
-                >
-                  <span className="relative z-30">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </span>
-                  {!sidebarCollapsed && <span className="flex-1 relative z-30 font-medium">Log out</span>}
-                </div>
-              </div>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              {!sidebarCollapsed && <span className="flex-1 font-medium">Log out</span>}
             </button>
           </div>
         </div>
