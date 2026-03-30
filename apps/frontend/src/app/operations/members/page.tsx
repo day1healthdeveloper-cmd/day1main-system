@@ -65,6 +65,7 @@ export default function OperationsMembersPage() {
   });
   const [dataLoading, setDataLoading] = useState(false);
   const [statsLoaded, setStatsLoaded] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   // Fetch stats on mount
   useEffect(() => {
@@ -111,9 +112,11 @@ export default function OperationsMembersPage() {
   }, []);
 
   useEffect(() => {
-    // Always fetch members when search term or filters change
-    fetchMembers();
-  }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, kycFilter, searchTerm]);
+    // Always fetch members when search term or filters change AND user has searched
+    if (hasSearched) {
+      fetchMembers();
+    }
+  }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, kycFilter, searchTerm, hasSearched]);
 
   const fetchMembers = async () => {
     try {
@@ -156,6 +159,7 @@ export default function OperationsMembersPage() {
   const handleSearch = () => {
     console.log('handleSearch called, searchInput:', searchInput);
     setSearchTerm(searchInput);
+    setHasSearched(true);
     // Store search state in sessionStorage
     sessionStorage.setItem('memberSearchState', JSON.stringify({
       searchTerm: searchInput,
@@ -172,19 +176,6 @@ export default function OperationsMembersPage() {
       handleSearch();
     }
   };
-
-  if (dataLoading) {
-    return (
-      <SidebarLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading members...</p>
-          </div>
-        </div>
-      </SidebarLayout>
-    );
-  }
 
   const getStatusBadge = (status: Member['status']) => {
     const styles = {
@@ -287,7 +278,10 @@ export default function OperationsMembersPage() {
                 <select
                   id="statusFilter"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setHasSearched(true);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Click to select</option>
@@ -302,7 +296,10 @@ export default function OperationsMembersPage() {
                 <select
                   id="brokerFilter"
                   value={brokerFilter}
-                  onChange={(e) => setBrokerFilter(e.target.value)}
+                  onChange={(e) => {
+                    setBrokerFilter(e.target.value);
+                    setHasSearched(true);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Click to select</option>
@@ -320,7 +317,10 @@ export default function OperationsMembersPage() {
                 <select
                   id="planFilter"
                   value={planFilter}
-                  onChange={(e) => setPlanFilter(e.target.value)}
+                  onChange={(e) => {
+                    setPlanFilter(e.target.value);
+                    setHasSearched(true);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Click to select</option>
@@ -334,7 +334,10 @@ export default function OperationsMembersPage() {
                 <select
                   id="paymentMethodFilter"
                   value={paymentMethodFilter}
-                  onChange={(e) => setPaymentMethodFilter(e.target.value)}
+                  onChange={(e) => {
+                    setPaymentMethodFilter(e.target.value);
+                    setHasSearched(true);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Click to select</option>
@@ -348,7 +351,10 @@ export default function OperationsMembersPage() {
                 <select
                   id="kycFilter"
                   value={kycFilter}
-                  onChange={(e) => setKycFilter(e.target.value)}
+                  onChange={(e) => {
+                    setKycFilter(e.target.value);
+                    setHasSearched(true);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="all">All KYC Statuses</option>
@@ -392,7 +398,24 @@ export default function OperationsMembersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredMembers.length === 0 ? (
+                  {dataLoading ? (
+                    <tr>
+                      <td colSpan={8} className="text-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+                        <p className="text-gray-600 text-sm">Searching members...</p>
+                      </td>
+                    </tr>
+                  ) : !hasSearched ? (
+                    <tr>
+                      <td colSpan={8} className="text-center py-12 text-gray-500">
+                        <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <p className="text-lg font-medium mb-2">Search for members</p>
+                        <p className="text-sm">Use the search box or filters above to find members</p>
+                      </td>
+                    </tr>
+                  ) : filteredMembers.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="text-center py-8 text-gray-500">
                         No members found matching your filters

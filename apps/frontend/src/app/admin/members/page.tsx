@@ -69,14 +69,37 @@ export default function AdminMembersPage() {
     suspended: 0,
     kycPending: 0,
   });
-  const [dataLoading, setDataLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+  const [hasSearched, setHasSearched] = useState(false);
 
+  // Only fetch stats on mount, not members
   useEffect(() => {
-    fetchMembers();
-  }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, kycFilter, searchTerm]);
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/admin/members?stats_only=true', {
+        cache: 'no-store',
+      });
+      const data = await response.json();
+      if (data.stats) {
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  // Fetch members only when filters or search change AND user has searched
+  useEffect(() => {
+    if (hasSearched) {
+      fetchMembers();
+    }
+  }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, kycFilter, searchTerm, hasSearched]);
 
   const fetchMembers = async () => {
     try {
@@ -123,11 +146,14 @@ export default function AdminMembersPage() {
     setPlanFilter('');
     setPaymentMethodFilter('');
     setCurrentPage(1);
+    setHasSearched(false);
+    setMembers([]);
   };
 
   const handleSearch = () => {
     setSearchTerm(searchInput);
     setCurrentPage(1);
+    setHasSearched(true);
   };
 
   const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -191,12 +217,12 @@ export default function AdminMembersPage() {
   //   }
   // }, [loading, isAuthenticated, router]);
 
-  if (loading || dataLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading members...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -332,7 +358,10 @@ export default function AdminMembersPage() {
                 <select
                   id="statusFilter"
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setHasSearched(true);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Click to select</option>
@@ -347,7 +376,10 @@ export default function AdminMembersPage() {
                 <select
                   id="brokerFilter"
                   value={brokerFilter}
-                  onChange={(e) => setBrokerFilter(e.target.value)}
+                  onChange={(e) => {
+                    setBrokerFilter(e.target.value);
+                    setHasSearched(true);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Click to select</option>
@@ -365,7 +397,10 @@ export default function AdminMembersPage() {
                 <select
                   id="planFilter"
                   value={planFilter}
-                  onChange={(e) => setPlanFilter(e.target.value)}
+                  onChange={(e) => {
+                    setPlanFilter(e.target.value);
+                    setHasSearched(true);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Click to select</option>
@@ -379,7 +414,10 @@ export default function AdminMembersPage() {
                 <select
                   id="paymentMethodFilter"
                   value={paymentMethodFilter}
-                  onChange={(e) => setPaymentMethodFilter(e.target.value)}
+                  onChange={(e) => {
+                    setPaymentMethodFilter(e.target.value);
+                    setHasSearched(true);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Click to select</option>
@@ -393,7 +431,10 @@ export default function AdminMembersPage() {
                 <select
                   id="kycFilter"
                   value={kycFilter}
-                  onChange={(e) => setKycFilter(e.target.value)}
+                  onChange={(e) => {
+                    setKycFilter(e.target.value);
+                    setHasSearched(true);
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Click to select</option>
@@ -447,7 +488,24 @@ export default function AdminMembersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredMembers.length === 0 ? (
+                  {dataLoading ? (
+                    <tr>
+                      <td colSpan={9} className="text-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+                        <p className="text-gray-600 text-sm">Searching members...</p>
+                      </td>
+                    </tr>
+                  ) : !hasSearched ? (
+                    <tr>
+                      <td colSpan={9} className="text-center py-12 text-gray-500">
+                        <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <p className="text-lg font-medium mb-2">Search for members</p>
+                        <p className="text-sm">Use the search box or filters above to find members</p>
+                      </td>
+                    </tr>
+                  ) : filteredMembers.length === 0 ? (
                     <tr>
                       <td colSpan={9} className="text-center py-8 text-gray-500">
                         No members found matching your filters
