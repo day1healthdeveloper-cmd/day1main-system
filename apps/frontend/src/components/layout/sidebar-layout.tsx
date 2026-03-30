@@ -13,6 +13,7 @@ interface NavItem {
   href: string;
   icon: React.ReactNode;
   badge?: number;
+  glowColor?: string;
 }
 
 interface SidebarLayoutProps {
