@@ -33,6 +33,8 @@ export default function ProviderDashboardPage() {
   }, [isAuthenticated, user]);
 
   const fetchProviderClaims = async () => {
+    if (!user) return;
+    
     try {
       setLoadingData(true);
       const response = await fetch(`/api/provider/claims?providerId=${user.id}&limit=5`);
