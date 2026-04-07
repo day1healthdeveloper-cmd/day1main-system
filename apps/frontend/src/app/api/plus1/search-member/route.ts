@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     // Search for member by mobile number in Plus1Rewards database
     const { data: members, error } = await plus1Supabase
       .from('members')
-      .select('first_name, last_name, id_number, date_of_birth, email, cell_phone, address_line_1, city, postal_code')
+      .select('first_name, last_name, sa_id, date_of_birth, email, cell_phone, address_line_1, city, postal_code')
       .eq('cell_phone', mobile)
       .limit(1)
 
@@ -72,8 +72,8 @@ export async function GET(request: NextRequest) {
 
     // Extract gender from ID number (digits 7-10: 0000-4999 = Female, 5000-9999 = Male)
     let gender = ''
-    if (member.id_number && member.id_number.length === 13) {
-      const genderDigits = parseInt(member.id_number.substring(6, 10))
+    if (member.sa_id && member.sa_id.length === 13) {
+      const genderDigits = parseInt(member.sa_id.substring(6, 10))
       gender = genderDigits < 5000 ? 'female' : 'male'
     }
 
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       member: {
         firstName: member.first_name || '',
         lastName: member.last_name || '',
-        idNumber: member.id_number || '',
+        idNumber: member.sa_id || '',
         dateOfBirth: member.date_of_birth || '',
         gender: gender,
         email: member.email || '',
