@@ -26,6 +26,7 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [memberFound, setMemberFound] = useState(false)
+  const [coverPlanName, setCoverPlanName] = useState('')
   
   const [formData, setFormData] = useState({
     firstName: data.firstName || '',
@@ -79,6 +80,7 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
           setDate(new Date(member.dateOfBirth))
         }
         
+        setCoverPlanName(member.coverPlanName || '')
         setMemberFound(true)
       } else {
         alert('Member not found. Please check the mobile number and try again.')
@@ -153,19 +155,14 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
             </button>
           </div>
           <div className="col-span-5">
-            <select
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-              defaultValue=""
-            >
-              <option value="" disabled>Select Cover Plan</option>
-              <option value="value-plus">Value Plus Plan</option>
-              <option value="value-plus-hospital">Value Plus Hospital Plan</option>
-              <option value="platinum">Platinum Plan</option>
-              <option value="platinum-hospital">Platinum Hospital Plan</option>
-              <option value="executive">Executive Plan</option>
-              <option value="executive-hospital">Executive Hospital Plan</option>
-              <option value="senior-comprehensive">Senior Comprehensive Plan</option>
-            </select>
+            <input
+              type="text"
+              value={coverPlanName}
+              readOnly
+              disabled
+              placeholder="Cover Plan Name"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-gray-100 cursor-not-allowed"
+            />
           </div>
         </div>
         {memberFound && (
