@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import Step1Personal from '@/components/apply-steps/Step1Personal'
+import Step1Plus1Confirm from '@/components/apply-steps/Step1Plus1Confirm'
 import Step2Documents from '@/components/apply-steps/Step2Documents'
 import Step5Dependents from '@/components/apply-steps/Step5Dependents'
 import Step6MedicalHistory from '@/components/apply-steps/Step6MedicalHistory'
@@ -45,7 +45,7 @@ export default function Plus1ConfirmPage() {
   const goToStep = (step: number) => setCurrentStep(step)
 
   const steps = [
-    { number: 1, title: 'Personal Info', component: Step1Personal },
+    { number: 1, title: 'Personal Info', component: Step1Plus1Confirm },
     { number: 2, title: 'Documents', component: Step2Documents },
     { number: 3, title: 'Dependents', component: Step5Dependents },
     { number: 4, title: 'Medical History', component: Step6MedicalHistory },
