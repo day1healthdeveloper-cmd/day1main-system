@@ -53,35 +53,35 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
     setSearching(true)
     
     try {
-      // Search for member by name, ID, or member number
-      const response = await fetch(`/api/admin/members?search=${encodeURIComponent(searchQuery)}&limit=1`)
+      // Search for member by mobile number in Plus1Rewards database
+      const response = await fetch(`/api/plus1/search-member?mobile=${encodeURIComponent(searchQuery)}`)
       const result = await response.json()
       
-      if (result.members && result.members.length > 0) {
-        const member = result.members[0]
+      if (result.found && result.member) {
+        const member = result.member
         
         // Populate form with member data
         setFormData({
-          firstName: member.first_name || '',
-          lastName: member.last_name || '',
-          idNumber: member.id_number || '',
-          dateOfBirth: member.date_of_birth || '',
+          firstName: member.firstName || '',
+          lastName: member.lastName || '',
+          idNumber: member.idNumber || '',
+          dateOfBirth: member.dateOfBirth || '',
           gender: member.gender || '',
           email: member.email || '',
           mobile: member.mobile || '',
-          addressLine1: member.address_line1 || '',
-          addressLine2: member.address_line2 || '',
+          addressLine1: member.addressLine1 || '',
+          addressLine2: '',
           city: member.city || '',
-          postalCode: member.postal_code || '',
+          postalCode: member.postalCode || '',
         })
         
-        if (member.date_of_birth) {
-          setDate(new Date(member.date_of_birth))
+        if (member.dateOfBirth) {
+          setDate(new Date(member.dateOfBirth))
         }
         
         setMemberFound(true)
       } else {
-        alert('Member not found. Please check the details and try again.')
+        alert('Member not found. Please check the mobile number and try again.')
         setMemberFound(false)
       }
     } catch (error) {

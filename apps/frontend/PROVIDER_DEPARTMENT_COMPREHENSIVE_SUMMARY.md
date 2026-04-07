@@ -8,7 +8,7 @@ The Provider Department manages healthcare providers (doctors, dentists, special
 ================================================================================
 
 DATABASE SCHEMA
-bm
+
 --------------------------------------------------------------------------------
 
 PROVIDERS TABLE (Main Provider Table)
