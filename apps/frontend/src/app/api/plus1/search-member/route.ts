@@ -30,6 +30,14 @@ export async function GET(request: NextRequest) {
         auth: {
           persistSession: false,
           autoRefreshToken: false,
+        },
+        db: {
+          schema: 'public'
+        },
+        global: {
+          headers: {
+            'x-application-name': 'day1main-plus1-integration'
+          }
         }
       }
     )
