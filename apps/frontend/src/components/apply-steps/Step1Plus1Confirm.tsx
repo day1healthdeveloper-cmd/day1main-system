@@ -131,23 +131,42 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
       <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <label className="block text-sm font-semibold text-gray-800 mb-2">Plus 1 Member Search</label>
         <p className="text-xs text-gray-600 mb-3">Search for the plus1rewards member by mobile number</p>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleMemberSearch()}
-            placeholder="Enter plus 1 member mobile number"
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            type="button"
-            onClick={handleMemberSearch}
-            disabled={searching || !searchQuery.trim()}
-            className="px-6 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            {searching ? 'Searching...' : 'Search'}
-          </button>
+        <div className="grid grid-cols-12 gap-2">
+          <div className="col-span-5">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleMemberSearch()}
+              placeholder="Enter plus 1 member mobile number"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="col-span-2">
+            <button
+              type="button"
+              onClick={handleMemberSearch}
+              disabled={searching || !searchQuery.trim()}
+              className="w-full px-6 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {searching ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+          <div className="col-span-5">
+            <select
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              defaultValue=""
+            >
+              <option value="" disabled>Select Cover Plan</option>
+              <option value="value-plus">Value Plus Plan</option>
+              <option value="value-plus-hospital">Value Plus Hospital Plan</option>
+              <option value="platinum">Platinum Plan</option>
+              <option value="platinum-hospital">Platinum Hospital Plan</option>
+              <option value="executive">Executive Plan</option>
+              <option value="executive-hospital">Executive Hospital Plan</option>
+              <option value="senior-comprehensive">Senior Comprehensive Plan</option>
+            </select>
+          </div>
         </div>
         {memberFound && (
           <p className="text-xs text-green-600 mt-2 font-medium">✓ Member found! Details loaded below.</p>
