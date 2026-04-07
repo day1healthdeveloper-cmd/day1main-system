@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Initialize Plus1Rewards Supabase client
-const plus1Supabase = createClient(
-  process.env.PLUS1_SUPABASE_URL!,
-  process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -19,6 +13,29 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Check if environment variables are set
+    if (!process.env.PLUS1_SUPABASE_URL || !process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Plus1 Supabase credentials not configured')
+      return NextResponse.json(
+        { error: 'External database not configured' },
+        { status: 500 }
+      )
+    }
+
+    // Initialize Plus1Rewards Supabase client
+    const plus1Supabase = createClient(
+      process.env.PLUS1_SUPABASE_URL,
+      process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY,
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        }
+      }
+    )
+
+    console.log('Searching Plus1 member with mobile:', mobile)
+
     // Search for member by mobile number in Plus1Rewards database
     const { data: members, error } = await plus1Supabase
       .from('members')
@@ -29,12 +46,13 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Plus1 member search error:', error)
       return NextResponse.json(
-        { error: 'Failed to search member' },
+        { error: 'Failed to search member', details: error.message },
         { status: 500 }
       )
     }
 
     if (!members || members.length === 0) {
+      console.log('No member found with mobile:', mobile)
       return NextResponse.json(
         { found: false, message: 'Member not found' },
         { status: 404 }
@@ -42,6 +60,7 @@ export async function GET(request: NextRequest) {
     }
 
     const member = members[0]
+    console.log('Member found:', member.first_name, member.last_name)
 
     // Extract gender from ID number (digits 7-10: 0000-4999 = Female, 5000-9999 = Male)
     let gender = ''
@@ -70,7 +89,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Plus1 search error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
