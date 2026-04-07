@@ -20,6 +20,7 @@ export default function Plus1ConfirmPage() {
   const children = searchParams.get('children')
   
   const [currentStep, setCurrentStep] = useState(1)
+  const [coverPlanName, setCoverPlanName] = useState('')
   const [applicationData, setApplicationData] = useState<ApplicationData>({
     firstName: '',
     lastName: '',
@@ -38,6 +39,10 @@ export default function Plus1ConfirmPage() {
 
   const updateData = (data: Partial<ApplicationData>) => {
     setApplicationData(prev => ({ ...prev, ...data }))
+    // Update cover plan name if it's in the data
+    if (data.planName) {
+      setCoverPlanName(data.planName)
+    }
   }
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 6))
@@ -60,30 +65,12 @@ export default function Plus1ConfirmPage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-green-600 to-green-700 border-b shadow-md">
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-white mb-3">Day1Health Application</h1>
-          {planName && (
+          <h1 className="text-3xl font-bold text-white mb-3">Day1Health Plus1 Application</h1>
+          {coverPlanName && (
             <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/20">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm text-white/90 font-medium">Selected Plan:</span>
-                <span className="text-xl font-bold text-yellow-300">{planName}</span>
-                {monthlyPrice && (
-                  <>
-                    <span className="text-white/60">|</span>
-                    <span className="text-sm text-white/90 font-medium">Monthly Premium:</span>
-                    <span className="text-2xl font-bold text-yellow-300">R{monthlyPrice}</span>
-                  </>
-                )}
-                {(adults || children) && (
-                  <>
-                    <span className="text-white/60">|</span>
-                    <span className="text-sm text-white/90 font-medium">Coverage:</span>
-                    <span className="text-lg font-semibold text-white">
-                      {adults && parseInt(adults) > 0 && `${adults} Adult${parseInt(adults) > 1 ? 's' : ''}`}
-                      {adults && children && parseInt(adults) > 0 && parseInt(children) > 0 && ' + '}
-                      {children && parseInt(children) > 0 && `${children} Child${parseInt(children) > 1 ? 'ren' : ''}`}
-                    </span>
-                  </>
-                )}
+                <span className="text-sm text-white/90 font-medium">Plus1 Cover Plan:</span>
+                <span className="text-xl font-bold text-yellow-300">{coverPlanName}</span>
               </div>
             </div>
           )}

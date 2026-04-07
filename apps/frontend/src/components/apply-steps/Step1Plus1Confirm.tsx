@@ -82,6 +82,9 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
         
         setCoverPlanName(member.coverPlanName || '')
         setMemberFound(true)
+        
+        // Update parent with cover plan name
+        updateData({ planName: member.coverPlanName || '' })
       } else {
         alert('Member not found. Please check the mobile number and try again.')
         setMemberFound(false)
