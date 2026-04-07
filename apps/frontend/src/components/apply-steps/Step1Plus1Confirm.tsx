@@ -130,14 +130,14 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
       {/* Plus 1 Member Search */}
       <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <label className="block text-sm font-semibold text-gray-800 mb-2">Plus 1 Member Search</label>
-        <p className="text-xs text-gray-600 mb-3">Search for the main member by name, ID number, or member number</p>
+        <p className="text-xs text-gray-600 mb-3">Search for the plus1rewards member by mobile number</p>
         <div className="flex gap-2">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleMemberSearch()}
-            placeholder="Enter name, ID, or member number"
+            placeholder="Enter plus 1 member mobile number"
             className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
           />
           <button
