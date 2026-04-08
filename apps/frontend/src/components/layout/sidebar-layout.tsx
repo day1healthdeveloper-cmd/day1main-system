@@ -50,7 +50,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         try {
           const response = await fetch('/api/admin/applications');
           const data = await response.json();
-          const submittedCount = data.applications?.filter((app: any) => app.status === 'submitted').length || 0;
+          const submittedCount = data.applications?.filter((app: any) => app.status === 'submitted' || app.status === 'under_review').length || 0;
           setNewApplicationsCount(submittedCount);
         } catch (error) {
           console.error('Failed to fetch applications count:', error);
