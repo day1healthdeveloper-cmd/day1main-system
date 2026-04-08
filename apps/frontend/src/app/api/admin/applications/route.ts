@@ -216,6 +216,39 @@ export async function PATCH(request: NextRequest) {
           .insert(memberDependents)
       }
 
+      // Update Plus1Rewards member status to "active" if this is a Plus1 application
+      // Check if broker is "POR" (Plus 1 Rewards)
+      if (application.broker_id) {
+        const { data: broker } = await supabaseAdmin
+          .from('brokers')
+          .select('code')
+          .eq('id', application.broker_id)
+          .single()
+
+        if (broker && broker.code === 'POR') {
+          console.log('Plus1 member approved - updating Plus1Rewards status to active')
+          try {
+            const plus1Response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/plus1/update-status`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                mobile: application.mobile,
+                planStatus: 'active'
+              })
+            })
+
+            if (!plus1Response.ok) {
+              console.error('Failed to update Plus1 status:', await plus1Response.text())
+            } else {
+              console.log('Plus1 member status updated to active successfully')
+            }
+          } catch (plus1Error) {
+            console.error('Error updating Plus1 status:', plus1Error)
+            // Don't fail the approval if Plus1 update fails
+          }
+        }
+      }
+
       // Update contact to mark as member
       await supabaseAdmin
         .from('contacts')
