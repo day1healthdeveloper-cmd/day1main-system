@@ -228,19 +228,35 @@ export async function PATCH(request: NextRequest) {
         if (broker && broker.code === 'POR') {
           console.log('Plus1 member approved - updating Plus1Rewards status to active')
           try {
-            const plus1Response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/plus1/update-status`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                mobile: application.mobile,
-                planStatus: 'active'
-              })
-            })
+            // Initialize Plus1Rewards Supabase client
+            const { createClient } = require('@supabase/supabase-js')
+            const plus1Supabase = createClient(
+              process.env.PLUS1_SUPABASE_URL!,
+              process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY!,
+              {
+                auth: {
+                  persistSession: false,
+                  autoRefreshToken: false,
+                },
+                db: {
+                  schema: 'public'
+                }
+              }
+            )
 
-            if (!plus1Response.ok) {
-              console.error('Failed to update Plus1 status:', await plus1Response.text())
+            // Update member plan_status in Plus1Rewards database
+            const { data: plus1Data, error: plus1Error } = await plus1Supabase
+              .from('members')
+              .update({ plan_status: 'active' })
+              .eq('cell_phone', application.mobile)
+              .select()
+
+            if (plus1Error) {
+              console.error('Failed to update Plus1 status:', plus1Error)
+            } else if (plus1Data && plus1Data.length > 0) {
+              console.log('✅ Plus1 member status updated to active:', plus1Data[0].cell_phone)
             } else {
-              console.log('Plus1 member status updated to active successfully')
+              console.log('⚠️ Plus1 member not found with mobile:', application.mobile)
             }
           } catch (plus1Error) {
             console.error('Error updating Plus1 status:', plus1Error)
