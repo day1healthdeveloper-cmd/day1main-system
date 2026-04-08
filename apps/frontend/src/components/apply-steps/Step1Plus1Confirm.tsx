@@ -154,6 +154,34 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     updateData(formData)
+    
+    // Save lead to database immediately after Step 1
+    try {
+      await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          mobile: formData.mobile,
+          idNumber: formData.idNumber,
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender,
+          addressLine1: formData.addressLine1,
+          addressLine2: formData.addressLine2,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          source: 'website_application',
+          lifecycleStage: 'application_started',
+        }),
+      })
+      // Continue to next step even if save fails (don't block user)
+    } catch (error) {
+      console.error('Failed to save lead:', error)
+      // Continue anyway
+    }
+    
     nextStep()
   }
 
