@@ -55,9 +55,13 @@ export default function LoginPage() {
     try {
       await login(email, password);
       
+      // Small delay to ensure auth state is saved
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Force a hard navigation to clear any cached state
       window.location.href = '/dashboard';
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
       setLoading(false);
     }
