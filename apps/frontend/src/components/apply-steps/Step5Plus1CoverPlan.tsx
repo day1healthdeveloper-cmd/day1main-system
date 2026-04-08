@@ -31,9 +31,15 @@ export default function Step5Plus1CoverPlan({ data, updateData, nextStep, prevSt
       <div className="space-y-3">
         {/* Cover Plan Display */}
         <div className="border-2 border-green-200 rounded-lg p-6 bg-green-50">
-          <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">Your Cover Plan</p>
-            <p className="text-2xl font-bold text-green-900">{data.planName || 'Cover Plan'}</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">Your Cover Plan</p>
+              <p className="text-2xl font-bold text-green-900">{data.planName || 'Cover Plan'}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">Amount</p>
+              <p className="text-2xl font-bold text-green-900">R{data.monthlyPrice || '0'}</p>
+            </div>
           </div>
         </div>
 
