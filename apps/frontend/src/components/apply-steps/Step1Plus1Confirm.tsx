@@ -61,8 +61,13 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
         { signal: abortController.signal }
       )
       
+      // Handle non-OK responses
       if (!response.ok) {
-        throw new Error('Search failed')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Search API error:', errorData)
+        alert('Failed to search for member. Please try again.')
+        setSearching(false)
+        return
       }
       
       const result = await response.json()

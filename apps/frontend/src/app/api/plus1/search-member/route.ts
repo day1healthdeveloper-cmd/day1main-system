@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       console.log('No member found with mobile:', mobile)
       return NextResponse.json(
         { found: false, message: 'Member not found' },
-        { status: 404 }
+        { status: 200 }
       )
     }
 
