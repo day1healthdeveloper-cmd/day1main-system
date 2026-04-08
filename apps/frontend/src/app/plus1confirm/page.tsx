@@ -6,7 +6,7 @@ import Step1Plus1Confirm from '@/components/apply-steps/Step1Plus1Confirm'
 import Step2Documents from '@/components/apply-steps/Step2Documents'
 import Step5Dependents from '@/components/apply-steps/Step5Dependents'
 import Step6MedicalHistory from '@/components/apply-steps/Step6MedicalHistory'
-import Step7Banking from '@/components/apply-steps/Step7Banking'
+import Step5Plus1CoverPlan from '@/components/apply-steps/Step5Plus1CoverPlan'
 import Step6ReviewTermsSubmit from '@/components/apply-steps/Step6ReviewTermsSubmit'
 import { ApplicationData } from '@/types/application'
 
@@ -55,7 +55,7 @@ export default function Plus1ConfirmPage() {
     { number: 2, title: 'Documents', component: Step2Documents },
     { number: 3, title: 'Dependents', component: Step5Dependents },
     { number: 4, title: 'Medical History', component: Step6MedicalHistory },
-    { number: 5, title: 'Banking Details', component: Step7Banking },
+    { number: 5, title: 'Your Medi Cover Plan', component: Step5Plus1CoverPlan },
     { number: 6, title: 'Review & Submit', component: Step6ReviewTermsSubmit },
   ]
 
