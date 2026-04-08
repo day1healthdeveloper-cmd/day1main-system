@@ -112,8 +112,10 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
         setCoverPlanName(member.coverPlanName || '')
         setMemberFound(true)
         
-        // Update parent with cover plan name
-        updateData({ planName: member.coverPlanName || '' })
+        // Update parent with cover plan name and preserve monthlyPrice if already set
+        updateData({ 
+          planName: member.coverPlanName || '',
+        })
       } else {
         alert('Member not found. Please check the mobile number and try again.')
         setMemberFound(false)
@@ -219,13 +221,23 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
               {searching ? 'Searching...' : 'Search'}
             </button>
           </div>
-          <div className="col-span-5">
+          <div className="col-span-3">
             <input
               type="text"
               value={coverPlanName}
               readOnly
               disabled
               placeholder="Cover Plan Name"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-gray-100 cursor-not-allowed"
+            />
+          </div>
+          <div className="col-span-2">
+            <input
+              type="text"
+              value={formData.monthlyPrice ? `R${formData.monthlyPrice}` : ''}
+              readOnly
+              disabled
+              placeholder="Amount"
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-gray-100 cursor-not-allowed"
             />
           </div>
