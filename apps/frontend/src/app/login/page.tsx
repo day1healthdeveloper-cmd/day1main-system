@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Prevent caching of this page
+  useEffect(() => {
+    // Clear any cached authentication state
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', window.location.href);
+    }
+  }, []);
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -47,15 +55,10 @@ export default function LoginPage() {
     try {
       await login(email, password);
       
-      // User data is now in auth context, no need to fetch
-      // Wait a moment for context to update
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Redirect will happen automatically based on role
-      router.push('/dashboard');
+      // Force a hard navigation to clear any cached state
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
-    } finally {
       setLoading(false);
     }
   };
