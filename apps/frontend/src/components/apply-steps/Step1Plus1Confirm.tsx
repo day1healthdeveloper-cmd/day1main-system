@@ -234,7 +234,7 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
           <div className="col-span-2">
             <input
               type="text"
-              value={formData.monthlyPrice ? `R${formData.monthlyPrice}` : ''}
+              value=""
               readOnly
               disabled
               placeholder="Amount"
