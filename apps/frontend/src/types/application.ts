@@ -9,6 +9,7 @@ export interface ApplicationData {
   adults?: number
   children?: number
   monthlyPrice?: number
+  brokerCode?: string // Broker code for Plus1Rewards or other broker assignments
   
   // Step 1: Personal Info
   firstName: string

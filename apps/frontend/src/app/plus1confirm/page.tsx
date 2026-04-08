@@ -35,6 +35,7 @@ export default function Plus1ConfirmPage() {
     planName: planName || undefined,
     planConfig: (planConfig as 'single' | 'couple' | 'family') || undefined,
     monthlyPrice: monthlyPrice ? parseFloat(monthlyPrice) : undefined,
+    brokerCode: 'POR', // Plus1Rewards broker code
   })
 
   const updateData = (data: Partial<ApplicationData>) => {

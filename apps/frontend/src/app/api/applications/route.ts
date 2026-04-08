@@ -16,6 +16,20 @@ export async function POST(request: NextRequest) {
       data.monthlyPrice = parseFloat(data.monthlyPrice)
     }
     
+    // Lookup broker_id if brokerCode is provided
+    let brokerId: string | undefined
+    if (data.brokerCode) {
+      const { data: broker } = await supabaseAdmin
+        .from('brokers')
+        .select('id')
+        .eq('code', data.brokerCode)
+        .single()
+      
+      if (broker) {
+        brokerId = broker.id
+      }
+    }
+    
     // Handle proof of address - store first document in main field
     let proofOfAddressUrl = data.proofOfAddressUrl
     if (Array.isArray(data.proofOfAddressUrls) && data.proofOfAddressUrls.length > 0) {
@@ -126,6 +140,7 @@ export async function POST(request: NextRequest) {
         plan_name: data.planName,
         plan_config: data.planConfig,
         monthly_price: data.monthlyPrice,
+        broker_id: brokerId, // Assign broker if found
         status: 'submitted',
         submitted_at: new Date().toISOString(),
       })
