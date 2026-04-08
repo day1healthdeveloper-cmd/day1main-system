@@ -54,11 +54,17 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    // Calculate date 30 days ago
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    // Get Day1 members from Plus1 that were approved 30+ days ago and haven't been synced recently
     const { data: day1Members, error: day1Error } = await day1Supabase
       .from('members')
-      .select('id, member_number, mobile, status')
+      .select('id, member_number, mobile, status, approved_at, updated_at')
       .eq('broker_id', porBroker.id)
       .in('status', ['active', 'suspended']) // Only sync active/suspended members
+      .lte('approved_at', thirtyDaysAgo.toISOString()) // Approved 30+ days ago
 
     if (day1Error) {
       console.error('Failed to fetch Day1 members:', day1Error)
@@ -66,15 +72,15 @@ export async function GET(request: NextRequest) {
     }
 
     if (!day1Members || day1Members.length === 0) {
-      console.log('No Plus1 members found in Day1 database')
+      console.log('No Plus1 members due for 30-day sync')
       return NextResponse.json({ 
         success: true, 
-        message: 'No Plus1 members to sync',
+        message: 'No Plus1 members due for sync',
         synced: 0
       })
     }
 
-    console.log(`Found ${day1Members.length} Plus1 members to sync`)
+    console.log(`Found ${day1Members.length} Plus1 members due for 30-day sync`)
 
     let syncedCount = 0
     let updatedCount = 0
