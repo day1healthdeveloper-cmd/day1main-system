@@ -232,7 +232,7 @@ export default function Step6Plus1ReviewSubmit({ data, updateData, prevStep, goT
       if (!response.ok) throw new Error('Submission failed')
 
       const result = await response.json()
-      router.push(`/application-submitted?ref=${result.applicationNumber}`)
+      router.push(`/plus1-application-submitted?ref=${result.applicationNumber}`)
     } catch (error) {
       alert('Failed to submit application. Please try again.')
       setSubmitting(false)

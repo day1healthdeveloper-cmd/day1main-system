@@ -117,20 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Get user data from custom users table
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select(`
-          id,
-          email,
-          is_active,
-          profile:profiles(first_name, last_name),
-          user_roles!user_roles_user_id_fkey(
-            role:roles(
-              name,
-              role_permissions(
-                permission:permissions(name)
-              )
-            )
-          )
-        `)
+        .select('id, email, is_active')
         .eq('email', session.user.email)
         .single();
 
@@ -149,22 +136,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Extract roles and permissions
-      const roles = userData.user_roles?.map((ur: any) => ur.role.name) || [];
-      const permissions = userData.user_roles?.flatMap((ur: any) =>
-        ur.role.role_permissions?.map((rp: any) => rp.permission.name) || []
-      ) || [];
+      // Get profile separately
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('user_id', userData.id)
+        .single();
 
-      // Handle profile - it comes as an array from Supabase join
-      const profile = Array.isArray(userData.profile) ? userData.profile[0] : userData.profile;
+      // Get user roles separately
+      const { data: userRolesData } = await supabase
+        .from('user_roles')
+        .select('role_id')
+        .eq('user_id', userData.id);
+
+      let roles: string[] = [];
+      let permissions: string[] = [];
+
+      if (userRolesData && userRolesData.length > 0) {
+        // Get role names
+        const roleIds = userRolesData.map((ur: any) => ur.role_id);
+        const { data: rolesData } = await supabase
+          .from('roles')
+          .select('name')
+          .in('id', roleIds);
+        
+        roles = rolesData?.map((r: any) => r.name) || [];
+
+        // Get permissions for these roles
+        const { data: rolePermissionsData } = await supabase
+          .from('role_permissions')
+          .select('permission_id')
+          .in('role_id', roleIds);
+
+        if (rolePermissionsData && rolePermissionsData.length > 0) {
+          const permissionIds = rolePermissionsData.map((rp: any) => rp.permission_id);
+          const { data: permissionsData } = await supabase
+            .from('permissions')
+            .select('name')
+            .in('id', permissionIds);
+          
+          permissions = [...new Set(permissionsData?.map((p: any) => p.name) || [])];
+        }
+      }
 
       const transformedUser: User = {
         id: userData.id,
         email: userData.email,
-        firstName: profile?.first_name || '',
-        lastName: profile?.last_name || '',
+        firstName: profileData?.first_name || '',
+        lastName: profileData?.last_name || '',
         roles,
-        permissions: [...new Set(permissions)],
+        permissions,
       };
 
       console.log('✅ User data loaded:', transformedUser);

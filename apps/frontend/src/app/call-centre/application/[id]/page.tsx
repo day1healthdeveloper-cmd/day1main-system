@@ -1,0 +1,352 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
+import { SidebarLayout } from '@/components/layout/sidebar-layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { User, MapPin, FileText, Users, CreditCard, CheckCircle, Phone } from 'lucide-react';
+
+interface Application {
+  id: string;
+  application_number: string;
+  first_name: string;
+  last_name: string;
+  id_number: string;
+  date_of_birth: string;
+  gender: string;
+  email: string;
+  mobile: string;
+  address_line1: string;
+  address_line2: string;
+  city: string;
+  postal_code: string;
+  plan_name: string;
+  monthly_price: number;
+  status: string;
+  submitted_at: string;
+  dependents: any[];
+  id_document_url: string;
+  proof_of_address_url: string;
+  bank_name: string;
+  account_number: string;
+  branch_code: string;
+  account_holder_name: string;
+  debit_order_day: number;
+  collection_method: string;
+  medical_history: any;
+}
+
+export default function CallCentreApplicationDetailPage() {
+  const router = useRouter();
+  const params = useParams();
+  const { user, loading, isAuthenticated } = useAuth();
+  const [application, setApplication] = useState<Application | null>(null);
+  const [loadingApp, setLoadingApp] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+  const [verificationNotes, setVerificationNotes] = useState('');
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    if (user && !user.roles.includes('call_centre_agent')) {
+      router.push('/dashboard');
+      return;
+    }
+
+    if (user && params.id) {
+      loadApplication();
+    }
+  }, [loading, isAuthenticated, user, router, params.id]);
+
+  const loadApplication = async () => {
+    setLoadingApp(true);
+    try {
+      const response = await fetch('/api/admin/applications');
+      
+      if (!response.ok) throw new Error('Failed to fetch applications');
+      
+      const data = await response.json();
+      const app = data.applications?.find((a: Application) => a.id === params.id);
+      
+      if (app) {
+        setApplication(app);
+      } else {
+        alert('Application not found');
+        router.push('/call-centre/support');
+      }
+    } catch (error) {
+      console.error('Error loading application:', error);
+      alert('Failed to load application');
+      router.push('/call-centre/support');
+    } finally {
+      setLoadingApp(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!verificationNotes.trim()) {
+      alert('Please add verification notes');
+      return;
+    }
+
+    if (!confirm('Mark this application as verified and ready for admin approval?')) {
+      return;
+    }
+
+    setVerifying(true);
+    try {
+      const response = await fetch('/api/admin/applications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          applicationId: application?.id,
+          status: 'under_review',
+          reviewNotes: `VERIFIED BY CALL CENTRE: ${verificationNotes}`,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to verify application');
+      
+      alert('Application verified! Admin will be notified for final approval.');
+      router.push('/call-centre/support');
+    } catch (error) {
+      console.error('Error verifying application:', error);
+      alert('Failed to verify application');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  if (loading || loadingApp || !application) {
+    return (
+      <SidebarLayout>
+        <div className="flex items-center justify-center h-96">
+          <p>Loading application...</p>
+        </div>
+      </SidebarLayout>
+    );
+  }
+
+  return (
+    <SidebarLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Application Details</h1>
+            <p className="text-gray-600">{application.application_number}</p>
+          </div>
+          <Button variant="outline" onClick={() => router.push('/call-centre/support')}>
+            Back to Applications
+          </Button>
+        </div>
+
+        {/* Personal Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Personal Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-600">Full Name</p>
+                <p className="font-medium">{application.first_name} {application.last_name}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">ID Number</p>
+                <p className="font-medium">{application.id_number}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Date of Birth</p>
+                <p className="font-medium">{new Date(application.date_of_birth).toLocaleDateString()}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Gender</p>
+                <p className="font-medium">{application.gender || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Email</p>
+                <p className="font-medium">{application.email}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Mobile</p>
+                <p className="font-medium flex items-center gap-2">
+                  {application.mobile}
+                  <a href={`tel:${application.mobile}`} className="text-blue-600 hover:text-blue-700">
+                    <Phone className="w-4 h-4" />
+                  </a>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Address */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Address
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm space-y-1">
+              <p>{application.address_line1}</p>
+              {application.address_line2 && <p>{application.address_line2}</p>}
+              <p>{application.city}, {application.postal_code}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Plan Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Plan Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-600">Plan Name</p>
+                <p className="font-medium">{application.plan_name || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Monthly Premium</p>
+                <p className="font-medium text-lg">R{application.monthly_price?.toFixed(2) || '0.00'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dependants */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Dependants
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {application.dependents && application.dependents.length > 0 ? (
+              <div className="space-y-3">
+                {application.dependents.map((dep, idx) => (
+                  <div key={idx} className="p-3 bg-gray-50 rounded">
+                    <p className="font-medium">{dep.first_name} {dep.last_name}</p>
+                    <p className="text-sm text-gray-600">{dep.relationship} • DOB: {new Date(dep.date_of_birth).toLocaleDateString()}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No dependants added</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Banking */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              Banking Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="bg-green-50 border border-green-200 rounded p-3">
+                <p className="text-sm text-gray-600 mb-1">Payment Method</p>
+                <p className="font-bold text-green-700">
+                  {application.collection_method === 'eft' ? '💳 EFT Payment' : '🏦 Debit Order'}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-600">Bank</p>
+                  <p className="font-medium">{application.bank_name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Account Holder</p>
+                  <p className="font-medium">{application.account_holder_name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Account Number</p>
+                  <p className="font-medium">****{application.account_number?.slice(-4) || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Debit Order Day</p>
+                  <p className="font-medium">{application.debit_order_day}th of each month</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Documents */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Documents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {application.id_document_url && (
+                <div className="p-3 bg-gray-50 rounded">
+                  <p className="text-sm font-medium mb-2">ID Document</p>
+                  <Button size="sm" onClick={() => window.open(application.id_document_url, '_blank')}>
+                    View Document
+                  </Button>
+                </div>
+              )}
+              {application.proof_of_address_url && (
+                <div className="p-3 bg-gray-50 rounded">
+                  <p className="text-sm font-medium mb-2">Proof of Address</p>
+                  <Button size="sm" onClick={() => window.open(application.proof_of_address_url, '_blank')}>
+                    View Document
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Verification Section */}
+        <Card className="border-2 border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-blue-600" />
+              Verification
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Verification Notes</label>
+                <textarea
+                  value={verificationNotes}
+                  onChange={(e) => setVerificationNotes(e.target.value)}
+                  placeholder="Add notes about your call with the member (e.g., confirmed details, member verified identity, etc.)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  rows={4}
+                />
+              </div>
+              <Button
+                onClick={handleVerify}
+                disabled={verifying || !verificationNotes.trim()}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                {verifying ? 'Verifying...' : 'Mark as Verified & Send to Admin'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </SidebarLayout>
+  );
+}

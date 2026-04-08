@@ -39,13 +39,14 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     }
   };
 
-  // Fetch new applications count for admins
+  // Fetch new applications count for admins and call centre
   useEffect(() => {
     const fetchNewApplicationsCount = async () => {
       const userRoles = user?.roles || [];
       const isAdmin = userRoles.includes('system_admin');
+      const isCallCentre = userRoles.includes('call_centre_agent');
       
-      if (isAdmin) {
+      if (isAdmin || isCallCentre) {
         try {
           const response = await fetch('/api/admin/applications');
           const data = await response.json();
@@ -987,6 +988,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Member Support',
           href: '/call-centre/support',
+          badge: newApplicationsCount,
           glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1031,16 +1033,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-          ),
-        },
-        {
-          name: 'Profile',
-          href: '/profile',
-          glowColor: '#6366f1', // Indigo
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           ),
         },
