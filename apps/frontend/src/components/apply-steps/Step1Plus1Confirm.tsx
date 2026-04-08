@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ApplicationData } from '@/types/application'
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -27,6 +27,7 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
   const [searching, setSearching] = useState(false)
   const [memberFound, setMemberFound] = useState(false)
   const [coverPlanName, setCoverPlanName] = useState('')
+  const abortControllerRef = useRef<AbortController | null>(null)
   
   const [formData, setFormData] = useState({
     firstName: data.firstName || '',
@@ -48,17 +49,31 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
+
   const handleMemberSearch = async () => {
     if (!searchQuery.trim()) return
     
+    // Cancel any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    
     setSearching(true)
-    const abortController = new AbortController()
+    abortControllerRef.current = new AbortController()
     
     try {
       // Search for member by mobile number in Plus1Rewards database
       const response = await fetch(
         `/api/plus1/search-member?mobile=${encodeURIComponent(searchQuery)}`,
-        { signal: abortController.signal }
+        { signal: abortControllerRef.current.signal }
       )
       
       // Handle non-OK responses
@@ -103,6 +118,7 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
         alert('Member not found. Please check the mobile number and try again.')
         setMemberFound(false)
       }
+      setSearching(false)
     } catch (error) {
       // Ignore abort errors during development hot reload
       if (error instanceof Error && error.name === 'AbortError') {
@@ -111,12 +127,8 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
       }
       console.error('Member search error:', error)
       alert('Failed to search for member. Please try again.')
-    } finally {
       setSearching(false)
     }
-    
-    // Cleanup function
-    return () => abortController.abort()
   }
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
