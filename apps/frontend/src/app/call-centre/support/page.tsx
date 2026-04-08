@@ -169,23 +169,6 @@ export default function CallCentreSupportPage() {
                     <Eye className="w-3 h-3 mr-1" />
                     View Details
                   </Button>
-                  <Button
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={() => updateStatus(app.id, 'approved')}
-                  >
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-red-600 hover:bg-red-50"
-                    onClick={() => updateStatus(app.id, 'rejected')}
-                  >
-                    <XCircle className="w-3 h-3 mr-1" />
-                    Reject
-                  </Button>
                 </div>
               </div>
             ))}
