@@ -52,10 +52,19 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
     if (!searchQuery.trim()) return
     
     setSearching(true)
+    const abortController = new AbortController()
     
     try {
       // Search for member by mobile number in Plus1Rewards database
-      const response = await fetch(`/api/plus1/search-member?mobile=${encodeURIComponent(searchQuery)}`)
+      const response = await fetch(
+        `/api/plus1/search-member?mobile=${encodeURIComponent(searchQuery)}`,
+        { signal: abortController.signal }
+      )
+      
+      if (!response.ok) {
+        throw new Error('Search failed')
+      }
+      
       const result = await response.json()
       
       if (result.found && result.member) {
@@ -90,11 +99,19 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
         setMemberFound(false)
       }
     } catch (error) {
+      // Ignore abort errors during development hot reload
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Search aborted')
+        return
+      }
       console.error('Member search error:', error)
       alert('Failed to search for member. Please try again.')
     } finally {
       setSearching(false)
     }
+    
+    // Cleanup function
+    return () => abortController.abort()
   }
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
