@@ -191,11 +191,6 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
       alert('Please wait for voice recording to finish uploading')
       return
     }
-    // Check if voice recording URL is valid (not a blob URL)
-    if (data.voiceRecordingUrl?.startsWith('blob:')) {
-      alert('Voice recording upload incomplete. Please wait or try recording again.')
-      return
-    }
     if (!signatureSaved) {
       alert('Please provide your signature')
       return
