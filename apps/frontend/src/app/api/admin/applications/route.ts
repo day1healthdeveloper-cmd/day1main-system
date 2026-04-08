@@ -171,7 +171,7 @@ export async function PATCH(request: NextRequest) {
           phone_consent: application.phone_consent,
           
           // Plan Information
-          plan_id: application.plan_name?.toLowerCase().replace(/\s+/g, '-') || null, // Derive from plan_name
+          plan_id: null, // Plan ID is UUID - set to null for now, plan_name is sufficient
           plan_name: application.plan_name,
           monthly_premium: application.monthly_price,
           start_date: new Date().toISOString(),
