@@ -7,13 +7,20 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createServerSupabaseClient()
     
+    console.log('Fetching brokers...')
+    
     // Fetch all brokers
     const { data: brokers, error } = await supabase
       .from('brokers')
       .select('*')
       .order('code', { ascending: true })
 
-    if (error) throw error
+    if (error) {
+      console.error('Brokers query error:', error)
+      throw error
+    }
+
+    console.log('Brokers fetched:', brokers?.length)
 
     // For each broker, count actual members from members table
     const brokersWithCounts = await Promise.all(
@@ -31,11 +38,12 @@ export async function GET(request: NextRequest) {
       })
     )
 
+    console.log('Returning brokers with counts:', brokersWithCounts.length)
     return NextResponse.json({ brokers: brokersWithCounts })
   } catch (error) {
     console.error('Error fetching brokers:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch brokers' },
+      { error: 'Failed to fetch brokers', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
