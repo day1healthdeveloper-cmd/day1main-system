@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     // Search for member by mobile number in Plus1Rewards database
     const { data: members, error } = await plus1Supabase
       .from('members')
-      .select('first_name, last_name, sa_id, date_of_birth, email, cell_phone, address_line_1, city, postal_code, cover_plan_name')
+      .select('first_name, last_name, sa_id, date_of_birth, email, cell_phone, address_line_1, city, postal_code, cover_plan_name, cover_plan_price')
       .eq('cell_phone', mobile)
       .limit(1)
 
@@ -92,6 +92,7 @@ export async function GET(request: NextRequest) {
         city: member.city || '',
         postalCode: member.postal_code || '',
         coverPlanName: member.cover_plan_name || '',
+        coverPlanPrice: member.cover_plan_price || '',
       }
     })
 

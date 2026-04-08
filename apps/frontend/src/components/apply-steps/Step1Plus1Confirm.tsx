@@ -27,6 +27,7 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
   const [searching, setSearching] = useState(false)
   const [memberFound, setMemberFound] = useState(false)
   const [coverPlanName, setCoverPlanName] = useState('')
+  const [coverPlanPrice, setCoverPlanPrice] = useState('')
   const abortControllerRef = useRef<AbortController | null>(null)
   
   const [formData, setFormData] = useState({
@@ -110,11 +111,13 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
         }
         
         setCoverPlanName(member.coverPlanName || '')
+        setCoverPlanPrice(member.coverPlanPrice || '')
         setMemberFound(true)
         
-        // Update parent with cover plan name and preserve monthlyPrice if already set
+        // Update parent with cover plan name and price
         updateData({ 
           planName: member.coverPlanName || '',
+          monthlyPrice: member.coverPlanPrice ? parseFloat(member.coverPlanPrice) : undefined,
         })
       } else {
         alert('Member not found. Please check the mobile number and try again.')
@@ -234,7 +237,7 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
           <div className="col-span-2">
             <input
               type="text"
-              value=""
+              value={coverPlanPrice ? `R${coverPlanPrice}` : ''}
               readOnly
               disabled
               placeholder="Amount"
