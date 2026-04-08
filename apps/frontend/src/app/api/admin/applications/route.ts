@@ -173,7 +173,6 @@ export async function PATCH(request: NextRequest) {
           // Plan Information
           plan_id: application.plan_name?.toLowerCase().replace(/\s+/g, '-') || null, // Derive from plan_name
           plan_name: application.plan_name,
-          plan_config: application.plan_config,
           monthly_premium: application.monthly_price,
           start_date: new Date().toISOString(),
           
