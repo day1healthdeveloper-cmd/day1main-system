@@ -7,7 +7,7 @@ import Step2Documents from '@/components/apply-steps/Step2Documents'
 import Step5Dependents from '@/components/apply-steps/Step5Dependents'
 import Step6MedicalHistory from '@/components/apply-steps/Step6MedicalHistory'
 import Step5Plus1CoverPlan from '@/components/apply-steps/Step5Plus1CoverPlan'
-import Step6ReviewTermsSubmit from '@/components/apply-steps/Step6ReviewTermsSubmit'
+import Step6Plus1ReviewSubmit from '@/components/apply-steps/Step6Plus1ReviewSubmit'
 import { ApplicationData } from '@/types/application'
 
 export default function Plus1ConfirmPage() {
@@ -56,7 +56,7 @@ export default function Plus1ConfirmPage() {
     { number: 3, title: 'Dependents', component: Step5Dependents },
     { number: 4, title: 'Medical History', component: Step6MedicalHistory },
     { number: 5, title: 'Your Medi Cover Plan', component: Step5Plus1CoverPlan },
-    { number: 6, title: 'Review & Submit', component: Step6ReviewTermsSubmit },
+    { number: 6, title: 'Review & Submit', component: Step6Plus1ReviewSubmit },
   ]
 
   const CurrentStepComponent = steps[currentStep - 1].component
