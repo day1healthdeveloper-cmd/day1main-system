@@ -941,32 +941,47 @@ export default function AdminApplicationsPage() {
                           </div>
                         </div>
 
-                        {/* Call Recording Link */}
-                        {selectedApplication.review_notes.includes('Call Recording:') && (
-                          <div className="mt-3">
-                            <p className="text-sm font-medium text-gray-700 mb-2">Call Recording:</p>
-                            <audio 
-                              controls 
-                              className="w-full" 
-                              preload="metadata"
-                              src={selectedApplication.review_notes.split('Call Recording: ')[1]?.split('\n')[0]?.trim()}
-                            >
-                              Your browser does not support the audio element.
-                            </audio>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="mt-2"
-                              onClick={() => {
-                                const recordingUrl = selectedApplication.review_notes.split('Call Recording: ')[1]?.split('\n')[0]?.trim();
-                                if (recordingUrl) window.open(recordingUrl, '_blank');
-                              }}
-                            >
-                              <Play className="w-3 h-3 mr-1" />
-                              Open Recording in New Tab
-                            </Button>
-                          </div>
-                        )}
+                        {/* Call Recording */}
+                        {selectedApplication.review_notes.includes('Call Recording:') && (() => {
+                          const recordingUrl = selectedApplication.review_notes.split('Call Recording: ')[1]?.split('\n')[0]?.trim();
+                          // Create a signed URL for Supabase storage
+                          const publicUrl = recordingUrl?.includes('supabase.co/storage') 
+                            ? recordingUrl.replace('/object/public/', '/object/sign/') 
+                            : recordingUrl;
+                          
+                          return (
+                            <div className="mt-3">
+                              <p className="text-sm font-medium text-gray-700 mb-2">Call Recording:</p>
+                              {recordingUrl ? (
+                                <>
+                                  <audio 
+                                    controls 
+                                    className="w-full" 
+                                    preload="metadata"
+                                    src={recordingUrl}
+                                    onError={(e) => {
+                                      console.error('Audio load error:', e);
+                                      console.log('Recording URL:', recordingUrl);
+                                    }}
+                                  >
+                                    Your browser does not support the audio element.
+                                  </audio>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="mt-2"
+                                    onClick={() => window.open(recordingUrl, '_blank')}
+                                  >
+                                    <Play className="w-3 h-3 mr-1" />
+                                    Open Recording in New Tab
+                                  </Button>
+                                </>
+                              ) : (
+                                <p className="text-sm text-gray-500">Recording URL not found</p>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                       
                       <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
