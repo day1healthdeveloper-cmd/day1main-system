@@ -176,6 +176,9 @@ export async function PATCH(request: NextRequest) {
           monthly_premium: application.monthly_price,
           start_date: new Date().toISOString(),
           
+          // Broker Information
+          broker_id: application.broker_id,
+          
           // Underwriting & Review
           underwriting_status: application.underwriting_status,
           underwriting_notes: application.underwriting_notes,
