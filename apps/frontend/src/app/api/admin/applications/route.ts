@@ -112,6 +112,17 @@ export async function PATCH(request: NextRequest) {
       const memberNumber = await generateNextMemberNumber()
       console.log(`✅ Generated member number: ${memberNumber}`)
       
+      // Get broker code if broker_id exists
+      let brokerCode = null
+      if (application.broker_id) {
+        const { data: broker } = await supabaseAdmin
+          .from('brokers')
+          .select('code')
+          .eq('id', application.broker_id)
+          .single()
+        brokerCode = broker?.code || null
+      }
+      
       // Create member record - EXACT COPY of ALL application fields
       const { data: member, error: memberError } = await supabaseAdmin
         .from('members')
@@ -178,6 +189,7 @@ export async function PATCH(request: NextRequest) {
           
           // Broker Information
           broker_id: application.broker_id,
+          broker_code: brokerCode,
           
           // Underwriting & Review
           underwriting_status: application.underwriting_status,
