@@ -285,7 +285,7 @@ export async function PATCH(request: NextRequest) {
         .from('contacts')
         .update({
           is_member: true,
-          member_id: member.id,
+          member_activated_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', application.contact_id)
@@ -296,7 +296,6 @@ export async function PATCH(request: NextRequest) {
         .insert({
           contact_id: application.contact_id,
           interaction_type: 'application_approved',
-          interaction_date: new Date().toISOString(),
           notes: `Application ${application.application_number} approved. Member ${memberNumber} created.`,
           metadata: {
             application_id: applicationId,
