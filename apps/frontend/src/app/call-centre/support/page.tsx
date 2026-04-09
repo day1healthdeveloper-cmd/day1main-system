@@ -34,7 +34,7 @@ export default function CallCentreSupportPage() {
       const response = await fetch('/api/admin/applications');
       const data = await response.json();
       const allApps = data.applications || [];
-      setApplications(allApps.filter((app: Application) => app.status === 'submitted'));
+      setApplications(allApps.filter((app: Application) => app.status === 'submitted' || app.status === 'under_review'));
     } catch (error) {
       console.error('Error:', error);
       setApplications([]);
