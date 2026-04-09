@@ -202,7 +202,7 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
       {/* Plus 1 Member Search */}
       <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <label className="block text-sm font-semibold text-gray-800 mb-2">Plus 1 Member Search</label>
-        <p className="text-xs text-gray-600 mb-3">Search for the plus1rewards member by mobile number</p>
+        <p className="text-xs text-gray-600 mb-3">Enter your cell number here to begin</p>
         <div className="grid grid-cols-12 gap-2">
           <div className="col-span-5">
             <input

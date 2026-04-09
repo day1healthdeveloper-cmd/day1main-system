@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     // Get query parameters for filtering
     const searchParams = request.nextUrl.searchParams
     const statsOnly = searchParams.get('stats_only') === 'true'
+    const filtersOnly = searchParams.get('filters_only') === 'true'
     const includeDependants = searchParams.get('include_dependants') === 'true'
     const status = searchParams.get('status')
     const broker = searchParams.get('broker')
@@ -17,6 +18,29 @@ export async function GET(request: NextRequest) {
     const paymentMethod = searchParams.get('payment_method')
     const kycStatus = searchParams.get('kyc_status')
     const search = searchParams.get('search')
+    
+    // If only filters are requested, return them quickly
+    if (filtersOnly) {
+      const { data: brokers } = await supabaseAdmin
+        .from('brokers')
+        .select('code, name')
+        .order('name')
+      
+      // Get ALL unique plan names using a more efficient query
+      const { data: plans, error: plansError } = await supabaseAdmin
+        .rpc('get_unique_plan_names')
+      
+      const uniquePlans = plans?.map((p: any) => p.plan_name) || []
+
+      return NextResponse.json({ 
+        filters: {
+          brokers: brokers || [],
+          plans: uniquePlans,
+          paymentMethods: ['A - MAG TAPE', 'B - BANK CASH'],
+          statuses: ['active', 'pending', 'suspended', 'in_waiting']
+        }
+      })
+    }
     
     // If only stats are requested, return them quickly
     if (statsOnly) {
@@ -280,3 +304,4 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+

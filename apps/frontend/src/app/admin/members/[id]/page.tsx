@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, FileText, CreditCard, Activity } from 'lucide-react';
+import { ArrowLeft, FileText, CreditCard, Activity, Trash2 } from 'lucide-react';
 import { Collapse, CollapseGroup } from '@/components/ui/collapse';
 
 interface Member {
@@ -48,6 +48,9 @@ export default function MemberDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editedData, setEditedData] = useState<Partial<Member>>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleEditSection = (section: string) => {
     setEditingSection(section);
@@ -80,6 +83,34 @@ export default function MemberDetailPage() {
 
   const handleFieldChange = (field: keyof Member, value: any) => {
     setEditedData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDeleteMember = async () => {
+    if (deleteConfirmText.toLowerCase() !== 'delete') {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      const response = await fetch(`/api/admin/members/${memberId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Redirect to members list after successful deletion
+        router.push('/admin/members');
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete member: ${error.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Failed to delete member:', error);
+      alert('Failed to delete member. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+      setDeleteConfirmText('');
+    }
   };
 
   useEffect(() => {
@@ -140,7 +171,7 @@ export default function MemberDetailPage() {
         </div>
       </SidebarLayout>
     );
-  };
+  }
 
   if (!member) {
     return (
@@ -539,9 +570,116 @@ export default function MemberDetailPage() {
                 </CollapseGroup>
               </CardContent>
             </Card>
+
+            {/* Delete Member Card */}
+            <Card className="mt-4 border-red-200">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-red-100 rounded">
+                    <Trash2 className="w-4 h-4 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-gray-900">Delete Member</h3>
+                    <p className="text-xs text-gray-600 mb-2">
+                      Permanently delete this account. Cannot be undone.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-red-300 text-red-600 hover:bg-red-50 text-xs h-7 px-2"
+                      onClick={() => setShowDeleteModal(true)}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Delete Member
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <Trash2 className="w-6 h-6 text-red-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">Delete Member Account</h2>
+                </div>
+                
+                <div className="mb-6">
+                  <p className="text-gray-700 mb-4">
+                    You are about to permanently delete:
+                  </p>
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                    <p className="font-semibold text-gray-900">{member.firstName} {member.lastName}</p>
+                    <p className="text-sm text-gray-600">Member #{member.memberNumber}</p>
+                    <p className="text-sm text-gray-600">{member.email}</p>
+                  </div>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-red-800 font-medium mb-2">⚠️ Warning: This action cannot be undone</p>
+                    <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
+                      <li>All member data will be permanently deleted</li>
+                      <li>Policy information will be removed</li>
+                      <li>Payment history will be deleted</li>
+                      <li>Claims records will be removed</li>
+                    </ul>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Type <span className="font-mono bg-gray-100 px-2 py-1 rounded">delete</span> to confirm:
+                    </label>
+                    <input
+                      type="text"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder="Type 'delete' here"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleDeleteMember}
+                    disabled={deleteConfirmText.toLowerCase() !== 'delete' || isDeleting}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Permanently
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setDeleteConfirmText('');
+                    }}
+                    disabled={isDeleting}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
     </SidebarLayout>
   );
 }

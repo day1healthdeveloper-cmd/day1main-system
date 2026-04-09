@@ -169,3 +169,122 @@ export async function PATCH(
     )
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabaseAdmin = createServerSupabaseClient()
+
+    // First, check if member exists
+    const { data: member, error: fetchError } = await supabaseAdmin
+      .from('members')
+      .select('member_number, first_name, last_name')
+      .eq('id', params.id)
+      .single()
+
+    if (fetchError || !member) {
+      return NextResponse.json(
+        { error: 'Member not found' },
+        { status: 404 }
+      )
+    }
+
+    // Get all claim IDs for this member (needed to delete claim-related records)
+    const { data: claims } = await supabaseAdmin
+      .from('claims')
+      .select('id')
+      .eq('member_id', params.id)
+
+    const claimIds = claims?.map(c => c.id) || []
+
+    // Delete in correct order (child tables first, then parent tables)
+    // This ensures referential integrity is maintained during deletion
+    
+    // 1. Delete claim documents (references claims)
+    if (claimIds.length > 0) {
+      await supabaseAdmin
+        .from('claim_documents')
+        .delete()
+        .in('claim_id', claimIds)
+    }
+
+    // 2. Delete claim audit trail (references claims)
+    if (claimIds.length > 0) {
+      await supabaseAdmin
+        .from('claim_audit_trail')
+        .delete()
+        .in('claim_id', claimIds)
+    }
+
+    // 3. Delete claims (references members)
+    await supabaseAdmin
+      .from('claims')
+      .delete()
+      .eq('member_id', params.id)
+
+    // 4. Delete payment history (references members)
+    await supabaseAdmin
+      .from('payment_history')
+      .delete()
+      .eq('member_id', params.id)
+
+    // 5. Delete payment discrepancies (references members)
+    await supabaseAdmin
+      .from('payment_discrepancies')
+      .delete()
+      .eq('member_id', params.id)
+
+    // 6. Delete refund requests (references members)
+    await supabaseAdmin
+      .from('refund_requests')
+      .delete()
+      .eq('member_id', params.id)
+
+    // 7. Delete EFT payment notifications (references members)
+    await supabaseAdmin
+      .from('eft_payment_notifications')
+      .delete()
+      .eq('member_id', params.id)
+
+    // 8. Delete group member payments (references members)
+    await supabaseAdmin
+      .from('group_member_payments')
+      .delete()
+      .eq('member_id', params.id)
+
+    // 9. Delete member dependants (references members)
+    await supabaseAdmin
+      .from('member_dependants')
+      .delete()
+      .eq('member_id', params.id)
+
+    // 10. Finally, delete the member
+    const { error: deleteError } = await supabaseAdmin
+      .from('members')
+      .delete()
+      .eq('id', params.id)
+
+    if (deleteError) {
+      console.error('Failed to delete member:', deleteError)
+      return NextResponse.json(
+        { error: 'Failed to delete member', details: deleteError.message },
+        { status: 500 }
+      )
+    }
+
+    // Note: contacts table is NOT deleted - contact information is preserved
+    
+    return NextResponse.json({ 
+      success: true,
+      message: `Member ${member.first_name} ${member.last_name} (${member.member_number}) and all related records have been permanently deleted`
+    })
+  } catch (error) {
+    console.error('Failed to delete member:', error)
+    return NextResponse.json(
+      { error: 'Failed to delete member', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
+  }
+}

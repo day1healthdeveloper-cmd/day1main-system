@@ -117,9 +117,10 @@ export default function AdminMembersPage() {
     };
   }, [members]);
 
-  // Only fetch stats on mount, not members
+  // Fetch stats and filter options on mount
   useEffect(() => {
     fetchStats();
+    fetchFilterOptions();
   }, []);
 
   const fetchStats = async () => {
@@ -133,6 +134,20 @@ export default function AdminMembersPage() {
       }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  const fetchFilterOptions = async () => {
+    try {
+      const response = await fetch('/api/admin/members?filters_only=true', {
+        cache: 'no-store',
+      });
+      const data = await response.json();
+      if (data.filters) {
+        setFilterOptions(data.filters);
+      }
+    } catch (error) {
+      console.error('Failed to fetch filter options:', error);
     }
   };
 
