@@ -75,6 +75,48 @@ export default function AdminMembersPage() {
   const [itemsPerPage] = useState(20);
   const [hasSearched, setHasSearched] = useState(false);
 
+  // Sync top and bottom scrollbars
+  useEffect(() => {
+    const topScroll = document.querySelector('.overflow-x-auto.mb-2') as HTMLElement;
+    const bottomScroll = document.getElementById('members-table-container');
+    
+    if (!topScroll || !bottomScroll) return;
+
+    // Set the width of the top scrollbar to match the table width
+    const syncWidth = () => {
+      const tableWidth = bottomScroll.scrollWidth;
+      const topScrollInner = topScroll.firstElementChild as HTMLElement;
+      if (topScrollInner) {
+        topScrollInner.style.width = `${tableWidth}px`;
+      }
+    };
+
+    // Sync scroll positions
+    const syncTopToBottom = () => {
+      bottomScroll.scrollLeft = topScroll.scrollLeft;
+    };
+
+    const syncBottomToTop = () => {
+      topScroll.scrollLeft = bottomScroll.scrollLeft;
+    };
+
+    topScroll.addEventListener('scroll', syncTopToBottom);
+    bottomScroll.addEventListener('scroll', syncBottomToTop);
+    
+    // Initial width sync
+    syncWidth();
+    
+    // Re-sync width when data changes
+    const observer = new MutationObserver(syncWidth);
+    observer.observe(bottomScroll, { childList: true, subtree: true });
+
+    return () => {
+      topScroll.removeEventListener('scroll', syncTopToBottom);
+      bottomScroll.removeEventListener('scroll', syncBottomToTop);
+      observer.disconnect();
+    };
+  }, [members]);
+
   // Only fetch stats on mount, not members
   useEffect(() => {
     fetchStats();
@@ -472,7 +514,13 @@ export default function AdminMembersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Top scrollbar */}
+            <div className="overflow-x-auto mb-2" style={{ overflowY: 'hidden', height: '20px' }}>
+              <div style={{ height: '1px', width: 'fit-content', minWidth: '100%' }}></div>
+            </div>
+            
+            {/* Main table with bottom scrollbar */}
+            <div className="overflow-x-auto" id="members-table-container">
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
