@@ -232,77 +232,50 @@ export async function PATCH(request: NextRequest) {
       }
 
       // Update Plus1Rewards member status to "active" if this is a Plus1 application
-      // Check if broker is "POR" (Plus 1 Rewards)
-      if (application.broker_id) {
-        const { data: broker } = await supabaseAdmin
-          .from('brokers')
-          .select('code')
-          .eq('id', application.broker_id)
-          .single()
-
-        if (broker && broker.code === 'POR') {
-          console.log('Plus1 member approved - updating Plus1Rewards status to active')
-          try {
-            // Initialize Plus1Rewards Supabase client
-            const { createClient } = require('@supabase/supabase-js')
-            const plus1Supabase = createClient(
-              process.env.PLUS1_SUPABASE_URL!,
-              process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY!,
-              {
-                auth: {
-                  persistSession: false,
-                  autoRefreshToken: false,
-                },
-                db: {
-                  schema: 'public'
-                }
+      // Use the brokerCode we already fetched above
+      if (brokerCode === 'POR') {
+        console.log('✅ Plus1 member detected - updating Plus1Rewards status to active')
+        try {
+          // Initialize Plus1Rewards Supabase client
+          const { createClient } = require('@supabase/supabase-js')
+          const plus1Supabase = createClient(
+            process.env.PLUS1_SUPABASE_URL!,
+            process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY!,
+            {
+              auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+              },
+              db: {
+                schema: 'public'
               }
-            )
-
-            // Update member plan_status in Plus1Rewards database
-            const { data: plus1Data, error: plus1Error } = await plus1Supabase
-              .from('members')
-              .update({ plan_status: 'active' })
-              .eq('cell_phone', application.mobile)
-              .select()
-
-            if (plus1Error) {
-              console.error('Failed to update Plus1 status:', plus1Error)
-            } else if (plus1Data && plus1Data.length > 0) {
-              console.log('✅ Plus1 member status updated to active:', plus1Data[0].cell_phone)
-            } else {
-              console.log('⚠️ Plus1 member not found with mobile:', application.mobile)
             }
-          } catch (plus1Error) {
-            console.error('Error updating Plus1 status:', plus1Error)
-            // Don't fail the approval if Plus1 update fails
+          )
+
+          console.log(`🔄 Updating Plus1 status for mobile: ${application.mobile}`)
+
+          // Update member plan_status in Plus1Rewards database
+          const { data: plus1Data, error: plus1Error } = await plus1Supabase
+            .from('members')
+            .update({ plan_status: 'active' })
+            .eq('cell_phone', application.mobile)
+            .select()
+
+          if (plus1Error) {
+            console.error('❌ Failed to update Plus1 status:', plus1Error)
+            throw new Error(`Plus1 update failed: ${plus1Error.message}`)
+          } else if (plus1Data && plus1Data.length > 0) {
+            console.log('✅ Plus1 member status updated to active:', plus1Data[0].cell_phone)
+          } else {
+            console.error('❌ Plus1 member not found with mobile:', application.mobile)
+            throw new Error(`Plus1 member not found with mobile: ${application.mobile}`)
           }
+        } catch (plus1Error) {
+          console.error('❌ CRITICAL: Error updating Plus1 status:', plus1Error)
+          // FAIL the approval if Plus1 update fails for POR broker
+          throw new Error(`Failed to update Plus1Rewards status: ${plus1Error instanceof Error ? plus1Error.message : 'Unknown error'}`)
         }
       }
-
-      // Update contact to mark as member
-      await supabaseAdmin
-        .from('contacts')
-        .update({
-          is_member: true,
-          member_activated_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', application.contact_id)
-
-      // Log contact interaction
-      await supabaseAdmin
-        .from('contact_interactions')
-        .insert({
-          contact_id: application.contact_id,
-          interaction_type: 'application_approved',
-          notes: `Application ${application.application_number} approved. Member ${memberNumber} created.`,
-          metadata: {
-            application_id: applicationId,
-            member_id: member.id,
-            member_number: memberNumber,
-          },
-        })
 
       // DELETE APPLICATION DATA after successful member creation
       // First delete dependents
@@ -326,30 +299,8 @@ export async function PATCH(request: NextRequest) {
       })
     }
 
-    // If rejected, update contact
-    if (status === 'rejected') {
-      await supabaseAdmin
-        .from('contacts')
-        .update({
-          is_rejected: true,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', data.contact_id)
-
-      // Log contact interaction
-      await supabaseAdmin
-        .from('contact_interactions')
-        .insert({
-          contact_id: application.contact_id,
-          interaction_type: 'application_rejected',
-          interaction_date: new Date().toISOString(),
-          notes: `Application ${application.application_number} rejected. Reason: ${rejectionReason || 'Not specified'}`,
-          metadata: {
-            application_id: applicationId,
-            rejection_reason: rejectionReason,
-          },
-        })
-    }
+    // If rejected, just return the updated application
+    // No need to update contacts table - everything works from members table
 
     return NextResponse.json({ application: data })
   } catch (error) {
