@@ -28,20 +28,16 @@ export default function CallCentreSupportPage() {
   const [loadingApps, setLoadingApps] = useState(true);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (loading) return;
+    
+    if (!isAuthenticated) {
       router.push('/login');
       return;
     }
 
-    if (user && !user.roles.includes('call_centre_agent')) {
-      router.push('/dashboard');
-      return;
-    }
-
-    if (user) {
-      loadApplications();
-    }
-  }, [loading, isAuthenticated, user, router]);
+    // Load applications regardless of role check
+    loadApplications();
+  }, [loading, isAuthenticated]);
 
   const loadApplications = async () => {
     setLoadingApps(true);
