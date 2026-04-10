@@ -21,10 +21,15 @@ export default function Plus1UpgradePage() {
 
   const fetchAvailablePlans = async () => {
     try {
+      console.log('Fetching plans from /api/products/list...');
       const response = await fetch('/api/products/list');
+      console.log('Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('Plans fetched:', data);
         setAvailablePlans(data);
+      } else {
+        console.error('Failed to fetch plans, status:', response.status);
       }
     } catch (error) {
       console.error('Error fetching plans:', error);
@@ -278,15 +283,6 @@ export default function Plus1UpgradePage() {
             )}
           </CardContent>
         </Card>
-
-        {/* Support Info */}
-        <div className="mt-8 text-center text-sm text-gray-600">
-          <p>Need help? Contact us:</p>
-          <p className="mt-1">
-            <span className="font-medium">Call:</span> 0800 123 456 | 
-            <span className="font-medium ml-2">Email:</span> support@day1health.co.za
-          </p>
-        </div>
       </div>
     </div>
   );
