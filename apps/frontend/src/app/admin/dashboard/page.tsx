@@ -63,10 +63,19 @@ export default function AdminDashboardPage() {
     activeBrokers: 0,
   });
   const [loadingStats, setLoadingStats] = useState(true);
+  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [loadingApprovals, setLoadingApprovals] = useState(true);
+  const [loadingAlerts, setLoadingAlerts] = useState(true);
+  const [loadingActivity, setLoadingActivity] = useState(true);
 
   useEffect(() => {
     setMounted(true);
     fetchStats();
+    fetchPendingApprovals();
+    fetchAlerts();
+    fetchRecentActivity();
   }, []);
 
   const fetchStats = async () => {
@@ -84,111 +93,52 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const [pendingApprovals] = useState<PendingApproval[]>([
-    {
-      id: '1',
-      type: 'product',
-      title: 'New Product: Elite Plan',
-      description: 'Comprehensive coverage with enhanced benefits',
-      submittedBy: 'Product Manager',
-      submittedDate: '2024-01-11T09:00:00',
-      priority: 'high',
-    },
-    {
-      id: '2',
-      type: 'provider',
-      title: 'Provider Registration: Dr. Sarah Johnson',
-      description: 'General Practitioner - Cape Town',
-      submittedBy: 'Provider Onboarding',
-      submittedDate: '2024-01-11T08:30:00',
-      priority: 'medium',
-    },
-    {
-      id: '3',
-      type: 'claim',
-      title: 'High-Value Claim Review',
-      description: 'Claim CLM-20240111-001 - R125,000',
-      submittedBy: 'Claims Assessor',
-      submittedDate: '2024-01-11T07:45:00',
-      priority: 'high',
-    },
-    {
-      id: '4',
-      type: 'policy',
-      title: 'Policy Reinstatement Request',
-      description: 'POL-20231215-123 - Bob Johnson',
-      submittedBy: 'Member Services',
-      submittedDate: '2024-01-10T16:20:00',
-      priority: 'medium',
-    },
-  ]);
+  const fetchPendingApprovals = async () => {
+    try {
+      setLoadingApprovals(true);
+      const response = await fetch('/api/admin/dashboard/approvals');
+      if (response.ok) {
+        const data = await response.json();
+        setPendingApprovals(data);
+      }
+    } catch (error) {
+      console.error('Error fetching pending approvals:', error);
+    } finally {
+      setLoadingApprovals(false);
+    }
+  };
 
-  const [alerts] = useState<Alert[]>([
-    {
-      id: '1',
-      type: 'warning',
-      title: 'Payment Gateway Latency',
-      message: 'Payment processing times are 20% higher than normal',
-      timestamp: '2024-01-11T10:15:00',
-    },
-    {
-      id: '2',
-      type: 'info',
-      title: 'Scheduled Maintenance',
-      message: 'System maintenance scheduled for Sunday 2AM-4AM',
-      timestamp: '2024-01-11T09:00:00',
-    },
-    {
-      id: '3',
-      type: 'error',
-      title: 'Failed Debit Orders',
-      message: '5 debit orders failed this morning - retry scheduled',
-      timestamp: '2024-01-11T08:30:00',
-    },
-  ]);
+  const fetchAlerts = async () => {
+    try {
+      setLoadingAlerts(true);
+      const response = await fetch('/api/admin/dashboard/alerts');
+      if (response.ok) {
+        const data = await response.json();
+        setAlerts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+    } finally {
+      setLoadingAlerts(false);
+    }
+  };
 
-  const [recentActivity] = useState<RecentActivity[]>([
-    {
-      id: '1',
-      type: 'member',
-      action: 'Member Registered',
-      description: 'John Smith - M-2024-1250',
-      timestamp: '2024-01-11T10:30:00',
-      user: 'System',
-    },
-    {
-      id: '2',
-      type: 'claim',
-      action: 'Claim Approved',
-      description: 'CLM-20240111-045 - R3,500',
-      timestamp: '2024-01-11T10:15:00',
-      user: 'Claims Assessor',
-    },
-    {
-      id: '3',
-      type: 'payment',
-      action: 'Payment Processed',
-      description: 'Batch payment - 45 claims - R125,000',
-      timestamp: '2024-01-11T10:00:00',
-      user: 'Finance Manager',
-    },
-    {
-      id: '4',
-      type: 'policy',
-      action: 'Policy Activated',
-      description: 'POL-20240111-012 - Jane Doe',
-      timestamp: '2024-01-11T09:45:00',
-      user: 'System',
-    },
-    {
-      id: '5',
-      type: 'provider',
-      action: 'Provider Approved',
-      description: 'Dr. Michael Brown - Cape Town',
-      timestamp: '2024-01-11T09:30:00',
-      user: 'Provider Manager',
-    },
-  ]);
+  const fetchRecentActivity = async () => {
+    try {
+      setLoadingActivity(true);
+      const response = await fetch('/api/admin/dashboard/activity');
+      if (response.ok) {
+        const data = await response.json();
+        setRecentActivity(data);
+      }
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+    } finally {
+      setLoadingActivity(false);
+    }
+  };
+
+
 
   const [financialStats] = useState({
     monthlyPremium: 0,
@@ -552,13 +502,25 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Alerts */}
-        {alerts.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>System Alerts</CardTitle>
-              <CardDescription>Important notifications requiring attention</CardDescription>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>System Alerts</CardTitle>
+            <CardDescription>Important notifications requiring attention</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingAlerts ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 border rounded-lg animate-pulse">
+                    <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-full"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : alerts.length > 0 ? (
               <div className="space-y-3">
                 {alerts.map((alert) => (
                   <div key={alert.id} className="flex items-start gap-3 p-3 border rounded-lg">
@@ -573,9 +535,11 @@ export default function AdminDashboardPage() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">No alerts at this time</p>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Pending Approvals */}
@@ -586,36 +550,57 @@ export default function AdminDashboardPage() {
                   <CardTitle>Pending Approvals</CardTitle>
                   <CardDescription>Items requiring your review</CardDescription>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => router.push('/admin/applications')}
+                >
                   View All
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {pendingApprovals.map((approval) => (
-                  <div
-                    key={approval.id}
-                    className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-sm font-medium text-gray-900">{approval.title}</p>
-                        {getPriorityBadge(approval.priority)}
+              {loadingApprovals ? (
+                <div className="space-y-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 border rounded-lg animate-pulse">
+                      <div className="flex-1 min-w-0">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                       </div>
-                      <p className="text-sm text-gray-600">{approval.description}</p>
-                      <p className="text-xs text-gray-500 mt-1" suppressHydrationWarning>
-                        By {approval.submittedBy} • {formatTimeAgo(approval.submittedDate)}
-                      </p>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
-                        Review
-                      </Button>
+                  ))}
+                </div>
+              ) : pendingApprovals.length > 0 ? (
+                <div className="space-y-3">
+                  {pendingApprovals.map((approval) => (
+                    <div
+                      key={approval.id}
+                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                      onClick={() => router.push('/admin/applications')}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-sm font-medium text-gray-900">{approval.title}</p>
+                          {getPriorityBadge(approval.priority)}
+                        </div>
+                        <p className="text-sm text-gray-600">{approval.description}</p>
+                        <p className="text-xs text-gray-500 mt-1" suppressHydrationWarning>
+                          By {approval.submittedBy} • {formatTimeAgo(approval.submittedDate)}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">
+                          Review
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">No pending approvals</p>
+              )}
             </CardContent>
           </Card>
 
@@ -626,20 +611,37 @@ export default function AdminDashboardPage() {
               <CardDescription>Latest system events</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3">
-                    {getActivityIcon(activity.type)}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                      <p className="text-sm text-gray-600">{activity.description}</p>
-                      <p className="text-xs text-gray-500" suppressHydrationWarning>
-                        {activity.user} • {formatTimeAgo(activity.timestamp)}
-                      </p>
+              {loadingActivity ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-start gap-3 animate-pulse">
+                      <div className="w-8 h-8 rounded-full bg-gray-200"></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : recentActivity.length > 0 ? (
+                <div className="space-y-3">
+                  {recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-start gap-3">
+                      {getActivityIcon(activity.type)}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                        <p className="text-sm text-gray-600">{activity.description}</p>
+                        <p className="text-xs text-gray-500" suppressHydrationWarning>
+                          {activity.user} • {formatTimeAgo(activity.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
+              )}
             </CardContent>
           </Card>
         </div>
