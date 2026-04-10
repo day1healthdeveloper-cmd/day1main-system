@@ -13,14 +13,23 @@ export default function Plus1UpgradePage() {
   const [memberFound, setMemberFound] = useState(false);
   const [memberData, setMemberData] = useState<any>(null);
 
-  const availablePlans = [
-    { id: 'value-plus', name: 'Value Plus Plan', price: 385 },
-    { id: 'value-plus-hospital', name: 'Value Plus Hospital Plan', price: 450 },
-    { id: 'platinum', name: 'Platinum Plan', price: 650 },
-    { id: 'platinum-hospital', name: 'Platinum Hospital Plan', price: 750 },
-    { id: 'executive', name: 'Executive Plan', price: 950 },
-    { id: 'executive-hospital', name: 'Executive Hospital Plan', price: 1100 },
-  ];
+  const [availablePlans, setAvailablePlans] = useState<Array<{id: string; name: string; price: number}>>([]);
+
+  useEffect(() => {
+    fetchAvailablePlans();
+  }, []);
+
+  const fetchAvailablePlans = async () => {
+    try {
+      const response = await fetch('/api/products/list');
+      if (response.ok) {
+        const data = await response.json();
+        setAvailablePlans(data);
+      }
+    } catch (error) {
+      console.error('Error fetching plans:', error);
+    }
+  };
 
   const handleSearch = async () => {
     if (!mobileNumber) {
