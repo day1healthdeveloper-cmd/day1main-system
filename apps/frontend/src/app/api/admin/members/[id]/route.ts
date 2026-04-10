@@ -61,7 +61,6 @@ export async function GET(
       paymentMethod: member.payment_method,
       monthlyPremium: member.monthly_premium || 0,
       joinDate: member.approved_at || member.created_at, // Use approved_at or created_at
-      kycStatus: member.kyc_status || 'pending',
       riskScore: member.risk_score || 0,
       
       // Address Information

@@ -112,8 +112,9 @@ export async function GET(request: NextRequest) {
         const plus1Status = plus1Member.plan_status?.toLowerCase() || 'active'
 
         // Map Plus1 status to Day1 status
+        // If Plus1 shows inactive/suspended, set Day1 member to suspended
         let day1Status = 'active'
-        if (plus1Status === 'suspended' || plus1Status === 'inactive') {
+        if (plus1Status === 'suspended' || plus1Status === 'inactive' || plus1Status === 'paused') {
           day1Status = 'suspended'
         }
 

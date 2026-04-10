@@ -6,6 +6,7 @@ import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/toast';
 import { 
   FileText, 
   User, 
@@ -86,6 +87,7 @@ interface Stats {
 
 export default function AdminApplicationsPage() {
   const router = useRouter();
+  const { addToast } = useToast();
   const [applications, setApplications] = useState<Application[]>([]);
   const [stats, setStats] = useState<Stats>({
     total: 0,
@@ -129,6 +131,15 @@ export default function AdminApplicationsPage() {
     }
 
     setProcessing(true);
+    
+    // Show processing notification
+    addToast({
+      type: 'info',
+      title: '⏳ Processing...',
+      description: `${newStatus === 'approved' ? 'Approving application and creating member record' : 'Rejecting application'}...`,
+      duration: 2000,
+    });
+
     try {
       const response = await fetch('/api/admin/applications', {
         method: 'PATCH',
@@ -142,18 +153,47 @@ export default function AdminApplicationsPage() {
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        alert(`Application ${newStatus} successfully!`);
+        // Show success notification
+        if (newStatus === 'approved') {
+          addToast({
+            type: 'success',
+            title: '✅ Application Approved!',
+            description: `Member ${data.member?.member_number || ''} has been created successfully. Welcome email will be sent shortly.`,
+            duration: 5000,
+          });
+        } else if (newStatus === 'rejected') {
+          addToast({
+            type: 'error',
+            title: '❌ Application Rejected',
+            description: `Application has been rejected. Applicant will be notified via email.`,
+            duration: 5000,
+          });
+        }
+        
         setShowDetails(false);
         setReviewNotes('');
         setRejectionReason('');
         fetchApplications();
       } else {
-        alert('Failed to update application');
+        // Show error notification
+        addToast({
+          type: 'error',
+          title: '⚠️ Update Failed',
+          description: data.details || data.error || 'Failed to update application. Please try again.',
+          duration: 5000,
+        });
       }
     } catch (error) {
       console.error('Failed to update application:', error);
-      alert('Failed to update application');
+      addToast({
+        type: 'error',
+        title: '⚠️ Network Error',
+        description: 'Unable to connect to server. Please check your connection and try again.',
+        duration: 5000,
+      });
     } finally {
       setProcessing(false);
     }

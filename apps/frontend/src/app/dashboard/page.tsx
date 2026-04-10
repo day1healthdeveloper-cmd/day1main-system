@@ -50,10 +50,16 @@ export default function DashboardPage() {
       router.push('/claims-assessor/dashboard');
     } else if (role === 'call_centre_agent') {
       console.log('→ Redirecting to call centre support');
-      window.location.href = '/call-centre/support'; // Force hard redirect
+      window.location.href = '/call-centre/support';
+    } else if (role === 'ambulance_operator') {
+      console.log('→ Redirecting to ambulance dashboard');
+      router.push('/ambulance/dashboard');
     } else if (role === 'provider') {
       console.log('→ Redirecting to provider dashboard');
       router.push('/provider/dashboard');
+    } else if (role === 'member') {
+      console.log('→ Redirecting to member dashboard');
+      router.push('/member/dashboard');
     } else if (role === 'onboarding') {
       console.log('→ Redirecting to onboarding');
       router.push('/onboarding');

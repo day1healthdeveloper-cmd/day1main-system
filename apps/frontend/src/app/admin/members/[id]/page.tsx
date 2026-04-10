@@ -26,7 +26,6 @@ interface Member {
   paymentMethod: string;
   monthlyPremium: number;
   joinDate: string;
-  kycStatus: 'pending' | 'verified' | 'failed';
   riskScore: number;
   addressLine1?: string;
   city?: string;
@@ -147,18 +146,7 @@ export default function MemberDetailPage() {
     );
   };
 
-  const getKycBadge = (kycStatus: Member['kycStatus']) => {
-    const styles = {
-      verified: 'bg-green-100 text-green-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      failed: 'bg-red-100 text-red-800',
-    };
-    return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${styles[kycStatus]}`}>
-        {kycStatus.charAt(0).toUpperCase() + kycStatus.slice(1)}
-      </span>
-    );
-  };
+
 
   if (loading) {
     return (
@@ -215,20 +203,12 @@ export default function MemberDetailPage() {
         </div>
 
         {/* Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-sm text-gray-600">Status</p>
                 <div className="mt-2">{getStatusBadge(member.status)}</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">KYC Status</p>
-                <div className="mt-2">{getKycBadge(member.kycStatus)}</div>
               </div>
             </CardContent>
           </Card>
@@ -506,22 +486,45 @@ export default function MemberDetailPage() {
                       </div>
                     ) : (
                       <div className="space-y-2 text-sm">
-                        <div>
-                          <p className="text-xs text-gray-600">Bank Name</p>
-                          <p className="font-medium">{member.bankName || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-600">Account Number</p>
-                          <p className="font-medium font-mono text-xs">{member.accountNumber || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-600">Branch Code</p>
-                          <p className="font-medium font-mono text-xs">{member.branchCode || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-gray-600">Debit Order Day</p>
-                          <p className="font-medium">{member.debitOrderDay ? `${member.debitOrderDay} of each month` : 'N/A'}</p>
-                        </div>
+                        {member.brokerCode === 'POR' ? (
+                          <>
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
+                              <p className="text-xs text-blue-600 font-medium mb-1">Plus1Rewards Member</p>
+                              <p className="text-xs text-blue-700">Payment handled by Plus1Rewards</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Active Until</p>
+                              <p className="font-medium">
+                                {member.joinDate ? 
+                                  new Date(new Date(member.joinDate).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-ZA', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                  }) 
+                                  : 'N/A'}
+                              </p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <p className="text-xs text-gray-600">Bank Name</p>
+                              <p className="font-medium">{member.bankName || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Account Number</p>
+                              <p className="font-medium font-mono text-xs">{member.accountNumber || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Branch Code</p>
+                              <p className="font-medium font-mono text-xs">{member.branchCode || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Debit Order Day</p>
+                              <p className="font-medium">{member.debitOrderDay ? `${member.debitOrderDay} of each month` : 'N/A'}</p>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                   </Collapse>

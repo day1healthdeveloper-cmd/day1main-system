@@ -5,7 +5,14 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: true,
+      detectSessionInUrl: false
+    }
+  }
 );
 
 interface User {
@@ -37,27 +44,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user on mount and listen for auth changes
+  // Load user on mount ONLY - no auth state listener
   useEffect(() => {
     loadUser();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', event);
-      if (session) {
-        await loadUser();
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   const loadUser = async () => {
     console.log('🔄 Loading user...');
+    setLoading(true);
     try {
       // Check for provider session first (custom auth)
       if (typeof window !== 'undefined') {
@@ -136,56 +130,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Get profile separately
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('first_name, last_name')
-        .eq('user_id', userData.id)
-        .single();
-
-      // Get user roles separately
-      const { data: userRolesData } = await supabase
+      // Get user roles with role names in one query
+      const { data: userRolesData, error: rolesError } = await supabase
         .from('user_roles')
-        .select('role_id')
+        .select('role_id, roles(name)')
         .eq('user_id', userData.id);
 
-      let roles: string[] = [];
-      let permissions: string[] = [];
-
-      if (userRolesData && userRolesData.length > 0) {
-        // Get role names
-        const roleIds = userRolesData.map((ur: any) => ur.role_id);
-        const { data: rolesData } = await supabase
-          .from('roles')
-          .select('name')
-          .in('id', roleIds);
-        
-        roles = rolesData?.map((r: any) => r.name) || [];
-
-        // Get permissions for these roles
-        const { data: rolePermissionsData } = await supabase
-          .from('role_permissions')
-          .select('permission_id')
-          .in('role_id', roleIds);
-
-        if (rolePermissionsData && rolePermissionsData.length > 0) {
-          const permissionIds = rolePermissionsData.map((rp: any) => rp.permission_id);
-          const { data: permissionsData } = await supabase
-            .from('permissions')
-            .select('name')
-            .in('id', permissionIds);
-          
-          permissions = [...new Set(permissionsData?.map((p: any) => p.name) || [])];
-        }
+      if (rolesError) {
+        console.error('❌ Error loading roles:', rolesError);
       }
+
+      const roles: string[] = userRolesData?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
 
       const transformedUser: User = {
         id: userData.id,
         email: userData.email,
-        firstName: profileData?.first_name || '',
-        lastName: profileData?.last_name || '',
+        firstName: '',
+        lastName: '',
         roles,
-        permissions,
+        permissions: [],
       };
 
       console.log('✅ User data loaded:', transformedUser);
@@ -199,9 +162,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (email: string, password: string) => {
+    setLoading(true);
     try {
       // First, try Supabase Auth (for department users)
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });

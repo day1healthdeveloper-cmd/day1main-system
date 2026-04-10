@@ -121,7 +121,6 @@ function generateTestMember(brokerGroup, index) {
     start_date: '2025-12-01',
     
     status: scenario === 'suspended' ? 'suspended' : 'active',
-    kyc_status: 'verified',
     
     marketing_consent: true,
     email_consent: true,

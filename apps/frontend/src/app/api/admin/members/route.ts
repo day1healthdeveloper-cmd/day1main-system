@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
     const broker = searchParams.get('broker')
     const plan = searchParams.get('plan')
     const paymentMethod = searchParams.get('payment_method')
-    const kycStatus = searchParams.get('kyc_status')
     const search = searchParams.get('search')
     
     // If only filters are requested, return them quickly
@@ -82,7 +81,6 @@ export async function GET(request: NextRequest) {
         active: (activeMembersCount || 0) + (activeDependantsCount || 0),
         pending: pendingCount || 0,
         suspended: (suspendedMembersCount || 0) + (suspendedDependantsCount || 0),
-        kycPending: pendingCount || 0,
       }
 
       return NextResponse.json({ stats })
@@ -109,10 +107,6 @@ export async function GET(request: NextRequest) {
     
     if (paymentMethod && paymentMethod !== 'all') {
       query = query.eq('payment_method', paymentMethod)
-    }
-    
-    if (kycStatus && kycStatus !== 'all') {
-      query = query.eq('kyc_status', kycStatus)
     }
     
     // Apply search AFTER filters (search within filtered results)
@@ -187,7 +181,6 @@ export async function GET(request: NextRequest) {
         paymentMethod: member.payment_method || 'N/A',
         monthlyPremium: member.monthly_premium || 0,
         joinDate: member.start_date || member.activated_at || member.created_at,
-        kycStatus: member.status === 'active' ? 'verified' : 'pending',
         riskScore: 0,
         dependants: []
       }
@@ -218,7 +211,6 @@ export async function GET(request: NextRequest) {
             paymentMethod: 'N/A',
             monthlyPremium: 0,
             joinDate: dep.created_at,
-            kycStatus: dep.status === 'active' ? 'verified' : 'pending',
             riskScore: 0,
             isDependant: true,
             dependantType: dep.dependant_type,
@@ -269,7 +261,6 @@ export async function GET(request: NextRequest) {
       active: (activeMembersCount || 0) + (activeDependantsCount || 0),
       pending: pendingCount || 0,
       suspended: (suspendedMembersCount || 0) + (suspendedDependantsCount || 0),
-      kycPending: pendingCount || 0,
     }
 
     // Get filter options

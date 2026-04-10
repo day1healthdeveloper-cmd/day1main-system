@@ -225,7 +225,6 @@ async function importMembers(filePath, batchSize = 15, startRow = 2, endRow = nu
         broker_code: brokerCode,
         broker_id: brokerId,
         status: status === 'Active' ? 'active' : status === 'Suspended' ? 'suspended' : status === 'In Waiting' ? 'pending' : 'pending',
-        kyc_status: 'pending',
         risk_score: 0,
         monthly_premium: 385, // Default premium
         marketing_consent: false,

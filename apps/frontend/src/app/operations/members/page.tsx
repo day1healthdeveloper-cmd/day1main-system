@@ -24,7 +24,6 @@ interface Member {
   paymentMethod: string;
   monthlyPremium: number;
   joinDate: string;
-  kycStatus: 'pending' | 'verified' | 'failed';
   riskScore: number;
   isDependant?: boolean;
   dependantType?: string;
@@ -44,7 +43,6 @@ export default function OperationsMembersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [kycFilter, setKycFilter] = useState('');
   const [brokerFilter, setBrokerFilter] = useState('');
   const [planFilter, setPlanFilter] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
@@ -61,7 +59,6 @@ export default function OperationsMembersPage() {
     active: 0,
     pending: 0,
     suspended: 0,
-    kycPending: 0,
   });
   const [dataLoading, setDataLoading] = useState(false);
   const [statsLoaded, setStatsLoaded] = useState(false);
@@ -101,7 +98,6 @@ export default function OperationsMembersPage() {
         setBrokerFilter(state.brokerFilter || '');
         setPlanFilter(state.planFilter || '');
         setPaymentMethodFilter(state.paymentMethodFilter || '');
-        setKycFilter(state.kycFilter || '');
       } catch (e) {
         console.error('Failed to restore search state:', e);
       }
@@ -116,7 +112,7 @@ export default function OperationsMembersPage() {
     if (hasSearched) {
       fetchMembers();
     }
-  }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, kycFilter, searchTerm, hasSearched]);
+  }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, searchTerm, hasSearched]);
 
   const fetchMembers = async () => {
     try {
@@ -128,7 +124,6 @@ export default function OperationsMembersPage() {
       if (brokerFilter && brokerFilter !== '') params.append('broker', brokerFilter);
       if (planFilter && planFilter !== '') params.append('plan', planFilter);
       if (paymentMethodFilter && paymentMethodFilter !== '') params.append('payment_method', paymentMethodFilter);
-      if (kycFilter && kycFilter !== '') params.append('kyc_status', kycFilter);
       if (searchTerm) params.append('search', searchTerm);
       params.append('include_dependants', 'true'); // Always include dependants
       
@@ -166,8 +161,7 @@ export default function OperationsMembersPage() {
       statusFilter,
       brokerFilter,
       planFilter,
-      paymentMethodFilter,
-      kycFilter
+      paymentMethodFilter
     }));
   };
 
@@ -311,7 +305,7 @@ export default function OperationsMembersPage() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="planFilter" className="text-sm font-medium">Plan</label>
                 <select
@@ -344,23 +338,6 @@ export default function OperationsMembersPage() {
                   {filterOptions.paymentMethods.map(method => (
                     <option key={method} value={method}>{method}</option>
                   ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="kycFilter" className="text-sm font-medium">KYC Status</label>
-                <select
-                  id="kycFilter"
-                  value={kycFilter}
-                  onChange={(e) => {
-                    setKycFilter(e.target.value);
-                    setHasSearched(true);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="all">All KYC Statuses</option>
-                  <option value="verified">Verified</option>
-                  <option value="pending">Pending</option>
-                  <option value="failed">Failed</option>
                 </select>
               </div>
             </div>

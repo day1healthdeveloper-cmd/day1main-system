@@ -108,11 +108,23 @@ export async function PATCH(request: NextRequest) {
 
     // If approved, create member record
     if (status === 'approved') {
-      // Generate sequential DAY1 member number
-      const memberNumber = await generateNextMemberNumber()
-      console.log(`✅ Generated member number: ${memberNumber}`)
-      
-      // Get broker code if broker_id exists
+      // DUPLICATE CHECK - Prevent duplicate members by ID number or mobile
+      const { data: existingMembers } = await supabaseAdmin
+        .from('members')
+        .select('id, member_number, first_name, last_name, id_number, mobile')
+        .or(`id_number.eq.${application.id_number},mobile.eq.${application.mobile}`)
+
+      if (existingMembers && existingMembers.length > 0) {
+        const existingMember = existingMembers[0]
+        throw new Error(
+          `Duplicate member detected! A member already exists with ${
+            existingMember.id_number === application.id_number ? 'ID number' : 'mobile number'
+          } ${existingMember.id_number === application.id_number ? application.id_number : application.mobile}. ` +
+          `Existing member: ${existingMember.first_name} ${existingMember.last_name} (${existingMember.member_number})`
+        )
+      }
+
+      // Get broker code if broker_id exists - DO THIS FIRST
       let brokerCode = null
       if (application.broker_id) {
         const { data: broker } = await supabaseAdmin
@@ -122,6 +134,52 @@ export async function PATCH(request: NextRequest) {
           .single()
         brokerCode = broker?.code || null
       }
+
+      // Update Plus1Rewards BEFORE creating member - if this fails, no member is created
+      if (brokerCode === 'POR') {
+        console.log('✅ Plus1 member detected - updating Plus1Rewards status to active')
+        try {
+          console.log(`🔄 Updating Plus1 status for mobile: ${application.mobile}`)
+
+          // Use direct REST API to completely bypass Supabase client and RLS
+          const updateResponse = await fetch(
+            `${process.env.PLUS1_SUPABASE_URL}/rest/v1/members?cell_phone=eq.${encodeURIComponent(application.mobile)}`,
+            {
+              method: 'PATCH',
+              headers: {
+                'apikey': process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY!,
+                'Authorization': `Bearer ${process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY!}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=representation'
+              },
+              body: JSON.stringify({ plan_status: 'active' })
+            }
+          )
+
+          if (!updateResponse.ok) {
+            const errorText = await updateResponse.text()
+            console.error('❌ Failed to update Plus1 status:', errorText)
+            throw new Error(`Plus1 update failed: ${errorText}`)
+          }
+
+          const updateData = await updateResponse.json()
+          
+          if (!updateData || updateData.length === 0) {
+            console.error('❌ Plus1 member not found with mobile:', application.mobile)
+            throw new Error(`Plus1 member not found with mobile: ${application.mobile}`)
+          } else {
+            console.log('✅ Plus1 member status updated to active for mobile:', application.mobile, `(${updateData.length} row(s) updated)`)
+          }
+        } catch (plus1Error) {
+          console.error('❌ CRITICAL: Error updating Plus1 status:', plus1Error)
+          // FAIL the approval if Plus1 update fails for POR broker - NO MEMBER CREATED
+          throw new Error(`Failed to update Plus1Rewards status: ${plus1Error instanceof Error ? plus1Error.message : 'Unknown error'}`)
+        }
+      }
+
+      // Generate sequential DAY1 member number - ONLY AFTER Plus1 update succeeds
+      const memberNumber = await generateNextMemberNumber()
+      console.log(`✅ Generated member number: ${memberNumber}`)
       
       // Create member record - EXACT COPY of ALL application fields
       const { data: member, error: memberError } = await supabaseAdmin
@@ -191,6 +249,9 @@ export async function PATCH(request: NextRequest) {
           broker_id: application.broker_id,
           broker_code: brokerCode,
           
+          // Payment Method
+          collection_method: application.collection_method || 'individual_debit_order',
+          
           // Underwriting & Review
           underwriting_status: application.underwriting_status,
           underwriting_notes: application.underwriting_notes,
@@ -199,7 +260,6 @@ export async function PATCH(request: NextRequest) {
           
           // Member Status
           status: 'active',
-          kyc_status: 'pending',
         })
         .select()
         .single()
@@ -229,52 +289,6 @@ export async function PATCH(request: NextRequest) {
         await supabaseAdmin
           .from('member_dependents')
           .insert(memberDependents)
-      }
-
-      // Update Plus1Rewards member status to "active" if this is a Plus1 application
-      // Use the brokerCode we already fetched above
-      if (brokerCode === 'POR') {
-        console.log('✅ Plus1 member detected - updating Plus1Rewards status to active')
-        try {
-          // Initialize Plus1Rewards Supabase client
-          const { createClient } = require('@supabase/supabase-js')
-          const plus1Supabase = createClient(
-            process.env.PLUS1_SUPABASE_URL!,
-            process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY!,
-            {
-              auth: {
-                persistSession: false,
-                autoRefreshToken: false,
-              },
-              db: {
-                schema: 'public'
-              }
-            }
-          )
-
-          console.log(`🔄 Updating Plus1 status for mobile: ${application.mobile}`)
-
-          // Update member plan_status in Plus1Rewards database
-          const { data: plus1Data, error: plus1Error } = await plus1Supabase
-            .from('members')
-            .update({ plan_status: 'active' })
-            .eq('cell_phone', application.mobile)
-            .select()
-
-          if (plus1Error) {
-            console.error('❌ Failed to update Plus1 status:', plus1Error)
-            throw new Error(`Plus1 update failed: ${plus1Error.message}`)
-          } else if (plus1Data && plus1Data.length > 0) {
-            console.log('✅ Plus1 member status updated to active:', plus1Data[0].cell_phone)
-          } else {
-            console.error('❌ Plus1 member not found with mobile:', application.mobile)
-            throw new Error(`Plus1 member not found with mobile: ${application.mobile}`)
-          }
-        } catch (plus1Error) {
-          console.error('❌ CRITICAL: Error updating Plus1 status:', plus1Error)
-          // FAIL the approval if Plus1 update fails for POR broker
-          throw new Error(`Failed to update Plus1Rewards status: ${plus1Error instanceof Error ? plus1Error.message : 'Unknown error'}`)
-        }
       }
 
       // DELETE APPLICATION DATA after successful member creation

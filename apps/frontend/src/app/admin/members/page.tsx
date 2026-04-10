@@ -26,7 +26,6 @@ interface Member {
   paymentMethod: string;
   monthlyPremium: number;
   joinDate: string;
-  kycStatus: 'pending' | 'verified' | 'failed';
   riskScore: number;
   isDependant?: boolean;
   dependantType?: string;
@@ -47,7 +46,6 @@ export default function AdminMembersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState(''); // Separate state for input field
   const [statusFilter, setStatusFilter] = useState('');
-  const [kycFilter, setKycFilter] = useState('');
   const [brokerFilter, setBrokerFilter] = useState('');
   const [planFilter, setPlanFilter] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
@@ -67,7 +65,6 @@ export default function AdminMembersPage() {
     active: 0,
     pending: 0,
     suspended: 0,
-    kycPending: 0,
   });
   const [dataLoading, setDataLoading] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
@@ -156,7 +153,7 @@ export default function AdminMembersPage() {
     if (hasSearched) {
       fetchMembers();
     }
-  }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, kycFilter, searchTerm, hasSearched]);
+  }, [statusFilter, brokerFilter, planFilter, paymentMethodFilter, searchTerm, hasSearched]);
 
   const fetchMembers = async () => {
     try {
@@ -168,7 +165,6 @@ export default function AdminMembersPage() {
       if (brokerFilter && brokerFilter !== '') params.append('broker', brokerFilter);
       if (planFilter && planFilter !== '') params.append('plan', planFilter);
       if (paymentMethodFilter && paymentMethodFilter !== '') params.append('payment_method', paymentMethodFilter);
-      if (kycFilter && kycFilter !== '') params.append('kyc_status', kycFilter);
       if (searchTerm) params.append('search', searchTerm);
       params.append('include_dependants', 'true');
       
@@ -198,7 +194,6 @@ export default function AdminMembersPage() {
     setSearchTerm('');
     setSearchInput('');
     setStatusFilter('');
-    setKycFilter('');
     setBrokerFilter('');
     setPlanFilter('');
     setPaymentMethodFilter('');
@@ -300,19 +295,6 @@ export default function AdminMembersPage() {
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
-    );
-  };
-
-  const getKycBadge = (kycStatus: Member['kycStatus']) => {
-    const styles = {
-      verified: 'bg-green-100 text-green-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      failed: 'bg-red-100 text-red-800',
-    };
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[kycStatus]}`}>
-        {kycStatus.charAt(0).toUpperCase() + kycStatus.slice(1)}
       </span>
     );
   };
@@ -448,7 +430,7 @@ export default function AdminMembersPage() {
                 </select>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="planFilter" className="text-sm font-medium">Plan</label>
                 <select
@@ -481,23 +463,6 @@ export default function AdminMembersPage() {
                   {filterOptions.paymentMethods.map(method => (
                     <option key={method} value={method}>{method}</option>
                   ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="kycFilter" className="text-sm font-medium">KYC Status</label>
-                <select
-                  id="kycFilter"
-                  value={kycFilter}
-                  onChange={(e) => {
-                    setKycFilter(e.target.value);
-                    setHasSearched(true);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Click to select</option>
-                  <option value="verified">Verified</option>
-                  <option value="pending">Pending</option>
-                  <option value="failed">Failed</option>
                 </select>
               </div>
             </div>
