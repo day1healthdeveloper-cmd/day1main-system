@@ -269,7 +269,7 @@ export default function Plus1UpgradePage() {
                     <div>
                       <p className="text-sm font-medium text-yellow-800">Important Information</p>
                       <p className="text-sm text-yellow-700 mt-1">
-                        Your upgrade request will be reviewed by our team. We will contact you within 24-48 hours to confirm your upgrade and new premium amount.
+                        Your upgrade request will be reviewed by our team. We will contact you soon to confirm your upgraded plan details and your new premium amount.
                       </p>
                     </div>
                   </div>
