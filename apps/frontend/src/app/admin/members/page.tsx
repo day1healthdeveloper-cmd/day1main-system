@@ -666,10 +666,6 @@ export default function AdminMembersPage() {
                     <div className="mt-1">{getStatusBadge(selectedMember.status)}</div>
                   </div>
                   <div>
-                    <p className="text-gray-600">KYC Status</p>
-                    <div className="mt-1">{getKycBadge(selectedMember.kycStatus)}</div>
-                  </div>
-                  <div>
                     <p className="text-gray-600">Join Date</p>
                     <p className="font-medium">{new Date(selectedMember.joinDate).toLocaleDateString()}</p>
                   </div>
