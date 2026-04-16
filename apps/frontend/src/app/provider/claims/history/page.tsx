@@ -29,9 +29,59 @@ export default function ClaimsHistoryPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [loadingClaims, setLoadingClaims] = useState(true);
 
-  // Mock data
-  const [claims] = useState<Claim[]>([
+  // TODO: Get provider_id from authenticated session
+  const providerId = 'temp-provider-id'; // Replace with actual provider ID from auth
+
+  useEffect(() => {
+    fetchClaims();
+  }, [statusFilter, dateFrom, dateTo, searchTerm]);
+
+  const fetchClaims = async () => {
+    try {
+      setLoadingClaims(true);
+      const params = new URLSearchParams({
+        provider_id: providerId
+      });
+      
+      if (statusFilter) params.append('status', statusFilter);
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+      if (searchTerm) params.append('search', searchTerm);
+
+      const response = await fetch(`/api/provider/claims?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Transform data to match component interface
+        const transformedClaims = (data.claims || []).map((claim: any) => ({
+          claimNumber: claim.claim_number,
+          patientName: claim.members ? `${claim.members.first_name} ${claim.members.last_name}` : 'Unknown',
+          memberNumber: claim.members?.member_number || 'N/A',
+          serviceDate: claim.service_date,
+          submissionDate: claim.submission_date,
+          claimType: claim.benefit_type,
+          amount: parseFloat(claim.claimed_amount || '0'),
+          approvedAmount: parseFloat(claim.approved_amount || '0'),
+          status: claim.claim_status,
+          statusDate: claim.approved_date || claim.submission_date,
+        }));
+        
+        setClaims(transformedClaims);
+        setStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching claims:', error);
+    } finally {
+      setLoadingClaims(false);
+    }
+  };
+
+  // Mock data for fallback (remove this once API is working)
+  const [mockClaims] = useState<Claim[]>([
     {
       claimNumber: 'CLM-20240110-001234',
       patientName: 'John Smith',
@@ -153,21 +203,8 @@ export default function ClaimsHistoryPage() {
     }
   };
 
-  const filteredClaims = claims.filter((claim) => {
-    const matchesSearch =
-      claim.claimNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      claim.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      claim.memberNumber.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = !statusFilter || claim.status === statusFilter;
-
-    const matchesDateFrom = !dateFrom || claim.serviceDate >= dateFrom;
-    const matchesDateTo = !dateTo || claim.serviceDate <= dateTo;
-
-    return matchesSearch && matchesStatus && matchesDateFrom && matchesDateTo;
-  });
-
-  const stats = {
+  // Use real stats if available, otherwise calculate from claims
+  const displayStats = stats || {
     total: claims.length,
     pending: claims.filter((c) => c.status === 'pending').length,
     approved: claims.filter((c) => c.status === 'approved').length,
@@ -197,7 +234,7 @@ export default function ClaimsHistoryPage() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-sm text-gray-600">Total Claims</p>
-                <p className="text-3xl font-bold mt-1">{stats.total}</p>
+                <p className="text-3xl font-bold mt-1">{displayStats.total}</p>
               </div>
             </CardContent>
           </Card>
@@ -205,7 +242,7 @@ export default function ClaimsHistoryPage() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-sm text-gray-600">Pending</p>
-                <p className="text-3xl font-bold mt-1 text-yellow-600">{stats.pending}</p>
+                <p className="text-3xl font-bold mt-1 text-yellow-600">{displayStats.pending}</p>
               </div>
             </CardContent>
           </Card>
@@ -213,7 +250,7 @@ export default function ClaimsHistoryPage() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-sm text-gray-600">Paid</p>
-                <p className="text-3xl font-bold mt-1 text-green-600">{stats.paid}</p>
+                <p className="text-3xl font-bold mt-1 text-green-600">{displayStats.paid}</p>
               </div>
             </CardContent>
           </Card>
@@ -221,7 +258,9 @@ export default function ClaimsHistoryPage() {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-sm text-gray-600">Total Submitted</p>
-                <p className="text-2xl font-bold mt-1">R{stats.totalAmount.toLocaleString()}</p>
+                <p className="text-2xl font-bold mt-1">
+                  R{(displayStats.total_claimed || displayStats.totalAmount || 0).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -303,7 +342,7 @@ export default function ClaimsHistoryPage() {
               <div>
                 <CardTitle>Claims List</CardTitle>
                 <CardDescription>
-                  Showing {filteredClaims.length} of {claims.length} claims
+                  Showing {claims.length} claims
                 </CardDescription>
               </div>
               <Button variant="outline" size="sm">
@@ -312,68 +351,79 @@ export default function ClaimsHistoryPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Claim Number</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Patient</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Service Date</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Type</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-900">Amount</th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-900">Approved</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredClaims.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="text-center py-8 text-gray-500">
-                        No claims found matching your filters
-                      </td>
+            {loadingClaims ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading claims...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Claim Number</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Patient</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Service Date</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Type</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-900">Amount</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-900">Approved</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
                     </tr>
-                  ) : (
-                    filteredClaims.map((claim) => (
-                      <tr key={claim.claimNumber} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <p className="font-mono text-sm">{claim.claimNumber}</p>
-                          <p className="text-xs text-gray-500">
-                            Submitted: {new Date(claim.submissionDate).toLocaleDateString()}
-                          </p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="font-medium">{claim.patientName}</p>
-                          <p className="text-xs text-gray-500">{claim.memberNumber}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          {new Date(claim.serviceDate).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 px-4">{claim.claimType}</td>
-                        <td className="py-3 px-4 text-right font-medium">
-                          R{claim.amount.toFixed(2)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-medium">
-                          {claim.approvedAmount > 0 ? (
-                            <span className="text-green-600">
-                              R{claim.approvedAmount.toFixed(2)}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">{getStatusBadge(claim.status)}</td>
-                        <td className="py-3 px-4">
-                          <Button variant="outline" size="sm">
-                            View Details
-                          </Button>
+                  </thead>
+                  <tbody>
+                    {claims.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="text-center py-8 text-gray-500">
+                          No claims found matching your filters
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ) : (
+                      claims.map((claim) => (
+                        <tr key={claim.claimNumber} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <p className="font-mono text-sm">{claim.claimNumber}</p>
+                            <p className="text-xs text-gray-500">
+                              Submitted: {new Date(claim.submissionDate).toLocaleDateString()}
+                            </p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <p className="font-medium">{claim.patientName}</p>
+                            <p className="text-xs text-gray-500">{claim.memberNumber}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            {new Date(claim.serviceDate).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 px-4">{claim.claimType}</td>
+                          <td className="py-3 px-4 text-right font-medium">
+                            R{claim.amount.toFixed(2)}
+                          </td>
+                          <td className="py-3 px-4 text-right font-medium">
+                            {claim.approvedAmount > 0 ? (
+                              <span className="text-green-600">
+                                R{claim.approvedAmount.toFixed(2)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">{getStatusBadge(claim.status)}</td>
+                          <td className="py-3 px-4">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => router.push(`/claims/${claim.claimNumber}`)}
+                            >
+                              View Details
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
 

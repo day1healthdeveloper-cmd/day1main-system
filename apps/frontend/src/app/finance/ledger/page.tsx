@@ -1,113 +1,70 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { FileText } from 'lucide-react';
 
 export default function FinanceLedgerPage() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
+  const { loading, isAuthenticated } = useAuth();
 
-  const accounts = [
-    { code: '1000', name: 'Cash', type: 'Asset', balance: 'R 1,250,000' },
-    { code: '1100', name: 'Accounts Receivable', type: 'Asset', balance: 'R 850,000' },
-    { code: '2000', name: 'Accounts Payable', type: 'Liability', balance: 'R 450,000' },
-    { code: '3000', name: 'Premium Revenue', type: 'Revenue', balance: 'R 5,000,000' },
-    { code: '4000', name: 'Claims Expense', type: 'Expense', balance: 'R 3,200,000' },
-  ];
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [loading, isAuthenticated, router]);
 
-  const stats = {
-    totalAssets: 'R 12,500,000',
-    totalLiabilities: 'R 3,200,000',
-    totalEquity: 'R 9,300,000',
-  };
+  if (loading) {
+    return (
+      <SidebarLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </SidebarLayout>
+    );
+  }
 
-  const filteredAccounts = accounts.filter(account =>
-    account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    account.code.includes(searchTerm)
-  );
+  if (!isAuthenticated) return null;
 
   return (
     <SidebarLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Ledger</h1>
-          <p className="text-gray-600 mt-1">View general ledger accounts</p>
+          <h1 className="text-3xl font-bold text-gray-900">General Ledger</h1>
+          <p className="text-gray-600 mt-1">View and manage general ledger accounts</p>
         </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">Total Assets</p>
-                <p className="text-2xl font-bold mt-1 text-green-600">{stats.totalAssets}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">Total Liabilities</p>
-                <p className="text-2xl font-bold mt-1 text-red-600">{stats.totalLiabilities}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">Total Equity</p>
-                <p className="text-2xl font-bold mt-1 text-blue-600">{stats.totalEquity}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Search */}
         <Card>
           <CardHeader>
-            <CardTitle>Search Accounts</CardTitle>
+            <CardTitle>General Ledger System</CardTitle>
           </CardHeader>
           <CardContent>
-            <Input
-              placeholder="Account code or name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Accounts Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Ledger Accounts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium">Code</th>
-                    <th className="text-left py-3 px-4 font-medium">Account Name</th>
-                    <th className="text-left py-3 px-4 font-medium">Type</th>
-                    <th className="text-right py-3 px-4 font-medium">Balance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAccounts.map((account) => (
-                    <tr key={account.code} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-mono font-medium">{account.code}</td>
-                      <td className="py-3 px-4">{account.name}</td>
-                      <td className="py-3 px-4">
-                        <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
-                          {account.type}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono font-medium">{account.balance}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="text-center py-12">
+              <FileText className="w-16 h-16 mx-auto mb-4 text-cyan-600 opacity-50" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Coming Soon</h3>
+              <p className="text-gray-600 mb-6">
+                The general ledger system is currently under development.
+              </p>
+              <div className="max-w-md mx-auto text-left space-y-2">
+                <p className="text-sm text-gray-600">✓ Chart of accounts</p>
+                <p className="text-sm text-gray-600">✓ Journal entries</p>
+                <p className="text-sm text-gray-600">✓ Account balances</p>
+                <p className="text-sm text-gray-600">✓ Transaction history</p>
+              </div>
+              <Button 
+                variant="outline" 
+                className="mt-6"
+                onClick={() => router.push('/finance/dashboard')}
+              >
+                Back to Dashboard
+              </Button>
             </div>
           </CardContent>
         </Card>

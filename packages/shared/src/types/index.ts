@@ -12,8 +12,6 @@ export type PaymentMethod = 'debit_order' | 'card' | 'eft' | 'cash'
 
 export type Gender = 'male' | 'female' | 'other'
 
-export type KYCStatus = 'pending' | 'in_progress' | 'completed' | 'failed'
-
 export type MandateStatus = 'active' | 'expired' | 'cancelled' | 'suspended'
 
 export type BillingFrequency = 'monthly' | 'quarterly' | 'annually'

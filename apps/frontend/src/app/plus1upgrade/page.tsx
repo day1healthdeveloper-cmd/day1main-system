@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
 import Image from 'next/image';
 
 export default function Plus1UpgradePage() {
+  const { addToast } = useToast();
   const [mobileNumber, setMobileNumber] = useState('');
   const [currentPlan, setCurrentPlan] = useState('');
   const [upgradedPlan, setUpgradedPlan] = useState('');
@@ -38,7 +40,12 @@ export default function Plus1UpgradePage() {
 
   const handleSearch = async () => {
     if (!mobileNumber) {
-      alert('Please enter your mobile number');
+      addToast({
+        type: 'error',
+        title: '⚠️ Mobile Number Required',
+        description: 'Please enter your mobile number to continue',
+        duration: 3000,
+      });
       return;
     }
 
@@ -52,34 +59,75 @@ export default function Plus1UpgradePage() {
         if (data.found) {
           setMemberFound(true);
           setMemberData(data.member);
-          setCurrentPlan(data.member.coverPlanName || 'No plan');
+          setCurrentPlan(data.member.currentPlan || 'No plan');
+          addToast({
+            type: 'success',
+            title: '✅ Member Found',
+            description: `Welcome ${data.member.firstName} ${data.member.lastName}!`,
+            duration: 3000,
+          });
         } else {
-          alert('Member not found. Please check your mobile number.');
           setMemberFound(false);
+          addToast({
+            type: 'error',
+            title: '❌ Member Not Found',
+            description: 'Please check your mobile number and try again.',
+            duration: 4000,
+          });
         }
       } else {
-        alert('Error searching for member. Please try again.');
+        addToast({
+          type: 'error',
+          title: '⚠️ Search Failed',
+          description: 'Error searching for member. Please try again.',
+          duration: 4000,
+        });
       }
     } catch (error) {
       console.error('Error searching member:', error);
-      alert('Error searching for member. Please try again.');
+      addToast({
+        type: 'error',
+        title: '⚠️ Network Error',
+        description: 'Unable to connect to server. Please check your connection.',
+        duration: 4000,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleSubmit = async () => {
+    console.log('🔵 handleSubmit called!');
+    console.log('🔵 upgradedPlan:', upgradedPlan);
+    console.log('🔵 currentPlan:', currentPlan);
+    console.log('🔵 mobileNumber:', mobileNumber);
+    
     if (!upgradedPlan) {
-      alert('Please select an upgraded plan');
+      console.log('❌ No upgraded plan selected');
+      addToast({
+        type: 'error',
+        title: '⚠️ Plan Selection Required',
+        description: 'Please select an upgraded plan to continue',
+        duration: 3000,
+      });
       return;
     }
 
     if (upgradedPlan === currentPlan) {
-      alert('Please select a different plan to upgrade');
+      addToast({
+        type: 'error',
+        title: '⚠️ Same Plan Selected',
+        description: 'Please select a different plan to upgrade',
+        duration: 3000,
+      });
       return;
     }
 
     setLoading(true);
+    console.log('✅ Validation passed, proceeding with submission');
+    console.log('📤 About to call /api/plus1/upgrade');
+    console.log('📤 Request body:', { mobileNumber, currentPlan, upgradedPlan, memberData });
+
     try {
       // Submit upgrade request
       const response = await fetch('/api/plus1/upgrade', {
@@ -95,8 +143,17 @@ export default function Plus1UpgradePage() {
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        alert('Upgrade request submitted successfully! Our team will contact you shortly.');
+        // Show success notification
+        addToast({
+          type: 'success',
+          title: '✅ Upgrade Request Submitted!',
+          description: 'Our team will contact you soon to confirm your upgraded plan details and new premium amount.',
+          duration: 6000,
+        });
+        
         // Reset form
         setMobileNumber('');
         setCurrentPlan('');
@@ -104,11 +161,22 @@ export default function Plus1UpgradePage() {
         setMemberFound(false);
         setMemberData(null);
       } else {
-        alert('Error submitting upgrade request. Please try again.');
+        // Show error notification
+        addToast({
+          type: 'error',
+          title: '❌ Submission Failed',
+          description: data.error || 'Failed to submit upgrade request. Please try again.',
+          duration: 5000,
+        });
       }
     } catch (error) {
       console.error('Error submitting upgrade:', error);
-      alert('Error submitting upgrade request. Please try again.');
+      addToast({
+        type: 'error',
+        title: '⚠️ Network Error',
+        description: 'Unable to connect to server. Please check your connection and try again.',
+        duration: 5000,
+      });
     } finally {
       setLoading(false);
     }
@@ -188,15 +256,60 @@ export default function Plus1UpgradePage() {
 
               {memberFound && memberData && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-center mb-2">
+                  <div className="flex items-center mb-3">
                     <svg className="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    <span className="text-green-800 font-medium">Member Found</span>
+                    <span className="text-green-800 font-semibold">Member Verified</span>
                   </div>
-                  <p className="text-sm text-green-700">
-                    {memberData.firstName} {memberData.lastName}
-                  </p>
+                  
+                  {/* Member Information Grid */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-gray-600">Member Number</p>
+                      <p className="font-medium text-gray-900">{memberData.memberNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Full Name</p>
+                      <p className="font-medium text-gray-900">{memberData.firstName} {memberData.lastName}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">ID Number</p>
+                      <p className="font-medium text-gray-900">{memberData.idNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Date of Birth</p>
+                      <p className="font-medium text-gray-900">
+                        {memberData.dateOfBirth ? new Date(memberData.dateOfBirth).toLocaleDateString('en-ZA') : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Email</p>
+                      <p className="font-medium text-gray-900">{memberData.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Mobile</p>
+                      <p className="font-medium text-gray-900">{memberData.mobile}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Address</p>
+                      <p className="font-medium text-gray-900">{memberData.addressLine1 || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">City</p>
+                      <p className="font-medium text-gray-900">{memberData.city || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Member Status</p>
+                      <p className="font-medium text-gray-900 capitalize">{memberData.status || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Start Date</p>
+                      <p className="font-medium text-gray-900">
+                        {memberData.startDate ? new Date(memberData.startDate).toLocaleDateString('en-ZA') : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -210,9 +323,9 @@ export default function Plus1UpgradePage() {
                   </label>
                   <div className="px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg">
                     <p className="font-medium text-gray-900">{currentPlan}</p>
-                    {memberData.coverPlanPrice && (
+                    {memberData.currentPremium && (
                       <p className="text-sm text-gray-600 mt-1">
-                        R{memberData.coverPlanPrice}/month
+                        R{memberData.currentPremium}/month
                       </p>
                     )}
                   </div>

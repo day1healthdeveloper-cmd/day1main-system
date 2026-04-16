@@ -7,7 +7,9 @@ import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FileText, AlertTriangle } from 'lucide-react';
+import { FileText, AlertTriangle, Download, Eye } from 'lucide-react';
+import { getClaimFormConfig } from '@/lib/claim-form-config';
+import { ClaimAdjudicationPanel } from '@/components/claims/claim-adjudication-panel';
 
 interface Claim {
   id: string;
@@ -16,6 +18,7 @@ interface Claim {
   provider: { name: string; provider_number: string } | null;
   service_date: string;
   claim_type: string;
+  benefit_type: string;
   claimed_amount: string;
   status: string;
   submission_date: string;
@@ -23,6 +26,9 @@ interface Claim {
   tariff_codes: string[];
   fraud_alert_triggered: boolean;
   is_pmb: boolean;
+  claim_data: Record<string, any>;
+  document_urls: string[];
+  claim_source: string;
 }
 
 export default function ClaimsQueuePage() {
@@ -63,33 +69,37 @@ export default function ClaimsQueuePage() {
     }
   };
 
-  const handleAction = async (claimId: string, action: string, status: string) => {
+  const handleAdjudication = async (action: 'approve' | 'reject' | 'pend', data: any) => {
+    if (!selectedClaim) return;
+    
     try {
-      await fetch(`/api/claims-assessor/queue/${claimId}`, {
+      const response = await fetch(`/api/claims-assessor/adjudicate/${selectedClaim.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action,
-          status,
-          ...(status === 'approved' && { 
-            approved_at: new Date().toISOString(),
-            approved_amount: selectedClaim?.claimed_amount 
-          }),
-          ...(status === 'pended' && { 
-            pended_date: new Date().toISOString(),
-            pended_reason: 'Additional information required' 
-          }),
-          ...(status === 'rejected' && { 
-            rejection_code: 'R09',
-            rejection_reason: 'Service excluded from coverage' 
-          })
+          ...data
         })
       });
-      fetchClaims();
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to adjudicate claim');
+      }
+
+      // Refresh claims list
+      await fetchClaims();
+      
+      // Close modal
       setShowDetails(false);
       setSelectedClaim(null);
+
+      // Show success message
+      alert(`Claim ${action}d successfully`);
     } catch (error) {
-      console.error(`Error ${action} claim:`, error);
+      console.error(`Error ${action}ing claim:`, error);
+      throw error; // Re-throw to let the panel handle it
     }
   };
 
@@ -290,110 +300,255 @@ export default function ClaimsQueuePage() {
 
         {/* Claim Details Modal */}
         {showDetails && selectedClaim && (
-          <Card className="border-2 border-green-500">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Claim Review</CardTitle>
-                  <CardDescription>{selectedClaim.claim_number}</CardDescription>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <CardHeader className="sticky top-0 bg-white z-10 border-b">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Claim Review</CardTitle>
+                    <CardDescription>{selectedClaim.claim_number}</CardDescription>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setShowDetails(false)}>
+                    Close
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setShowDetails(false)}>
-                  Close
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-6">
+                  {/* Basic Information */}
                   <div>
-                    <p className="text-gray-600">Member</p>
-                    <p className="font-medium">
-                      {selectedClaim.member?.first_name} {selectedClaim.member?.last_name}
-                    </p>
-                    <p className="text-xs text-gray-500">{selectedClaim.member?.member_number}</p>
+                    <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-600">Member</p>
+                        <p className="font-medium">
+                          {selectedClaim.member?.first_name} {selectedClaim.member?.last_name}
+                        </p>
+                        <p className="text-xs text-gray-500">{selectedClaim.member?.member_number}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Provider</p>
+                        <p className="font-medium">{selectedClaim.provider?.name || 'Member-submitted'}</p>
+                        <p className="text-xs text-gray-500">{selectedClaim.provider?.provider_number || selectedClaim.claim_source}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Service Date</p>
+                        <p className="font-medium">{new Date(selectedClaim.service_date).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Submission Date</p>
+                        <p className="font-medium">{new Date(selectedClaim.submission_date).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Claim Type</p>
+                        <p className="font-medium">{selectedClaim.claim_type}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Benefit Type</p>
+                        <p className="font-medium capitalize">{selectedClaim.benefit_type?.replace(/_/g, ' ')}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Claimed Amount</p>
+                        <p className="font-medium text-lg">R{parseFloat(selectedClaim.claimed_amount).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Status</p>
+                        <p className="font-medium">{getStatusBadge(selectedClaim.status)}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600">Provider</p>
-                    <p className="font-medium">{selectedClaim.provider?.name}</p>
-                    <p className="text-xs text-gray-500">{selectedClaim.provider?.provider_number}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Service Date</p>
-                    <p className="font-medium">{new Date(selectedClaim.service_date).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Claimed Amount</p>
-                    <p className="font-medium">R{parseFloat(selectedClaim.claimed_amount).toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Claim Type</p>
-                    <p className="font-medium">{selectedClaim.claim_type}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600">Status</p>
-                    <p className="font-medium">{getStatusBadge(selectedClaim.status)}</p>
-                  </div>
-                  {selectedClaim.icd10_codes?.length > 0 && (
+
+                  {/* Claim-Specific Details */}
+                  {selectedClaim.claim_data && Object.keys(selectedClaim.claim_data).length > 0 && (
                     <div>
-                      <p className="text-gray-600">ICD-10 Codes</p>
-                      <p className="font-medium">{selectedClaim.icd10_codes.join(', ')}</p>
+                      <h3 className="text-lg font-semibold mb-3">Claim Details</h3>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          {Object.entries(selectedClaim.claim_data).map(([key, value]) => {
+                            // Skip empty values
+                            if (!value || value === '' || value === 0) return null;
+                            
+                            // Format the key for display
+                            const label = key
+                              .replace(/([A-Z])/g, ' $1')
+                              .replace(/^./, str => str.toUpperCase())
+                              .trim();
+                            
+                            // Format the value
+                            let displayValue = value;
+                            if (typeof value === 'object') {
+                              displayValue = JSON.stringify(value);
+                            } else if (key.toLowerCase().includes('date')) {
+                              displayValue = new Date(value as string).toLocaleDateString();
+                            } else if (key.toLowerCase().includes('amount') || key.toLowerCase().includes('price')) {
+                              displayValue = `R${parseFloat(value as string).toLocaleString()}`;
+                            }
+                            
+                            return (
+                              <div key={key}>
+                                <p className="text-gray-600">{label}</p>
+                                <p className="font-medium">{displayValue}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   )}
-                  {selectedClaim.tariff_codes?.length > 0 && (
+
+                  {/* Codes */}
+                  {(selectedClaim.icd10_codes?.length > 0 || selectedClaim.tariff_codes?.length > 0) && (
                     <div>
-                      <p className="text-gray-600">Tariff Codes</p>
-                      <p className="font-medium">{selectedClaim.tariff_codes.join(', ')}</p>
+                      <h3 className="text-lg font-semibold mb-3">Medical Codes</h3>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        {selectedClaim.icd10_codes?.length > 0 && (
+                          <div>
+                            <p className="text-gray-600">ICD-10 Diagnosis Codes</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {selectedClaim.icd10_codes.map((code, idx) => (
+                                <span key={idx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-mono">
+                                  {code}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {selectedClaim.tariff_codes?.length > 0 && (
+                          <div>
+                            <p className="text-gray-600">Tariff/Procedure Codes</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {selectedClaim.tariff_codes.map((code, idx) => (
+                                <span key={idx} className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-mono">
+                                  {code}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
-                </div>
 
-                {selectedClaim.fraud_alert_triggered && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <div className="flex items-center gap-2 text-red-800">
-                      <AlertTriangle className="w-5 h-5" />
-                      <p className="font-medium">Fraud Alert Triggered</p>
+                  {/* Supporting Documents */}
+                  {selectedClaim.document_urls && selectedClaim.document_urls.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Supporting Documents</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {selectedClaim.document_urls.map((url, idx) => {
+                          const fileName = url.split('/').pop() || `Document ${idx + 1}`;
+                          const fileExtension = fileName.split('.').pop()?.toLowerCase();
+                          const isPDF = fileExtension === 'pdf';
+                          const isImage = ['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension || '');
+                          
+                          return (
+                            <div key={idx} className="border rounded-lg p-3 hover:bg-gray-50">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                  <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium truncate">{fileName}</p>
+                                    <p className="text-xs text-gray-500 uppercase">{fileExtension}</p>
+                                  </div>
+                                </div>
+                                <div className="flex gap-1 flex-shrink-0">
+                                  {(isPDF || isImage) && (
+                                    <a 
+                                      href={url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="p-1 hover:bg-gray-200 rounded"
+                                      title="View"
+                                    >
+                                      <Eye className="w-4 h-4 text-gray-600" />
+                                    </a>
+                                  )}
+                                  <a 
+                                    href={url} 
+                                    download 
+                                    className="p-1 hover:bg-gray-200 rounded"
+                                    title="Download"
+                                  >
+                                    <Download className="w-4 h-4 text-gray-600" />
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <p className="text-sm text-red-700 mt-1">
-                      This claim has been flagged for potential fraud. Please review carefully.
-                    </p>
-                  </div>
-                )}
+                  )}
 
-                {selectedClaim.is_pmb && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-sm text-blue-800">
-                      <strong>PMB Claim:</strong> This is a Prescribed Minimum Benefit claim and must be covered according to regulations.
-                    </p>
-                  </div>
-                )}
+                  {/* Required Documents Checklist */}
+                  {selectedClaim.benefit_type && (() => {
+                    const claimConfig = getClaimFormConfig(selectedClaim.benefit_type);
+                    if (claimConfig && claimConfig.requiredDocuments.length > 0) {
+                      const uploadedCount = selectedClaim.document_urls?.length || 0;
+                      const requiredCount = claimConfig.requiredDocuments.length;
+                      
+                      return (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-3">
+                            Required Documents 
+                            <span className={`ml-2 text-sm ${uploadedCount >= requiredCount ? 'text-green-600' : 'text-orange-600'}`}>
+                              ({uploadedCount}/{requiredCount} uploaded)
+                            </span>
+                          </h3>
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <ul className="space-y-2">
+                              {claimConfig.requiredDocuments.map((doc, idx) => (
+                                <li key={idx} className="flex items-center gap-2 text-sm">
+                                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                                    idx < uploadedCount ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-400'
+                                  }`}>
+                                    {idx < uploadedCount ? '✓' : '○'}
+                                  </div>
+                                  <span className="capitalize">{doc.replace(/_/g, ' ')}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
 
-                <div className="flex gap-2 pt-4">
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleAction(selectedClaim.id, 'approved', 'approved')}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    Approve
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => handleAction(selectedClaim.id, 'pended', 'pended')}
-                  >
-                    Pend for Info
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-red-600 hover:text-red-700"
-                    onClick={() => handleAction(selectedClaim.id, 'rejected', 'rejected')}
-                  >
-                    Reject
-                  </Button>
+                  {/* Alerts */}
+                  {selectedClaim.fraud_alert_triggered && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-red-800">
+                        <AlertTriangle className="w-5 h-5" />
+                        <p className="font-medium">Fraud Alert Triggered</p>
+                      </div>
+                      <p className="text-sm text-red-700 mt-1">
+                        This claim has been flagged for potential fraud. Please review carefully.
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedClaim.is_pmb && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-sm text-blue-800">
+                        <strong>PMB Claim:</strong> This is a Prescribed Minimum Benefit claim and must be covered according to regulations.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Adjudication Panel */}
+                  <ClaimAdjudicationPanel
+                    claim={{
+                      ...selectedClaim,
+                      member: selectedClaim.member || { plan_id: undefined },
+                      provider: selectedClaim.provider || { provider_tier: undefined }
+                    }}
+                    onAction={handleAdjudication}
+                    onClose={() => setShowDetails(false)}
+                  />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </SidebarLayout>

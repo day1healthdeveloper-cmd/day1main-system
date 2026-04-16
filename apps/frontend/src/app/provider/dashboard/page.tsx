@@ -203,7 +203,7 @@ export default function ProviderDashboardPage() {
                         </div>
                       </div>
                     </div>
-                    <Button size="sm">Review</Button>
+                    <Button size="sm" onClick={() => router.push('/provider/preauth')}>Review</Button>
                   </div>
                 ))}
               </div>

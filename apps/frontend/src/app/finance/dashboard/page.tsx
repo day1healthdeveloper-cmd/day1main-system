@@ -149,7 +149,10 @@ export default function FinanceDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <button className="p-4 border rounded-lg hover:bg-cyan-50 hover:border-cyan-300 transition-colors text-left group">
+              <button 
+                className="p-4 border rounded-lg hover:bg-cyan-50 hover:border-cyan-300 transition-colors text-left group"
+                onClick={() => router.push('/finance/ledger')}
+              >
                 <div className="w-10 h-10 bg-cyan-100 group-hover:bg-cyan-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <FileText className="w-5 h-5 text-cyan-600" />
                 </div>
@@ -157,7 +160,10 @@ export default function FinanceDashboardPage() {
                 <p className="text-xs text-gray-500">General ledger</p>
               </button>
 
-              <button className="p-4 border rounded-lg hover:bg-cyan-50 hover:border-cyan-300 transition-colors text-left group">
+              <button 
+                className="p-4 border rounded-lg hover:bg-cyan-50 hover:border-cyan-300 transition-colors text-left group"
+                onClick={() => router.push('/finance/reconciliation')}
+              >
                 <div className="w-10 h-10 bg-cyan-100 group-hover:bg-cyan-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <DollarSign className="w-5 h-5 text-cyan-600" />
                 </div>
@@ -165,7 +171,10 @@ export default function FinanceDashboardPage() {
                 <p className="text-xs text-gray-500">Bank reconciliation</p>
               </button>
 
-              <button className="p-4 border rounded-lg hover:bg-cyan-50 hover:border-cyan-300 transition-colors text-left group">
+              <button 
+                className="p-4 border rounded-lg hover:bg-cyan-50 hover:border-cyan-300 transition-colors text-left group"
+                onClick={() => router.push('/finance/payment-batches')}
+              >
                 <div className="w-10 h-10 bg-cyan-100 group-hover:bg-cyan-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <CreditCard className="w-5 h-5 text-cyan-600" />
                 </div>
@@ -173,7 +182,10 @@ export default function FinanceDashboardPage() {
                 <p className="text-xs text-gray-500">Process payments</p>
               </button>
 
-              <button className="p-4 border rounded-lg hover:bg-cyan-50 hover:border-cyan-300 transition-colors text-left group">
+              <button 
+                className="p-4 border rounded-lg hover:bg-cyan-50 hover:border-cyan-300 transition-colors text-left group"
+                onClick={() => router.push('/finance/reports')}
+              >
                 <div className="w-10 h-10 bg-cyan-100 group-hover:bg-cyan-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <FileText className="w-5 h-5 text-cyan-600" />
                 </div>

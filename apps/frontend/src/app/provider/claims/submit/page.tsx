@@ -7,48 +7,81 @@ import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-interface ClaimLine {
-  id: string;
-  diagnosisCode: string;
-  procedureCode: string;
-  tariffCode: string;
-  quantity: number;
-  unitPrice: number;
-  totalAmount: number;
-}
+import { getAllClaimTypes, getClaimFormConfig, type ClaimFormConfig, type ClaimFormField } from '@/lib/claim-form-config';
+import { uploadClaimDocuments, generateTempClaimNumber } from '@/lib/storage';
+import { useBenefitValidation } from '@/hooks/useBenefitValidation';
+import { BenefitValidationDisplay } from '@/components/claims/benefit-validation-display';
 
 export default function ClaimSubmissionPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [claimNumber, setClaimNumber] = useState('');
+  const [uploadProgress, setUploadProgress] = useState<string>('');
+
+  // Benefit validation
+  const { validateBenefit, validating, validationResult, clearValidation } = useBenefitValidation();
+  const [showValidation, setShowValidation] = useState(false);
+
+  // Claim type selection
+  const [selectedBenefitType, setSelectedBenefitType] = useState('doctor_visits');
+  const [claimConfig, setClaimConfig] = useState<ClaimFormConfig | null>(null);
+  const availableClaimTypes = getAllClaimTypes();
 
   // Patient Information
   const [memberNumber, setMemberNumber] = useState('');
   const [patientName, setPatientName] = useState('');
   const [idNumber, setIdNumber] = useState('');
 
-  // Claim Information
-  const [serviceDate, setServiceDate] = useState('');
-  const [claimType, setClaimType] = useState('consultation');
-  const [referenceNumber, setReferenceNumber] = useState('');
-
-  // Claim Lines
-  const [claimLines, setClaimLines] = useState<ClaimLine[]>([
-    {
-      id: '1',
-      diagnosisCode: '',
-      procedureCode: '',
-      tariffCode: '',
-      quantity: 1,
-      unitPrice: 0,
-      totalAmount: 0,
-    },
-  ]);
+  // Dynamic form data based on selected claim type
+  const [formData, setFormData] = useState<Record<string, any>>({});
 
   // Documents
   const [documents, setDocuments] = useState<File[]>([]);
+
+  // Update claim config when benefit type changes
+  useEffect(() => {
+    const config = getClaimFormConfig(selectedBenefitType);
+    setClaimConfig(config);
+    // Reset form data with default values
+    const initialData: Record<string, any> = {};
+    config?.fields.forEach(field => {
+      initialData[field.name] = field.type === 'number' ? 0 : '';
+    });
+    setFormData(initialData);
+    // Clear validation when benefit type changes
+    clearValidation();
+    setShowValidation(false);
+  }, [selectedBenefitType]);
+
+  // Update form field value
+  const updateFormField = (fieldName: string, value: any) => {
+    setFormData(prev => ({ ...prev, [fieldName]: value }));
+    // Clear validation when form changes
+    if (showValidation) {
+      setShowValidation(false);
+      clearValidation();
+    }
+  };
+
+  // Validate benefit eligibility
+  const handleValidateBenefit = async () => {
+    if (!memberNumber) {
+      alert('Please enter a member number first');
+      return;
+    }
+
+    const result = await validateBenefit({
+      memberNumber,
+      benefitType: selectedBenefitType,
+      claimedAmount: calculateTotal()
+    });
+
+    if (result) {
+      setShowValidation(true);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -68,42 +101,86 @@ export default function ClaimSubmissionPage() {
     return null;
   }
 
-  const addClaimLine = () => {
-    const newLine: ClaimLine = {
-      id: Date.now().toString(),
-      diagnosisCode: '',
-      procedureCode: '',
-      tariffCode: '',
-      quantity: 1,
-      unitPrice: 0,
-      totalAmount: 0,
-    };
-    setClaimLines([...claimLines, newLine]);
-  };
+  // Render form field based on config
+  const renderFormField = (field: ClaimFormField) => {
+    const value = formData[field.name] || '';
 
-  const removeClaimLine = (id: string) => {
-    if (claimLines.length > 1) {
-      setClaimLines(claimLines.filter((line) => line.id !== id));
+    switch (field.type) {
+      case 'select':
+        return (
+          <select
+            id={field.name}
+            value={value}
+            onChange={(e) => updateFormField(field.name, e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            required={field.required}
+          >
+            <option value="">Select {field.label}</option>
+            {field.options?.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        );
+      
+      case 'textarea':
+        return (
+          <textarea
+            id={field.name}
+            value={value}
+            onChange={(e) => updateFormField(field.name, e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            rows={3}
+            required={field.required}
+            placeholder={field.label}
+          />
+        );
+      
+      case 'number':
+        return (
+          <Input
+            id={field.name}
+            type="number"
+            value={value}
+            onChange={(e) => updateFormField(field.name, parseFloat(e.target.value) || 0)}
+            required={field.required}
+            min={field.validation?.min}
+            max={field.validation?.max}
+            step="0.01"
+          />
+        );
+      
+      case 'date':
+        return (
+          <Input
+            id={field.name}
+            type="date"
+            value={value}
+            onChange={(e) => updateFormField(field.name, e.target.value)}
+            required={field.required}
+            max={new Date().toISOString().split('T')[0]}
+          />
+        );
+      
+      default:
+        return (
+          <Input
+            id={field.name}
+            type="text"
+            value={value}
+            onChange={(e) => updateFormField(field.name, e.target.value)}
+            required={field.required}
+            placeholder={field.label}
+            pattern={field.validation?.pattern}
+          />
+        );
     }
   };
 
-  const updateClaimLine = (id: string, field: keyof ClaimLine, value: any) => {
-    setClaimLines(
-      claimLines.map((line) => {
-        if (line.id === id) {
-          const updated = { ...line, [field]: value };
-          if (field === 'quantity' || field === 'unitPrice') {
-            updated.totalAmount = updated.quantity * updated.unitPrice;
-          }
-          return updated;
-        }
-        return line;
-      })
-    );
-  };
-
   const calculateTotal = () => {
-    return claimLines.reduce((sum, line) => sum + line.totalAmount, 0);
+    // Get claimed amount from form data
+    return parseFloat(formData.claimedAmount || 0);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,9 +195,59 @@ export default function ClaimSubmissionPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check if benefit validation has been performed
+    if (!showValidation || !validationResult) {
+      const shouldContinue = window.confirm(
+        'You have not checked benefit eligibility. Do you want to continue without validation?'
+      );
+      if (!shouldContinue) return;
+    }
+
+    // Warn if validation shows issues
+    if (validationResult && !validationResult.valid) {
+      const shouldContinue = window.confirm(
+        `Warning: ${validationResult.error || 'Benefit validation failed'}. Do you want to submit anyway?`
+      );
+      if (!shouldContinue) return;
+    }
+
+    // Warn if there are validation warnings
+    if (validationResult?.warnings && validationResult.warnings.length > 0) {
+      const warningMessages = validationResult.warnings.map(w => w.message).join('\n');
+      const shouldContinue = window.confirm(
+        `Warning:\n${warningMessages}\n\nDo you want to submit anyway?`
+      );
+      if (!shouldContinue) return;
+    }
+
     setIsSubmitting(true);
+    setUploadProgress('');
 
     try {
+      // Upload documents first if any
+      let documentUrls: string[] = [];
+      
+      if (documents.length > 0) {
+        setUploadProgress(`Uploading ${documents.length} document(s)...`);
+        
+        // Generate temporary claim number for uploads
+        const tempClaimNumber = generateTempClaimNumber();
+        
+        try {
+          documentUrls = await uploadClaimDocuments(documents, tempClaimNumber);
+          setUploadProgress(`Documents uploaded successfully`);
+        } catch (uploadError) {
+          console.error('Document upload error:', uploadError);
+          alert('Failed to upload documents. Please try again.');
+          setIsSubmitting(false);
+          setUploadProgress('');
+          return;
+        }
+      }
+
+      setUploadProgress('Submitting claim...');
+
       const response = await fetch('/api/provider/claims/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -129,10 +256,11 @@ export default function ClaimSubmissionPage() {
           memberNumber,
           patientName,
           idNumber,
-          serviceDate,
-          claimType,
-          claimLines,
-          totalAmount: calculateTotal()
+          benefitType: selectedBenefitType,
+          claimType: claimConfig?.displayName,
+          formData,
+          totalAmount: calculateTotal(),
+          documentUrls
         })
       });
 
@@ -141,11 +269,14 @@ export default function ClaimSubmissionPage() {
       if (!response.ok) {
         alert(data.error || 'Failed to submit claim');
         setIsSubmitting(false);
+        setUploadProgress('');
         return;
       }
 
+      setClaimNumber(data.claimNumber);
       setIsSubmitting(false);
       setShowSuccess(true);
+      setUploadProgress('');
       
       // Reset form after 3 seconds
       setTimeout(() => {
@@ -156,6 +287,7 @@ export default function ClaimSubmissionPage() {
       console.error('Error submitting claim:', error);
       alert('Failed to submit claim. Please try again.');
       setIsSubmitting(false);
+      setUploadProgress('');
     }
   };
 
@@ -191,7 +323,7 @@ export default function ClaimSubmissionPage() {
                 <div>
                   <p className="font-medium text-green-900">Claim Submitted Successfully!</p>
                   <p className="text-sm text-green-700">
-                    Claim number: CLM-20240111-{Math.floor(Math.random() * 10000).toString().padStart(6, '0')}
+                    Claim number: {claimNumber}
                   </p>
                 </div>
               </div>
@@ -214,7 +346,7 @@ export default function ClaimSubmissionPage() {
                   </label>
                   <Input
                     id="memberNumber"
-                    placeholder="M-2024-5678"
+                    placeholder="DAY1XXXXXXX"
                     value={memberNumber}
                     onChange={(e) => setMemberNumber(e.target.value)}
                     required
@@ -248,188 +380,142 @@ export default function ClaimSubmissionPage() {
             </CardContent>
           </Card>
 
-          {/* Claim Information */}
+          {/* Claim Type Selection */}
           <Card>
             <CardHeader>
-              <CardTitle>Claim Information</CardTitle>
-              <CardDescription>Service details and claim type</CardDescription>
+              <CardTitle>Claim Type</CardTitle>
+              <CardDescription>Select the type of service provided</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="serviceDate" className="text-sm font-medium">
-                    Service Date <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    id="serviceDate"
-                    type="date"
-                    value={serviceDate}
-                    onChange={(e) => setServiceDate(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="claimType" className="text-sm font-medium">
-                    Claim Type <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="claimType"
-                    value={claimType}
-                    onChange={(e) => setClaimType(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  >
-                    <option value="consultation">Consultation</option>
-                    <option value="procedure">Procedure</option>
-                    <option value="hospitalization">Hospitalization</option>
-                    <option value="pathology">Pathology</option>
-                    <option value="radiology">Radiology</option>
-                    <option value="pharmacy">Pharmacy</option>
-                    <option value="dental">Dental</option>
-                    <option value="optical">Optical</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="referenceNumber" className="text-sm font-medium">
-                    Reference Number
-                  </label>
-                  <Input
-                    id="referenceNumber"
-                    placeholder="Optional internal reference"
-                    value={referenceNumber}
-                    onChange={(e) => setReferenceNumber(e.target.value)}
-                  />
-                </div>
+              <div className="space-y-2">
+                <label htmlFor="claimType" className="text-sm font-medium">
+                  Claim Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="claimType"
+                  value={selectedBenefitType}
+                  onChange={(e) => setSelectedBenefitType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                >
+                  {availableClaimTypes.map((type) => (
+                    <option key={type.benefitType} value={type.benefitType}>
+                      {type.displayName}
+                    </option>
+                  ))}
+                </select>
+                {claimConfig && (
+                  <p className="text-sm text-gray-600 mt-2">{claimConfig.description}</p>
+                )}
+                {claimConfig?.preAuthRequired && (
+                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <div>
+                        <p className="text-sm font-medium text-yellow-900">Pre-Authorization Required</p>
+                        <p className="text-sm text-yellow-700">This claim type requires pre-authorization before submission.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Claim Lines */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Claim Lines</CardTitle>
-                  <CardDescription>Add diagnosis, procedures, and charges</CardDescription>
+          {/* Dynamic Claim Form Fields */}
+          {claimConfig && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Claim Details</CardTitle>
+                    <CardDescription>Enter service details for {claimConfig.displayName}</CardDescription>
+                  </div>
+                  {memberNumber && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleValidateBenefit}
+                      disabled={validating || !memberNumber}
+                    >
+                      {validating ? 'Validating...' : 'Check Eligibility'}
+                    </Button>
+                  )}
                 </div>
-                <Button type="button" variant="outline" onClick={addClaimLine}>
-                  + Add Line
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {claimLines.map((line, index) => (
-                  <div key={line.id} className="p-4 border rounded-lg space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Line {index + 1}</h4>
-                      {claimLines.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeClaimLine(line.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          Remove
-                        </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {claimConfig.fields.map((field) => (
+                    <div key={field.name} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
+                      <label htmlFor={field.name} className="text-sm font-medium block mb-2">
+                        {field.label} {field.required && <span className="text-red-500">*</span>}
+                      </label>
+                      {renderFormField(field)}
+                      {field.validation?.message && (
+                        <p className="text-xs text-gray-500 mt-1">{field.validation.message}</p>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Diagnosis Code <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                          placeholder="ICD-10 (e.g., J00)"
-                          value={line.diagnosisCode}
-                          onChange={(e) =>
-                            updateClaimLine(line.id, 'diagnosisCode', e.target.value)
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Procedure Code <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                          placeholder="e.g., 0101"
-                          value={line.procedureCode}
-                          onChange={(e) =>
-                            updateClaimLine(line.id, 'procedureCode', e.target.value)
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Tariff Code <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                          placeholder="e.g., NHRPL"
-                          value={line.tariffCode}
-                          onChange={(e) =>
-                            updateClaimLine(line.id, 'tariffCode', e.target.value)
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Quantity <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={line.quantity}
-                          onChange={(e) =>
-                            updateClaimLine(line.id, 'quantity', parseInt(e.target.value) || 1)
-                          }
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Unit Price (R) <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={line.unitPrice}
-                          onChange={(e) =>
-                            updateClaimLine(line.id, 'unitPrice', parseFloat(e.target.value) || 0)
-                          }
-                          required
-                        />
-                      </div>
-                    </div>
+                  ))}
+                </div>
+
+                {/* Total Amount Display */}
+                {formData.claimedAmount > 0 && (
+                  <div className="mt-6 pt-6 border-t">
                     <div className="flex justify-end">
                       <div className="text-right">
-                        <p className="text-sm text-gray-600">Line Total</p>
-                        <p className="text-lg font-bold">R{line.totalAmount.toFixed(2)}</p>
+                        <p className="text-sm text-gray-600">Claim Total</p>
+                        <p className="text-2xl font-bold text-primary">
+                          R{parseFloat(formData.claimedAmount || 0).toFixed(2)}
+                        </p>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-              {/* Total */}
-              <div className="mt-6 pt-6 border-t">
-                <div className="flex justify-end">
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">Claim Total</p>
-                    <p className="text-2xl font-bold text-primary">
-                      R{calculateTotal().toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Benefit Validation Result */}
+          {showValidation && validationResult && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Benefit Eligibility Check</CardTitle>
+                <CardDescription>Validation result for {claimConfig?.displayName}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <BenefitValidationDisplay validation={validationResult} />
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Supporting Documents */}
+          {/* Required Documents Checklist */}
+          {claimConfig && claimConfig.requiredDocuments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Required Documents</CardTitle>
+                <CardDescription>
+                  Please ensure you have the following documents ready for upload
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {claimConfig.requiredDocuments.map((doc) => (
+                    <li key={doc} className="flex items-center gap-2">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-sm capitalize">{doc.replace(/_/g, ' ')}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Supporting Documents Upload */}
           <Card>
             <CardHeader>
               <CardTitle>Supporting Documents</CardTitle>
@@ -524,16 +610,28 @@ export default function ClaimSubmissionPage() {
           {/* Submit Button */}
           <div className="flex gap-3">
             <Button type="submit" disabled={isSubmitting} className="min-w-[200px]">
-              {isSubmitting ? 'Submitting...' : 'Submit Claim'}
+              {isSubmitting ? (uploadProgress || 'Submitting...') : 'Submit Claim'}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => router.push('/provider/dashboard')}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
           </div>
+
+          {/* Upload Progress */}
+          {uploadProgress && (
+            <div className="flex items-center gap-2 text-sm text-blue-600">
+              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>{uploadProgress}</span>
+            </div>
+          )}
         </form>
 
         {/* Information Card */}
@@ -548,8 +646,8 @@ export default function ClaimSubmissionPage() {
                 <ul className="list-disc list-inside space-y-1 ml-2 mt-1">
                   <li>Valid member number and patient details</li>
                   <li>Service date (must be within last 4 months)</li>
-                  <li>ICD-10 diagnosis codes</li>
-                  <li>Procedure and tariff codes</li>
+                  <li>ICD-10 diagnosis codes (where applicable)</li>
+                  <li>Procedure codes</li>
                   <li>Accurate pricing information</li>
                 </ul>
               </div>

@@ -1,60 +1,105 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-export async function GET() {
+// GET - Fetch member's claims
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
-    const userIdCookie = cookieStore.get('user-id');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { searchParams } = new URL(request.url);
     
-    if (!userIdCookie) {
+    // TODO: Get member_id from authenticated session
+    const memberId = searchParams.get('member_id');
+    const status = searchParams.get('status');
+    const dateFrom = searchParams.get('date_from');
+    const dateTo = searchParams.get('date_to');
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50;
+
+    if (!memberId) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
+        { error: 'Member ID required' },
+        { status: 400 }
       );
     }
 
-    const userId = userIdCookie.value;
-
-    // Get member ID
-    const { data: member } = await supabaseAdmin
-      .from('members')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    if (!member) {
-      return NextResponse.json(
-        { error: 'Member not found' },
-        { status: 404 }
-      );
-    }
-
-    // Fetch member's claims
-    const { data: claims, error } = await supabaseAdmin
+    // Build query
+    let query = supabase
       .from('claims')
-      .select('*')
-      .eq('member_id', member.id)
-      .order('submission_date', { ascending: false });
+      .select(`
+        id,
+        claim_number,
+        member_id,
+        provider_id,
+        benefit_type,
+        service_date,
+        submission_date,
+        claimed_amount,
+        approved_amount,
+        claim_status,
+        rejection_reason,
+        pend_reason,
+        approved_date,
+        paid_date,
+        payment_reference,
+        created_at,
+        providers (
+          practice_name,
+          provider_type
+        )
+      `)
+      .eq('member_id', memberId)
+      .order('submission_date', { ascending: false })
+      .limit(limit);
+
+    // Apply filters
+    if (status) {
+      query = query.eq('claim_status', status);
+    }
+
+    if (dateFrom) {
+      query = query.gte('service_date', dateFrom);
+    }
+
+    if (dateTo) {
+      query = query.lte('service_date', dateTo);
+    }
+
+    const { data: claims, error } = await query;
 
     if (error) {
       console.error('Error fetching claims:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch claims' },
-        { status: 500 }
-      );
+      throw error;
     }
 
-    return NextResponse.json(claims || []);
+    // Calculate statistics
+    const stats = {
+      total: claims?.length || 0,
+      submitted: claims?.filter(c => c.claim_status === 'submitted').length || 0,
+      pending: claims?.filter(c => c.claim_status === 'pending').length || 0,
+      approved: claims?.filter(c => c.claim_status === 'approved').length || 0,
+      paid: claims?.filter(c => c.claim_status === 'paid').length || 0,
+      rejected: claims?.filter(c => c.claim_status === 'rejected').length || 0,
+      pended: claims?.filter(c => c.claim_status === 'pended').length || 0,
+      total_claimed: claims?.reduce((sum, c) => sum + parseFloat(c.claimed_amount || '0'), 0) || 0,
+      total_approved: claims?.reduce((sum, c) => sum + parseFloat(c.approved_amount || '0'), 0) || 0,
+      total_paid: claims?.filter(c => c.claim_status === 'paid')
+        .reduce((sum, c) => sum + parseFloat(c.approved_amount || '0'), 0) || 0
+    };
+
+    return NextResponse.json({
+      claims: claims || [],
+      stats
+    });
+
   } catch (error) {
-    console.error('Error fetching claims:', error);
+    console.error('Error in member claims API:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch claims' },
+      { 
+        error: 'Failed to fetch claims',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

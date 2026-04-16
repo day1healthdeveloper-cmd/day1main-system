@@ -46,3 +46,12 @@ interface DialogTitleProps {
 export function DialogTitle({ children, className = '' }: DialogTitleProps) {
   return <h2 className={`font-semibold ${className}`}>{children}</h2>;
 }
+
+interface DialogDescriptionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function DialogDescription({ children, className = '' }: DialogDescriptionProps) {
+  return <p className={`text-sm text-gray-600 mt-1 ${className}`}>{children}</p>;
+}

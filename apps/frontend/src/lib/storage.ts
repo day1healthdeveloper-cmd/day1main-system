@@ -95,9 +95,55 @@ export async function uploadDocument(
 }
 
 /**
+ * Upload claim document (invoice, prescription, etc.)
+ * @param file - The file to upload
+ * @param claimNumber - The claim number for file naming (or temp ID)
+ * @param documentType - Type of document (invoice, prescription, etc.)
+ * @returns The public URL of the uploaded document
+ */
+export async function uploadClaimDocument(
+  file: File,
+  claimNumber: string,
+  documentType: string
+): Promise<string> {
+  const timestamp = Date.now()
+  const extension = file.name.split('.').pop() || 'pdf'
+  const sanitizedType = documentType.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+  const path = `claims/${claimNumber}/${sanitizedType}-${timestamp}.${extension}`
+  
+  return uploadToStorage(file, path)
+}
+
+/**
+ * Upload multiple claim documents
+ * @param files - Array of files to upload
+ * @param claimNumber - The claim number for file naming (or temp ID)
+ * @returns Array of public URLs of uploaded documents
+ */
+export async function uploadClaimDocuments(
+  files: File[],
+  claimNumber: string
+): Promise<string[]> {
+  const uploadPromises = files.map((file, index) => {
+    const documentType = `document_${index + 1}`
+    return uploadClaimDocument(file, claimNumber, documentType)
+  })
+  
+  return Promise.all(uploadPromises)
+}
+
+/**
  * Generate a temporary application number for uploads before submission
  * @returns A temporary application number
  */
 export function generateTempApplicationNumber(): string {
   return `TEMP-${Date.now()}`
+}
+
+/**
+ * Generate a temporary claim number for uploads before submission
+ * @returns A temporary claim number
+ */
+export function generateTempClaimNumber(): string {
+  return `CLM-TEMP-${Date.now()}`
 }

@@ -1,95 +1,70 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DollarSign } from 'lucide-react';
 
 export default function FinanceReconciliationPage() {
-  const reconciliations = [
-    { id: 'REC-001', account: 'Standard Bank - Current', period: 'Jan 2026', difference: 'R 1,500', status: 'pending' },
-    { id: 'REC-002', account: 'FNB - Savings', period: 'Jan 2026', difference: 'R 0', status: 'reconciled' },
-    { id: 'REC-003', account: 'Nedbank - Investment', period: 'Dec 2025', difference: 'R 0', status: 'reconciled' },
-  ];
+  const router = useRouter();
+  const { loading, isAuthenticated } = useAuth();
 
-  const stats = {
-    totalAccounts: 12,
-    reconciled: 8,
-    pending: 3,
-  };
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [loading, isAuthenticated, router]);
+
+  if (loading) {
+    return (
+      <SidebarLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </SidebarLayout>
+    );
+  }
+
+  if (!isAuthenticated) return null;
 
   return (
     <SidebarLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reconciliation</h1>
-          <p className="text-gray-600 mt-1">Bank reconciliation status</p>
+          <h1 className="text-3xl font-bold text-gray-900">Bank Reconciliation</h1>
+          <p className="text-gray-600 mt-1">Reconcile bank statements with ledger accounts</p>
         </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">Total Accounts</p>
-                <p className="text-3xl font-bold mt-1">{stats.totalAccounts}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">Reconciled</p>
-                <p className="text-3xl font-bold mt-1 text-green-600">{stats.reconciled}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">Pending</p>
-                <p className="text-3xl font-bold mt-1 text-yellow-600">{stats.pending}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Reconciliations Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Bank Reconciliations</CardTitle>
+            <CardTitle>Bank Reconciliation System</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 font-medium">ID</th>
-                    <th className="text-left py-3 px-4 font-medium">Account</th>
-                    <th className="text-left py-3 px-4 font-medium">Period</th>
-                    <th className="text-right py-3 px-4 font-medium">Difference</th>
-                    <th className="text-left py-3 px-4 font-medium">Status</th>
-                    <th className="text-left py-3 px-4 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reconciliations.map((rec) => (
-                    <tr key={rec.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">{rec.id}</td>
-                      <td className="py-3 px-4">{rec.account}</td>
-                      <td className="py-3 px-4">{rec.period}</td>
-                      <td className="py-3 px-4 text-right font-mono">{rec.difference}</td>
-                      <td className="py-3 px-4">
-                        <span className={`text-xs px-2 py-1 rounded ${rec.status === 'reconciled' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {rec.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Button variant="outline" size="sm">View</Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="text-center py-12">
+              <DollarSign className="w-16 h-16 mx-auto mb-4 text-cyan-600 opacity-50" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Coming Soon</h3>
+              <p className="text-gray-600 mb-6">
+                The bank reconciliation system is currently under development.
+              </p>
+              <div className="max-w-md mx-auto text-left space-y-2">
+                <p className="text-sm text-gray-600">✓ Import bank statements</p>
+                <p className="text-sm text-gray-600">✓ Match transactions automatically</p>
+                <p className="text-sm text-gray-600">✓ Identify discrepancies</p>
+                <p className="text-sm text-gray-600">✓ Generate reconciliation reports</p>
+              </div>
+              <Button 
+                variant="outline" 
+                className="mt-6"
+                onClick={() => router.push('/finance/dashboard')}
+              >
+                Back to Dashboard
+              </Button>
             </div>
           </CardContent>
         </Card>

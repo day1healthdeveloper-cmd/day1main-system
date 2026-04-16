@@ -24,6 +24,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [newApplicationsCount, setNewApplicationsCount] = useState(0);
+  const [verifiedUpgradesCount, setVerifiedUpgradesCount] = useState(0);
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, logout } = useAuth();
@@ -45,15 +46,38 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       const userRoles = user?.roles || [];
       const isAdmin = userRoles.includes('system_admin');
       const isCallCentre = userRoles.includes('call_centre_agent');
+      const isOperationsManager = userRoles.includes('operations_manager');
       
       if (isAdmin || isCallCentre) {
         try {
-          const response = await fetch('/api/admin/applications');
-          const data = await response.json();
-          const submittedCount = data.applications?.filter((app: any) => app.status === 'submitted' || app.status === 'under_review').length || 0;
-          setNewApplicationsCount(submittedCount);
+          // Fetch applications count
+          const appResponse = await fetch('/api/admin/applications');
+          const appData = await appResponse.json();
+          const submittedCount = appData.applications?.filter((app: any) => app.status === 'submitted' || app.status === 'under_review').length || 0;
+          
+          // Fetch upgrade requests count
+          const upgradeResponse = await fetch('/api/plus1/upgrade-requests?status=pending');
+          const upgradeData = await upgradeResponse.json();
+          const upgradeCount = upgradeData.stats?.pending || 0;
+          
+          // Combine both counts
+          setNewApplicationsCount(submittedCount + upgradeCount);
         } catch (error) {
           console.error('Failed to fetch applications count:', error);
+        }
+      }
+
+      // Fetch verified upgrades count for operations manager
+      if (isOperationsManager) {
+        try {
+          const upgradeResponse = await fetch('/api/plus1/upgrade-requests');
+          const upgradeData = await upgradeResponse.json();
+          // Count both pending and verified requests
+          const pendingCount = upgradeData.stats?.pending || 0;
+          const verifiedCount = upgradeData.stats?.verified || 0;
+          setVerifiedUpgradesCount(pendingCount + verifiedCount);
+        } catch (error) {
+          console.error('Failed to fetch verified upgrades count:', error);
         }
       }
     };
@@ -217,16 +241,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           ),
         },
         {
-          name: 'KYC',
-          href: '/admin/kyc',
-          glowColor: '#84cc16', // Lime
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-          ),
-        },
-        {
           name: 'Roles',
           href: '/admin/roles',
           glowColor: '#f97316', // Orange
@@ -336,6 +350,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Call Centre',
           href: '/operations/call-centre',
+          badge: verifiedUpgradesCount,
           glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

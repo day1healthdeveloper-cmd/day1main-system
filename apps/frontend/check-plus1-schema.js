@@ -1,39 +1,56 @@
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config({ path: '.env.local' });
 
-const plus1Supabase = createClient(
+const supabase = createClient(
   process.env.PLUS1_SUPABASE_URL,
-  process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    }
-  }
+  process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY
 );
 
-async function checkPlus1Schema() {
-  console.log('🔍 Checking Plus1Rewards members table schema...\n');
-  
-  // Get one member to see all columns
-  const { data, error } = await plus1Supabase
-    .from('members')
-    .select('*')
-    .limit(1);
-  
-  if (error) {
-    console.error('❌ Error:', error);
-    return;
+(async () => {
+  try {
+    // Get one record to see all columns
+    const { data, error } = await supabase
+      .from('members')
+      .select('*')
+      .limit(1);
+    
+    if (error) {
+      console.log('❌ Error:', error.message);
+      return;
+    }
+    
+    if (data && data.length > 0) {
+      console.log('✅ Plus1 Members Table Columns:\n');
+      const columns = Object.keys(data[0]);
+      columns.forEach(col => {
+        const value = data[0][col];
+        const type = value === null ? 'null' : typeof value;
+        console.log(`  ${col}: ${type}`);
+      });
+      
+      // Check specifically for PIN and cell phone
+      console.log('\n🔍 Authentication Fields:');
+      if (columns.includes('pin')) {
+        console.log('  ✅ PIN field exists');
+      } else {
+        console.log('  ❌ PIN field NOT found');
+      }
+      
+      if (columns.includes('cell_phone')) {
+        console.log('  ✅ cell_phone field exists');
+      } else {
+        console.log('  ❌ cell_phone field NOT found');
+      }
+      
+      // Show sample data (masked)
+      console.log('\n📋 Sample Record (masked):');
+      console.log('  cell_phone:', data[0].cell_phone ? '***' + data[0].cell_phone.slice(-4) : 'null');
+      console.log('  pin:', data[0].pin ? '****' : 'null');
+      
+    } else {
+      console.log('⚠️ No data found in Plus1 members table');
+    }
+  } catch (err) {
+    console.error('❌ Script error:', err.message);
   }
-  
-  if (data && data.length > 0) {
-    console.log('✅ Columns in Plus1 members table:');
-    Object.keys(data[0]).forEach(col => {
-      console.log(`  - ${col}: ${typeof data[0][col]} (${data[0][col] === null ? 'NULL' : 'has value'})`);
-    });
-  } else {
-    console.log('❌ No members found in Plus1 database');
-  }
-}
-
-checkPlus1Schema();
+})();

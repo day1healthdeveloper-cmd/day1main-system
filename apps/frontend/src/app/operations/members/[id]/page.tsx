@@ -26,7 +26,6 @@ interface Member {
   paymentMethod: string;
   monthlyPremium: number;
   joinDate: string;
-  kycStatus: 'pending' | 'verified' | 'failed';
   riskScore: number;
   addressLine1?: string;
   city?: string;
@@ -116,19 +115,6 @@ export default function OperationsMemberDetailPage() {
     );
   };
 
-  const getKycBadge = (kycStatus: Member['kycStatus']) => {
-    const styles = {
-      verified: 'bg-green-100 text-green-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      failed: 'bg-red-100 text-red-800',
-    };
-    return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${styles[kycStatus]}`}>
-        {kycStatus.charAt(0).toUpperCase() + kycStatus.slice(1)}
-      </span>
-    );
-  };
-
   if (loading) {
     return (
       <SidebarLayout>
@@ -178,20 +164,12 @@ export default function OperationsMemberDetailPage() {
         </div>
 
         {/* Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-sm text-gray-600">Status</p>
                 <div className="mt-2">{getStatusBadge(member.status)}</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">KYC Status</p>
-                <div className="mt-2">{getKycBadge(member.kycStatus)}</div>
               </div>
             </CardContent>
           </Card>

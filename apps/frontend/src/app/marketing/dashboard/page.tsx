@@ -341,7 +341,10 @@ export default function MarketingDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <button className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-left group">
+              <button 
+                className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-left group"
+                onClick={() => router.push('/marketing/leads')}
+              >
                 <div className="w-10 h-10 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <UserPlus className="w-5 h-5 text-purple-600" />
                 </div>
@@ -349,7 +352,10 @@ export default function MarketingDashboardPage() {
                 <p className="text-xs text-gray-500">Add new lead</p>
               </button>
 
-              <button className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-left group">
+              <button 
+                className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-left group"
+                onClick={() => router.push('/marketing/campaigns/new')}
+              >
                 <div className="w-10 h-10 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <Megaphone className="w-5 h-5 text-purple-600" />
                 </div>
@@ -357,7 +363,10 @@ export default function MarketingDashboardPage() {
                 <p className="text-xs text-gray-500">Create campaign</p>
               </button>
 
-              <button className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-left group">
+              <button 
+                className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-left group"
+                onClick={() => router.push('/marketing/analytics')}
+              >
                 <div className="w-10 h-10 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <BarChart3 className="w-5 h-5 text-purple-600" />
                 </div>
@@ -365,7 +374,10 @@ export default function MarketingDashboardPage() {
                 <p className="text-xs text-gray-500">Performance metrics</p>
               </button>
 
-              <button className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-left group">
+              <button 
+                className="p-4 border rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors text-left group"
+                onClick={() => router.push('/marketing/referrals')}
+              >
                 <div className="w-10 h-10 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <UserPlus className="w-5 h-5 text-purple-600" />
                 </div>
@@ -386,7 +398,10 @@ export default function MarketingDashboardPage() {
                   <Users className="w-5 h-5" />
                   Recent Leads
                 </CardTitle>
-                <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                <button 
+                  className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                  onClick={() => router.push('/marketing/leads')}
+                >
                   View All →
                 </button>
               </div>
@@ -436,7 +451,10 @@ export default function MarketingDashboardPage() {
                   <Megaphone className="w-5 h-5" />
                   Active Campaigns
                 </CardTitle>
-                <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                <button 
+                  className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                  onClick={() => router.push('/marketing/campaigns')}
+                >
                   View All →
                 </button>
               </div>
@@ -501,7 +519,6 @@ export default function MarketingDashboardPage() {
                   { step: 'Landing Page Visits', count: 5420, percentage: 100 },
                   { step: 'Lead Capture', count: 1628, percentage: 30 },
                   { step: 'Application Started', count: 814, percentage: 15 },
-                  { step: 'KYC Completed', count: 651, percentage: 12 },
                   { step: 'Plan Selected', count: 570, percentage: 10.5 },
                   { step: 'Payment Setup', count: 489, percentage: 9 },
                   { step: 'Policy Activated', count: 434, percentage: 8 },

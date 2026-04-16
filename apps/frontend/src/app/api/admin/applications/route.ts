@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { generateNextMemberNumber } from '@/lib/generate-member-number'
+import { mapPlus1PlanToProduct } from '@/lib/plus1-plan-mapper'
 
 export const dynamic = 'force-dynamic'
 
@@ -135,13 +136,48 @@ export async function PATCH(request: NextRequest) {
         brokerCode = broker?.code || null
       }
 
-      // Update Plus1Rewards BEFORE creating member - if this fails, no member is created
+      // Fetch Plus1 member data and update status BEFORE creating member - if this fails, no member is created
+      let plus1PinCode = null
+      let plus1PlanName = null
       if (brokerCode === 'POR') {
-        console.log('✅ Plus1 member detected - updating Plus1Rewards status to active')
+        console.log('✅ Plus1 member detected - fetching PIN, plan name, and updating Plus1Rewards status to active')
         try {
-          console.log(`🔄 Updating Plus1 status for mobile: ${application.mobile}`)
+          console.log(`🔄 Fetching Plus1 member data for mobile: ${application.mobile}`)
 
-          // Use direct REST API to completely bypass Supabase client and RLS
+          // First, fetch the Plus1 member to get their PIN and plan name
+          const fetchResponse = await fetch(
+            `${process.env.PLUS1_SUPABASE_URL}/rest/v1/members?cell_phone=eq.${encodeURIComponent(application.mobile)}&select=pin_code,cover_plan_name`,
+            {
+              method: 'GET',
+              headers: {
+                'apikey': process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY!,
+                'Authorization': `Bearer ${process.env.PLUS1_SUPABASE_SERVICE_ROLE_KEY!}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          )
+
+          if (!fetchResponse.ok) {
+            const errorText = await fetchResponse.text()
+            console.error('❌ Failed to fetch Plus1 member:', errorText)
+            throw new Error(`Plus1 fetch failed: ${errorText}`)
+          }
+
+          const fetchData = await fetchResponse.json()
+          
+          if (!fetchData || fetchData.length === 0) {
+            console.error('❌ Plus1 member not found with mobile:', application.mobile)
+            throw new Error(`Plus1 member not found with mobile: ${application.mobile}`)
+          }
+
+          // Store the PIN and plan name for later use
+          plus1PinCode = fetchData[0].pin_code
+          plus1PlanName = fetchData[0].cover_plan_name
+          console.log(`✅ Plus1 PIN fetched for mobile: ${application.mobile}`)
+          console.log(`✅ Plus1 plan name: ${plus1PlanName}`)
+
+          // Now update the Plus1 status to active
+          console.log(`🔄 Updating Plus1 status to active for mobile: ${application.mobile}`)
           const updateResponse = await fetch(
             `${process.env.PLUS1_SUPABASE_URL}/rest/v1/members?cell_phone=eq.${encodeURIComponent(application.mobile)}`,
             {
@@ -163,13 +199,7 @@ export async function PATCH(request: NextRequest) {
           }
 
           const updateData = await updateResponse.json()
-          
-          if (!updateData || updateData.length === 0) {
-            console.error('❌ Plus1 member not found with mobile:', application.mobile)
-            throw new Error(`Plus1 member not found with mobile: ${application.mobile}`)
-          } else {
-            console.log('✅ Plus1 member status updated to active for mobile:', application.mobile, `(${updateData.length} row(s) updated)`)
-          }
+          console.log('✅ Plus1 member status updated to active for mobile:', application.mobile, `(${updateData.length} row(s) updated)`)
         } catch (plus1Error) {
           console.error('❌ CRITICAL: Error updating Plus1 status:', plus1Error)
           // FAIL the approval if Plus1 update fails for POR broker - NO MEMBER CREATED
@@ -180,6 +210,36 @@ export async function PATCH(request: NextRequest) {
       // Generate sequential DAY1 member number - ONLY AFTER Plus1 update succeeds
       const memberNumber = await generateNextMemberNumber()
       console.log(`✅ Generated member number: ${memberNumber}`)
+      
+      // For Plus1 members, map the Plus1 plan name to our product name and fetch product ID
+      let finalPlanName = application.plan_name
+      let finalPlanId = null
+      
+      if (brokerCode === 'POR' && plus1PlanName) {
+        try {
+          // Map Plus1 plan name to our product name
+          finalPlanName = mapPlus1PlanToProduct(plus1PlanName)
+          console.log(`✅ Mapped Plus1 plan "${plus1PlanName}" to product "${finalPlanName}"`)
+          
+          // Fetch the product ID from products table
+          const { data: product, error: productError } = await supabaseAdmin
+            .from('products')
+            .select('id')
+            .eq('name', finalPlanName)
+            .single()
+          
+          if (productError) {
+            console.error('❌ Failed to fetch product ID:', productError.message)
+          } else if (product) {
+            finalPlanId = product.id
+            console.log(`✅ Found product ID: ${finalPlanId}`)
+          }
+        } catch (mappingError) {
+          console.error('❌ Plan mapping error:', mappingError instanceof Error ? mappingError.message : 'Unknown error')
+          // Continue with application plan name if mapping fails
+          console.log(`⚠️  Using application plan name: ${application.plan_name}`)
+        }
+      }
       
       // Create member record - EXACT COPY of ALL application fields
       const { data: member, error: memberError } = await supabaseAdmin
@@ -240,8 +300,8 @@ export async function PATCH(request: NextRequest) {
           phone_consent: application.phone_consent,
           
           // Plan Information
-          plan_id: null, // Plan ID is UUID - set to null for now, plan_name is sufficient
-          plan_name: application.plan_name,
+          plan_id: finalPlanId, // Mapped from Plus1 plan name for POR members
+          plan_name: finalPlanName, // Use mapped plan name for Plus1 members
           monthly_premium: application.monthly_price,
           start_date: new Date().toISOString(),
           
@@ -251,6 +311,9 @@ export async function PATCH(request: NextRequest) {
           
           // Payment Method
           collection_method: application.collection_method || 'individual_debit_order',
+          
+          // PIN Authentication (synced from Plus1Rewards for POR members)
+          pin_code: plus1PinCode, // Will be null for non-Plus1 members
           
           // Underwriting & Review
           underwriting_status: application.underwriting_status,

@@ -9,7 +9,7 @@ export async function GET() {
     
     const { data: products, error } = await supabaseAdmin
       .from('products')
-      .select('id, name')
+      .select('*')
       .eq('status', 'published')
       .order('name')
 

@@ -57,9 +57,6 @@ export default function DashboardPage() {
     } else if (role === 'provider') {
       console.log('→ Redirecting to provider dashboard');
       router.push('/provider/dashboard');
-    } else if (role === 'member') {
-      console.log('→ Redirecting to member dashboard');
-      router.push('/member/dashboard');
     } else if (role === 'onboarding') {
       console.log('→ Redirecting to onboarding');
       router.push('/onboarding');

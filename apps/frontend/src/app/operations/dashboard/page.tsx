@@ -23,10 +23,22 @@ export default function OperationsDashboardPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [upgradeRequestsCount, setUpgradeRequestsCount] = useState(0);
 
   useEffect(() => {
     setMounted(true);
+    loadUpgradeRequests();
   }, []);
+
+  const loadUpgradeRequests = async () => {
+    try {
+      const response = await fetch('/api/plus1/upgrade-requests?status=pending');
+      const data = await response.json();
+      setUpgradeRequestsCount(data.stats?.pending || 0);
+    } catch (error) {
+      console.error('Error loading upgrade requests:', error);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -96,31 +108,6 @@ export default function OperationsDashboardPage() {
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <CreditCard className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </div>
-
-          <div 
-            className="relative overflow-hidden rounded-lg border border-r-0 bg-gradient-to-t from-background to-muted transition-all duration-200 hover:shadow-lg group cursor-pointer"
-            style={{
-              "--glow-color": "rgba(234, 179, 8, 1)",
-              "--glow-color-via": "rgba(234, 179, 8, 0.075)",
-              "--glow-color-to": "rgba(234, 179, 8, 0.2)",
-            } as React.CSSProperties}
-            onClick={() => router.push('/operations/call-centre')}
-          >
-            <div className="absolute inset-0 rounded-[inherit] bg-gradient-to-r from-transparent from-40% via-[var(--glow-color-via)] to-[var(--glow-color-to)] via-70% z-10 pointer-events-none"></div>
-            <div className="absolute w-[5px] h-[60%] bg-[var(--glow-color)] right-0 top-1/2 -translate-y-1/2 rounded-l shadow-[-2px_0_10px_var(--glow-color)] group-hover:translate-x-full transition-all duration-200 z-20"></div>
-            <CardContent className="pt-6 relative z-30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Call Centre Queue</p>
-                  <p className="text-3xl font-bold mt-1 text-yellow-600">0</p>
-                  <p className="text-xs text-gray-600 mt-1">Waiting calls</p>
-                </div>
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <Phone className="w-6 h-6 text-yellow-600" />
                 </div>
               </div>
             </CardContent>

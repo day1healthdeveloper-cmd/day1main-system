@@ -128,14 +128,49 @@ export async function POST(request: Request) {
     // Determine eligibility
     const eligible = isActive && isPolicyActive && isWithinDateRange;
 
-    // Default benefits (will be replaced with real data if available)
-    let benefits: any = {
-      gp_visits: { limit: 'Unlimited', used: 0, remaining: 'Unlimited' },
-      specialist_visits: { limit: 5, used: 0, remaining: 5 },
-      dental: { limit: 2000, used: 0, remaining: 2000 },
-      optical: { limit: 1000, used: 0, remaining: 1000 },
-      hospital: { limit: 'R500,000', used: 0, remaining: 'R500,000' },
-    };
+    // Get real benefit usage data
+    const currentYear = new Date().getFullYear();
+    
+    // Initialize benefits for this member if not exists
+    if (member.plan_id) {
+      await supabase.rpc('initialize_member_benefits', {
+        p_member_id: member.id,
+        p_year: currentYear
+      });
+    }
+    
+    // Fetch benefit usage
+    const { data: benefitUsage } = await supabase
+      .from('benefit_usage')
+      .select('*')
+      .eq('member_id', member.id)
+      .eq('year', currentYear);
+    
+    // Transform to benefits object
+    let benefits: any = {};
+    
+    if (benefitUsage && benefitUsage.length > 0) {
+      benefitUsage.forEach((usage: any) => {
+        benefits[usage.benefit_type] = {
+          limit: usage.total_limit_count || usage.total_limit_amount || 'Unlimited',
+          used: usage.used_count || usage.used_amount || 0,
+          remaining: usage.remaining_count !== null 
+            ? usage.remaining_count 
+            : usage.remaining_amount !== null 
+              ? usage.remaining_amount 
+              : 'Unlimited'
+        };
+      });
+    } else {
+      // Fallback to default benefits
+      benefits = {
+        gp_visits: { limit: 'Unlimited', used: 0, remaining: 'Unlimited' },
+        specialist_visits: { limit: 5, used: 0, remaining: 5 },
+        dental: { limit: 2000, used: 0, remaining: 2000 },
+        optical: { limit: 1000, used: 0, remaining: 1000 },
+        hospital: { limit: 'R500,000', used: 0, remaining: 'R500,000' },
+      };
+    }
 
     // Fetch real benefits from policy_section_items if policy and plan_type exist
     if (policy && policy.plan_type) {
@@ -183,19 +218,27 @@ export async function POST(request: Request) {
       }
     }
 
-    // Check waiting periods (mock data - will be replaced with actual waiting periods logic)
+    // Calculate real waiting periods based on member start date
+    const startDate = member.start_date ? new Date(member.start_date) : new Date();
+    const today = new Date();
+    const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
     const waitingPeriods = {
       general: {
-        completed: true,
-        daysRemaining: 0,
+        completed: daysSinceStart >= 90, // 3 months
+        daysRemaining: Math.max(0, 90 - daysSinceStart),
       },
       specialist: {
-        completed: true,
-        daysRemaining: 0,
+        completed: daysSinceStart >= 90, // 3 months
+        daysRemaining: Math.max(0, 90 - daysSinceStart),
       },
       hospital: {
-        completed: true,
-        daysRemaining: 0,
+        completed: daysSinceStart >= 90, // 3 months
+        daysRemaining: Math.max(0, 90 - daysSinceStart),
+      },
+      maternity: {
+        completed: daysSinceStart >= 365, // 12 months
+        daysRemaining: Math.max(0, 365 - daysSinceStart),
       },
     };
 

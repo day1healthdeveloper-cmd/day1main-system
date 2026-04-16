@@ -1,57 +1,61 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Get session from cookies
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('sb-access-token');
-    
-    if (!sessionCookie) {
+    const searchParams = request.nextUrl.searchParams;
+    const memberId = searchParams.get('id');
+
+    if (!memberId) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
+        { error: 'Member ID is required' },
+        { status: 400 }
       );
     }
 
-    // For now, we'll use a simple approach - get user_id from session
-    // In production, you'd decode the JWT token properly
-    const userIdCookie = cookieStore.get('user-id');
-    
-    if (!userIdCookie) {
-      return NextResponse.json(
-        { error: 'User ID not found' },
-        { status: 401 }
-      );
-    }
-
-    const userId = userIdCookie.value;
-
-    // Fetch member data
-    const { data: member, error } = await supabaseAdmin
+    // Fetch fresh member data from database
+    const { data: member, error: memberError } = await supabaseAdmin
       .from('members')
-      .select('*')
-      .eq('user_id', userId)
+      .select('id, member_number, first_name, last_name, email, mobile, status, broker_code, plan_name, plan_id, monthly_premium, next_debit_date, start_date')
+      .eq('id', memberId)
       .single();
 
-    if (error || !member) {
+    if (memberError || !member) {
       return NextResponse.json(
         { error: 'Member not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(member);
+    // Return fresh member data
+    return NextResponse.json({
+      success: true,
+      member: {
+        id: member.id,
+        member_number: member.member_number,
+        first_name: member.first_name,
+        last_name: member.last_name,
+        email: member.email,
+        mobile: member.mobile,
+        broker_code: member.broker_code,
+        plan_name: member.plan_name,
+        plan_id: member.plan_id,
+        monthly_premium: member.monthly_premium,
+        next_debit_date: member.next_debit_date,
+        start_date: member.start_date,
+        status: member.status
+      }
+    });
+
   } catch (error) {
-    console.error('Error fetching member profile:', error);
+    console.error('Profile fetch error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch member profile' },
+      { error: 'Failed to fetch profile data' },
       { status: 500 }
     );
   }

@@ -14,11 +14,15 @@ export async function POST(request: NextRequest) {
       memberNumber,
       patientName,
       idNumber,
-      serviceDate,
+      benefitType,
       claimType,
-      claimLines,
-      totalAmount
+      formData,
+      totalAmount,
+      documentUrls
     } = body;
+
+    // Extract service date from formData (different field names for different claim types)
+    const serviceDate = formData.serviceDate || formData.admissionDate || new Date().toISOString().split('T')[0];
 
     // Find member by member_number
     const { data: member, error: memberError } = await supabase
@@ -37,11 +41,13 @@ export async function POST(request: NextRequest) {
     // Generate claim number
     const claimNumber = `CLM-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 10000).toString().padStart(3, '0')}`;
 
-    // Extract ICD-10 and tariff codes from claim lines
-    const icd10Codes = claimLines.map((line: any) => line.diagnosisCode).filter(Boolean);
-    const tariffCodes = claimLines.map((line: any) => line.tariffCode).filter(Boolean);
+    // Extract ICD-10 codes from formData
+    const icd10Codes = formData.diagnosisCode ? [formData.diagnosisCode] : [];
+    
+    // Extract tariff/procedure codes from formData
+    const tariffCodes = formData.procedureCode ? [formData.procedureCode] : [];
 
-    // Create claim
+    // Create claim with dynamic form data
     const { data: claim, error: claimError } = await supabase
       .from('claims')
       .insert({
@@ -50,6 +56,7 @@ export async function POST(request: NextRequest) {
         provider_id: providerId,
         service_date: serviceDate,
         claim_type: claimType,
+        benefit_type: benefitType,
         claimed_amount: totalAmount.toString(),
         status: 'pending',
         submission_date: new Date().toISOString(),
@@ -58,7 +65,9 @@ export async function POST(request: NextRequest) {
         pre_auth_required: false,
         is_pmb: false,
         fraud_alert_triggered: false,
-        claim_source: 'provider_portal'
+        claim_source: 'provider_portal',
+        claim_data: formData, // Store all form data as JSON
+        document_urls: documentUrls // Store uploaded document URLs
       })
       .select()
       .single();
