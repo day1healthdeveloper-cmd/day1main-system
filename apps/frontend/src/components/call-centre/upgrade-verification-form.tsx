@@ -695,40 +695,40 @@ export function UpgradeVerificationForm({ upgradeRequest, onVerify, onReject, us
                 variant="outline"
                 className="text-xs h-7 shrink-0"
                 onClick={() => {
-                  // Find the brochure URL based on plan name
+                  // Find the brochure file name based on plan name
                   const planBrochures: Record<string, string> = {
                     // Plus1 Upgrade Plans
-                    'Day-to-Day Plan': '/docs/cover plan brochures/Day-To-Day Single Plan .pdf',
-                    'Hospital Value Plus': '/docs/cover plan brochures/Hospital Value Plus Plan.pdf',
-                    'Comprehensive - Value Plus': '/docs/cover plan brochures/Comprehensive Value Plus Plan.pdf',
+                    'Day-to-Day Plan': 'Day-To-Day Single Plan .pdf',
+                    'Hospital Value Plus': 'Hospital Value Plus Plan.pdf',
+                    'Comprehensive - Value Plus': 'Comprehensive Value Plus Plan.pdf',
                     // Standard Plans
-                    'Day to Day Single': '/docs/cover plan brochures/Day-To-Day Single Plan .pdf',
-                    'Day to Day Couple': '/docs/cover plan brochures/Day-To-Day Single Plan .pdf',
-                    'Day to Day Family': '/docs/cover plan brochures/Day-To-Day Single Plan .pdf',
-                    'Comprehensive Value Plus Plan Single': '/docs/cover plan brochures/Comprehensive Value Plus Plan.pdf',
-                    'Comprehensive Value Plus Plan Couple': '/docs/cover plan brochures/Comprehensive Value Plus Plan.pdf',
-                    'Comprehensive Value Plus Plan Family': '/docs/cover plan brochures/Comprehensive Value Plus Plan.pdf',
-                    'Platinum Plan Single': '/docs/cover plan brochures/Comprehensive Platinum Plan.pdf',
-                    'Platinum Plan Couple': '/docs/cover plan brochures/Comprehensive Platinum Plan.pdf',
-                    'Platinum Plan Family': '/docs/cover plan brochures/Comprehensive Platinum Plan.pdf',
-                    'Platinum Hospital Plan Single': '/docs/cover plan brochures/Hospital Platinum Plan.pdf',
-                    'Platinum Hospital Plan Couple': '/docs/cover plan brochures/Hospital Platinum Plan.pdf',
-                    'Platinum Hospital Plan Family': '/docs/cover plan brochures/Hospital Platinum Plan.pdf',
-                    'Executive Plan Single': '/docs/cover plan brochures/Comprehensive Executive Plan.pdf',
-                    'Executive Plan Couple': '/docs/cover plan brochures/Comprehensive Executive Plan.pdf',
-                    'Executive Plan Family': '/docs/cover plan brochures/Comprehensive Executive Plan.pdf',
-                    'Executive Hospital Plan Single': '/docs/cover plan brochures/Hospital Executive Plan.pdf',
-                    'Executive Hospital Plan Couple': '/docs/cover plan brochures/Hospital Executive Plan.pdf',
-                    'Executive Hospital Plan Family': '/docs/cover plan brochures/Hospital Executive Plan.pdf',
-                    'Senior Comprehensive Plan': '/docs/cover plan brochures/Senior Comprehensive Plan.pdf',
-                    'Senior Day-to-Day Plan': '/docs/cover plan brochures/Senior Day-To-Day Plan.pdf',
-                    'Senior Hospital Plan': '/docs/cover plan brochures/Senior Hospital Plan.pdf',
-                    'Value Plus Senior Hospital Plan': '/docs/cover plan brochures/Senior Hospital Plan.pdf',
+                    'Day to Day Single': 'Day-To-Day Single Plan .pdf',
+                    'Day to Day Couple': 'Day-To-Day Single Plan .pdf',
+                    'Day to Day Family': 'Day-To-Day Single Plan .pdf',
+                    'Comprehensive Value Plus Plan Single': 'Comprehensive Value Plus Plan.pdf',
+                    'Comprehensive Value Plus Plan Couple': 'Comprehensive Value Plus Plan.pdf',
+                    'Comprehensive Value Plus Plan Family': 'Comprehensive Value Plus Plan.pdf',
+                    'Platinum Plan Single': 'Comprehensive Platinum Plan.pdf',
+                    'Platinum Plan Couple': 'Comprehensive Platinum Plan.pdf',
+                    'Platinum Plan Family': 'Comprehensive Platinum Plan.pdf',
+                    'Platinum Hospital Plan Single': 'Hospital Platinum Plan.pdf',
+                    'Platinum Hospital Plan Couple': 'Hospital Platinum Plan.pdf',
+                    'Platinum Hospital Plan Family': 'Hospital Platinum Plan.pdf',
+                    'Executive Plan Single': 'Comprehensive Executive Plan.pdf',
+                    'Executive Plan Couple': 'Comprehensive Executive Plan.pdf',
+                    'Executive Plan Family': 'Comprehensive Executive Plan.pdf',
+                    'Executive Hospital Plan Single': 'Hospital Executive Plan.pdf',
+                    'Executive Hospital Plan Couple': 'Hospital Executive Plan.pdf',
+                    'Executive Hospital Plan Family': 'Hospital Executive Plan.pdf',
+                    'Senior Comprehensive Plan': 'Senior Comprehensive Plan.pdf',
+                    'Senior Day-to-Day Plan': 'Senior Day-To-Day Plan.pdf',
+                    'Senior Hospital Plan': 'Senior Hospital Plan.pdf',
+                    'Value Plus Senior Hospital Plan': 'Senior Hospital Plan.pdf',
                   };
                   
-                  const brochureUrl = planBrochures[upgradeRequest.upgraded_plan];
-                  if (brochureUrl) {
-                    window.open(brochureUrl, '_blank');
+                  const brochureFileName = planBrochures[upgradeRequest.upgraded_plan];
+                  if (brochureFileName) {
+                    window.open(`/api/brochure?file=${encodeURIComponent(brochureFileName)}`, '_blank');
                   } else {
                     addToast({
                       type: 'error',
