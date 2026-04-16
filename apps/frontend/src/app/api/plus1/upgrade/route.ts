@@ -9,7 +9,7 @@ const supabaseAdmin = createClient(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { mobileNumber, currentPlan, upgradedPlan, memberData } = body;
+    const { mobileNumber, currentPlan, upgradedPlan, currentPrice, upgradedPrice, memberData } = body;
 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('📝 PLUS1 UPGRADE REQUEST RECEIVED');
@@ -17,6 +17,8 @@ export async function POST(request: NextRequest) {
     console.log('Mobile Number:', mobileNumber);
     console.log('Current Plan:', currentPlan);
     console.log('Upgraded Plan:', upgradedPlan);
+    console.log('Current Price:', currentPrice);
+    console.log('Upgraded Price:', upgradedPrice);
     console.log('Member Name:', `${memberData?.firstName} ${memberData?.lastName}`);
 
     // Validate required fields
@@ -64,25 +66,10 @@ export async function POST(request: NextRequest) {
     console.log('Member Number:', member.member_number);
     console.log('Member ID:', member.id);
     console.log('Name:', member.first_name, member.last_name);
-    console.log('Current Premium:', member.monthly_premium);
+    console.log('Current Premium (DB):', member.monthly_premium);
+    console.log('Current Premium (Request):', currentPrice);
 
-    console.log('\n🔍 STEP 2: Getting upgraded plan price...');
-    // Get upgraded plan price from products table
-    let upgradedPrice = null;
-    const { data: product, error: productError } = await supabaseAdmin
-      .from('products')
-      .select('monthly_premium')
-      .eq('name', upgradedPlan)
-      .single();
-
-    if (!productError && product) {
-      upgradedPrice = product.monthly_premium;
-      console.log('✅ Upgraded plan price:', upgradedPrice);
-    } else {
-      console.log('⚠️ Could not find product price, using null');
-    }
-
-    console.log('\n💾 STEP 3: Saving upgrade request to database...');
+    console.log('\n💾 STEP 2: Saving upgrade request to database...');
     const upgradeData = {
       member_id: member.id,
       mobile_number: mobileNumber,
@@ -91,8 +78,8 @@ export async function POST(request: NextRequest) {
       member_email: memberData?.email || member.email,
       current_plan: currentPlan,
       upgraded_plan: upgradedPlan,
-      current_price: member.monthly_premium,
-      upgraded_price: upgradedPrice,
+      current_price: currentPrice || member.monthly_premium, // Use request price first, fallback to DB
+      upgraded_price: upgradedPrice, // Use the price from Plus1Rewards
       status: 'pending',
       requested_at: new Date().toISOString(),
     };
