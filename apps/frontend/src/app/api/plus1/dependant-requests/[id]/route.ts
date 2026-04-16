@@ -266,7 +266,7 @@ export async function PATCH(
         .insert({
           member_id: member.id,
           member_number: member.member_number,
-          dependant_code: parseInt(dependantCode),
+          dependant_code: dependantCode,
           dependant_type: dependantType,
           first_name: dependantRequest.dependant_first_name,
           last_name: dependantRequest.dependant_last_name,
