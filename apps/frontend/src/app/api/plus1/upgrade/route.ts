@@ -70,6 +70,18 @@ export async function POST(request: NextRequest) {
     console.log('Current Premium (Request):', currentPrice);
 
     console.log('\n💾 STEP 2: Saving upgrade request to database...');
+    
+    // Parse pricing values to ensure they're numbers
+    const parsedCurrentPrice = currentPrice ? parseFloat(String(currentPrice)) : null;
+    const parsedUpgradedPrice = upgradedPrice ? parseFloat(String(upgradedPrice)) : null;
+    
+    console.log('Pricing values:');
+    console.log('  - currentPrice (raw):', currentPrice, typeof currentPrice);
+    console.log('  - currentPrice (parsed):', parsedCurrentPrice);
+    console.log('  - upgradedPrice (raw):', upgradedPrice, typeof upgradedPrice);
+    console.log('  - upgradedPrice (parsed):', parsedUpgradedPrice);
+    console.log('  - member.monthly_premium (fallback):', member.monthly_premium);
+    
     const upgradeData = {
       member_id: member.id,
       mobile_number: mobileNumber,
@@ -78,8 +90,8 @@ export async function POST(request: NextRequest) {
       member_email: memberData?.email || member.email,
       current_plan: currentPlan,
       upgraded_plan: upgradedPlan,
-      current_price: currentPrice || member.monthly_premium, // Use request price first, fallback to DB
-      upgraded_price: upgradedPrice, // Use the price from Plus1Rewards
+      current_price: parsedCurrentPrice || member.monthly_premium, // Use request price first, fallback to DB
+      upgraded_price: parsedUpgradedPrice, // Use the price from Plus1Rewards
       status: 'pending',
       requested_at: new Date().toISOString(),
     };
