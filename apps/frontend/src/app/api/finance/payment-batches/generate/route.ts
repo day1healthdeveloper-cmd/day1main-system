@@ -104,18 +104,21 @@ export async function POST(request: NextRequest) {
         return null;
       }
 
+      // Type assertion to handle union type
+      const payeeData = payee as any;
+
       return {
         claim_id: claim.id,
         claim_number: claim.claim_number,
         payee_type: isProviderClaim ? 'provider' : 'member',
-        payee_id: payee.id,
+        payee_id: payeeData.id,
         payee_name: isProviderClaim 
-          ? payee.name 
-          : `${payee.first_name} ${payee.last_name}`,
-        bank_name: payee.bank_name,
-        account_number: payee.account_number,
-        branch_code: payee.branch_code,
-        account_holder_name: payee.account_holder_name,
+          ? payeeData.name 
+          : `${payeeData.first_name} ${payeeData.last_name}`,
+        bank_name: payeeData.bank_name,
+        account_number: payeeData.account_number,
+        branch_code: payeeData.branch_code,
+        account_holder_name: payeeData.account_holder_name,
         payment_amount: parseFloat(claim.approved_amount),
         service_date: claim.service_date,
         approved_date: claim.approved_at
