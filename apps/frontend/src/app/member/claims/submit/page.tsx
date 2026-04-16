@@ -346,8 +346,8 @@ export default function MemberClaimSubmissionPage() {
                         >
                           <option value="">Select...</option>
                           {field.options.map((option) => (
-                            <option key={option} value={option}>
-                              {option}
+                            <option key={option.value} value={option.value}>
+                              {option.label}
                             </option>
                           ))}
                         </select>
