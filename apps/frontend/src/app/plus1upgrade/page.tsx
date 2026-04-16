@@ -11,32 +11,24 @@ export default function Plus1UpgradePage() {
   const [mobileNumber, setMobileNumber] = useState('');
   const [currentPlan, setCurrentPlan] = useState('');
   const [upgradedPlan, setUpgradedPlan] = useState('');
+  const [upgradedPlanPrice, setUpgradedPlanPrice] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [memberFound, setMemberFound] = useState(false);
   const [memberData, setMemberData] = useState<any>(null);
 
-  const [availablePlans, setAvailablePlans] = useState<Array<{id: string; name: string; price: number}>>([]);
-
+  // Get upgrade plan from URL parameters
   useEffect(() => {
-    fetchAvailablePlans();
-  }, []);
-
-  const fetchAvailablePlans = async () => {
-    try {
-      console.log('Fetching plans from /api/products/list...');
-      const response = await fetch('/api/products/list');
-      console.log('Response status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Plans fetched:', data);
-        setAvailablePlans(data);
-      } else {
-        console.error('Failed to fetch plans, status:', response.status);
-      }
-    } catch (error) {
-      console.error('Error fetching plans:', error);
+    const params = new URLSearchParams(window.location.search);
+    const planName = params.get('plan');
+    const planPrice = params.get('price');
+    
+    if (planName) {
+      setUpgradedPlan(decodeURIComponent(planName));
     }
-  };
+    if (planPrice) {
+      setUpgradedPlanPrice(parseFloat(planPrice));
+    }
+  }, []);
 
   const handleSearch = async () => {
     if (!mobileNumber) {
@@ -331,41 +323,56 @@ export default function Plus1UpgradePage() {
                   </div>
                 </div>
 
-                {/* Step 3: Upgraded Plan Selection */}
+                {/* Step 3: Upgraded Plan Display */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Upgraded Plan *
+                    Upgraded Plan
                   </label>
-                  <select
-                    value={upgradedPlan}
-                    onChange={(e) => setUpgradedPlan(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">-- Select a plan --</option>
-                    {availablePlans.map((plan) => (
-                      <option key={plan.id} value={plan.name}>
-                        {plan.name} - R{plan.price}/month
-                      </option>
-                    ))}
-                  </select>
+                  <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg">
+                    <p className="font-semibold text-blue-900">{upgradedPlan}</p>
+                    {upgradedPlanPrice && (
+                      <p className="text-sm text-blue-700 mt-1">
+                        R{upgradedPlanPrice.toFixed(2)}/month
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Upgrade Summary */}
-                {upgradedPlan && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-900 mb-2">Upgrade Summary</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">From:</span>
-                        <span className="font-medium text-gray-900">{currentPlan}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">To:</span>
-                        <span className="font-medium text-blue-600">{upgradedPlan}</span>
-                      </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-900 mb-3">Upgrade Summary</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Current Plan:</span>
+                      <span className="font-medium text-gray-900">{currentPlan}</span>
                     </div>
+                    {memberData.currentPremium && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Current Premium:</span>
+                        <span className="font-medium text-gray-900">R{memberData.currentPremium}/month</span>
+                      </div>
+                    )}
+                    <div className="border-t border-blue-200 my-2"></div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Upgraded Plan:</span>
+                      <span className="font-semibold text-blue-600">{upgradedPlan}</span>
+                    </div>
+                    {upgradedPlanPrice && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">New Premium:</span>
+                        <span className="font-semibold text-blue-600">R{upgradedPlanPrice.toFixed(2)}/month</span>
+                      </div>
+                    )}
+                    {memberData.currentPremium && upgradedPlanPrice && (
+                      <div className="flex items-center justify-between text-sm bg-blue-100 -mx-4 -mb-4 mt-3 p-3 rounded-b-lg">
+                        <span className="text-blue-800 font-medium">Increase:</span>
+                        <span className="font-bold text-blue-800">
+                          +R{(upgradedPlanPrice - parseFloat(memberData.currentPremium)).toFixed(2)}/month
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {/* Submit Button */}
                 <div className="pt-4">

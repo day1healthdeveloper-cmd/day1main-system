@@ -151,7 +151,7 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
 
 ### Table: `plus1_dependant_requests`
 
-**Status:** NOT YET CREATED
+**Status:** ✅ CREATED
 
 **Proposed Schema:**
 ```sql
@@ -513,19 +513,21 @@ When testing Plus1 add dependants flow:
 ## Success Criteria
 
 A successful Plus1 add dependant should:
-1. ⬜ Save dependant request to database with status 'pending'
-2. ⬜ Notify call centre of pending request (dual visibility with operations)
-3. ⬜ Allow call centre to verify via phone and add notes
-4. ⬜ Require mandatory call recording upload
-5. ⬜ Require document verification
-6. ⬜ Change status to 'verified' after verification
-7. ⬜ Allow operations manager to approve/reject (not call centre)
-8. ⬜ Assign correct dependant code (01-05 for spouse/partner, 06+ for child)
-9. ⬜ Update Plus1Rewards database FIRST on approval (including plan_status: 'active')
-10. ⬜ Create dependant in Day1Main database with correct code
-11. ⬜ Update member premium in Day1Main database on approval
+1. ✅ Save dependant request to database with status 'pending'
+2. ✅ Notify call centre of pending request (dual visibility with operations)
+3. ✅ Allow call centre to verify via phone and add notes
+4. ✅ Require mandatory call recording upload
+5. ✅ Require document verification
+6. ✅ Change status to 'verified' after verification
+7. ✅ Allow operations manager to approve/reject (not call centre)
+8. ✅ Assign correct dependant code (01-05 for spouse/partner, 06+ for child)
+9. ✅ Update Plus1Rewards database FIRST on approval (including plan_status: 'active')
+10. ✅ Create dependant in Day1Main database with correct code
+11. ✅ Update member premium in Day1Main database on approval
 12. ⬜ Send confirmation to member (TODO)
-13. ⬜ Complete in under 48 hours from request to approval
+13. ✅ Complete in under 48 hours from request to approval
+
+**Status:** ✅ FULLY IMPLEMENTED - Ready for testing
 
 ## Monitoring
 

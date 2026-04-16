@@ -49,8 +49,8 @@ export default function DashboardPage() {
       console.log('→ Redirecting to claims assessor dashboard');
       router.push('/claims-assessor/dashboard');
     } else if (role === 'call_centre_agent') {
-      console.log('→ Redirecting to call centre support');
-      window.location.href = '/call-centre/support';
+      console.log('→ Redirecting to call centre dashboard');
+      window.location.href = '/call-centre/dashboard';
     } else if (role === 'ambulance_operator') {
       console.log('→ Redirecting to ambulance dashboard');
       router.push('/ambulance/dashboard');

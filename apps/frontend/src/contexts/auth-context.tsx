@@ -117,10 +117,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (userError || !userData) {
         console.error('❌ Error loading user data:', userError);
+        console.error('❌ Session email:', session.user.email);
         setUser(null);
         setLoading(false);
         return;
       }
+
+      console.log('✅ User data found:', userData);
 
       if (!userData.is_active) {
         console.error('❌ User is inactive');
@@ -129,6 +132,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         return;
       }
+
+      console.log('✅ Fetching roles for user_id:', userData.id);
 
       // Get user roles with role names in one query
       const { data: userRolesData, error: rolesError } = await supabase
@@ -140,7 +145,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('❌ Error loading roles:', rolesError);
       }
 
+      console.log('✅ User roles data:', userRolesData);
+
       const roles: string[] = userRolesData?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
+
+      console.log('✅ Extracted roles:', roles);
 
       const transformedUser: User = {
         id: userData.id,
