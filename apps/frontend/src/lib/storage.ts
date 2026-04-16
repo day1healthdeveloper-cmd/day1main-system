@@ -116,13 +116,13 @@ export async function uploadClaimDocument(
 
 /**
  * Upload multiple claim documents
- * @param files - Array of files to upload
  * @param claimNumber - The claim number for file naming (or temp ID)
+ * @param files - Array of files to upload
  * @returns Array of public URLs of uploaded documents
  */
 export async function uploadClaimDocuments(
-  files: File[],
-  claimNumber: string
+  claimNumber: string,
+  files: File[]
 ): Promise<string[]> {
   const uploadPromises = files.map((file, index) => {
     const documentType = `document_${index + 1}`
