@@ -783,7 +783,7 @@ export function UpgradeVerificationForm({ upgradeRequest, onVerify, onReject, us
             disabled={processing || !verificationNotes.trim() || !uploadedRecordingUrl}
           >
             <CheckCircle className="w-4 h-4 mr-2" />
-            Verify & Approve Upgrade
+            Verify Upgrade Request
           </Button>
         </div>
 
