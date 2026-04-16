@@ -14,8 +14,8 @@ import { ClaimAdjudicationPanel } from '@/components/claims/claim-adjudication-p
 interface Claim {
   id: string;
   claim_number: string;
-  member: { first_name: string; last_name: string; member_number: string } | null;
-  provider: { name: string; provider_number: string } | null;
+  member: { first_name: string; last_name: string; member_number: string; plan_id?: string } | null;
+  provider: { name: string; provider_number: string; provider_tier?: string } | null;
   service_date: string;
   claim_type: string;
   benefit_type: string;
@@ -539,8 +539,8 @@ export default function ClaimsQueuePage() {
                   <ClaimAdjudicationPanel
                     claim={{
                       ...selectedClaim,
-                      member: selectedClaim.member || { plan_id: undefined },
-                      provider: selectedClaim.provider || { provider_tier: undefined }
+                      member: selectedClaim.member || { first_name: '', last_name: '', member_number: '', plan_id: undefined },
+                      provider: selectedClaim.provider || { name: '', provider_number: '', provider_tier: undefined }
                     }}
                     onAction={handleAdjudication}
                     onClose={() => setShowDetails(false)}
