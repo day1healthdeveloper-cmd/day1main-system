@@ -48,17 +48,17 @@ interface DependantRequest {
   dependant_date_of_birth: string;
   dependant_gender: string;
   dependant_relationship: string;
-  id_document_url?: string;
+  id_document_url: string | null;
   birth_certificate_url?: string;
   marriage_certificate_url?: string;
   current_premium: number;
   dependant_cost: number;
   new_premium: number;
   status: string;
-  verification_notes?: string;
-  call_recording_url?: string;
-  verified_at?: string;
-  verified_by?: string;
+  verification_notes: string | null;
+  call_recording_url: string | null;
+  verified_at: string | null;
+  verified_by: string | null;
   requested_at: string;
 }
 
