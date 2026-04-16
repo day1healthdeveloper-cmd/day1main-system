@@ -540,7 +540,9 @@ export default function ClaimsQueuePage() {
                     claim={{
                       ...selectedClaim,
                       member: selectedClaim.member || { first_name: '', last_name: '', member_number: '', plan_id: undefined },
-                      provider: selectedClaim.provider || { name: '', provider_number: '', provider_tier: undefined }
+                      provider: selectedClaim.provider || { name: '', provider_number: '', provider_tier: undefined },
+                      pre_auth_required: selectedClaim.claim_data?.pre_auth_required || false,
+                      fraud_risk_score: 0
                     }}
                     onAction={handleAdjudication}
                     onClose={() => setShowDetails(false)}
