@@ -787,27 +787,29 @@ export function UpgradeVerificationForm({ upgradeRequest, onVerify, onReject, us
           </Button>
         </div>
 
-        {/* Rejection Section */}
-        <div className="pt-4 border-t space-y-3">
-          <p className="text-sm font-medium text-gray-700">Or Reject Upgrade Request:</p>
-          <div className="space-y-2">
-            <textarea
-              className="w-full px-3 py-2 border rounded-md"
-              rows={2}
-              placeholder="Reason for rejection (e.g., member declined, payment issues, etc.)..."
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-            />
+        {/* Rejection Section - Only for Operations Manager */}
+        {userRole === 'operations_manager' && (
+          <div className="pt-4 border-t space-y-3">
+            <p className="text-sm font-medium text-gray-700">Or Reject Upgrade Request:</p>
+            <div className="space-y-2">
+              <textarea
+                className="w-full px-3 py-2 border rounded-md"
+                rows={2}
+                placeholder="Reason for rejection (e.g., member declined, payment issues, etc.)..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+              />
+            </div>
+            <Button
+              variant="outline"
+              className="w-full text-red-600 hover:bg-red-50"
+              onClick={handleReject}
+              disabled={processing || !rejectionReason.trim()}
+            >
+              Reject Upgrade Request
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            className="w-full text-red-600 hover:bg-red-50"
-            onClick={handleReject}
-            disabled={processing || !rejectionReason.trim()}
-          >
-            Reject Upgrade Request
-          </Button>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

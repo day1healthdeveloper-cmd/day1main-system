@@ -233,12 +233,14 @@ CREATE TABLE plus1_upgrade_requests (
 - TODO: Record `approved_by` user ID
 - TODO: Send confirmation email/SMS
 
-**3. Reject Action** (Call Centre or Operations):
+**3. Reject Action** (Operations Manager ONLY):
 - Requires: `rejection_reason`
 - Updates status to 'rejected'
 - Records `rejected_at` timestamp
 - TODO: Record `rejected_by` user ID
 - TODO: Send notification to member
+
+**Important:** Call centre agents can ONLY verify - they cannot approve or reject upgrade requests.
 
 ### GET `/api/brochure`
 
@@ -393,7 +395,7 @@ This dual visibility ensures operations managers can monitor upgrade requests an
 10. **Broker Code** - Must remain 'POR' (Plus1Rewards) after upgrade
 11. **Dual Visibility** - Upgrade requests visible to both Call Centre and Operations simultaneously
 12. **Operations Follow-up** - Operations manager can follow up with call centre if verification is delayed
-13. **Role-Based Approval** - Only operations managers can approve; call centre can only verify
+13. **Role-Based Approval** - Only operations managers can approve or reject; call centre can only verify
 
 ## Testing Checklist
 
