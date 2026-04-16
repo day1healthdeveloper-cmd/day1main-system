@@ -4,6 +4,56 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+/**
+ * Update benefit usage when a claim is approved
+ */
+async function updateBenefitUsage(
+  supabase: any,
+  memberId: string,
+  benefitType: string,
+  approvedAmount: number
+) {
+  const currentYear = new Date().getFullYear();
+
+  // Get or create benefit usage record
+  const { data: existing } = await supabase
+    .from('benefit_usage')
+    .select('*')
+    .eq('member_id', memberId)
+    .eq('benefit_type', benefitType)
+    .eq('year', currentYear)
+    .single();
+
+  if (existing) {
+    // Update existing record
+    const newUsedAmount = (parseFloat(existing.used_amount) || 0) + approvedAmount;
+    const newUsedCount = (existing.used_count || 0) + 1;
+
+    await supabase
+      .from('benefit_usage')
+      .update({
+        used_amount: newUsedAmount,
+        used_count: newUsedCount,
+        last_claim_date: new Date().toISOString().split('T')[0],
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id);
+  } else {
+    // Create new record - we'll need to get limits from product_benefits
+    // For now, create with just the usage
+    await supabase
+      .from('benefit_usage')
+      .insert({
+        member_id: memberId,
+        benefit_type: benefitType,
+        year: currentYear,
+        used_amount: approvedAmount,
+        used_count: 1,
+        last_claim_date: new Date().toISOString().split('T')[0],
+      });
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -174,10 +224,24 @@ export async function PATCH(
       // Don't fail the request if audit trail fails
     }
 
+    // Update benefit usage if claim is approved
+    if (action === 'approve' && claim.benefit_type && claim.member_id) {
+      try {
+        await updateBenefitUsage(
+          supabase,
+          claim.member_id,
+          claim.benefit_type,
+          approved_amount
+        );
+      } catch (benefitError) {
+        console.error('Error updating benefit usage:', benefitError);
+        // Don't fail the request if benefit usage update fails
+      }
+    }
+
     // TODO: Send notifications
     // - Email/SMS to member
     // - Email to provider (if provider-submitted)
-    // - Update benefit_usage table (if approved)
 
     return NextResponse.json({
       success: true,

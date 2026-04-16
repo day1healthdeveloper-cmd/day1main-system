@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateBenefitLimit, validateWaitingPeriod } from '@/lib/benefit-validation-server';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Find member by member_number
     const { data: member, error: memberError } = await supabase
       .from('members')
-      .select('id')
+      .select('id, plan_id, status')
       .eq('member_number', memberNumber)
       .single();
 
@@ -36,6 +37,52 @@ export async function POST(request: NextRequest) {
         { error: 'Member not found. Please verify the member number.' },
         { status: 404 }
       );
+    }
+
+    // Check member status
+    if (member.status !== 'active') {
+      return NextResponse.json(
+        { error: `Member is not active. Current status: ${member.status}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate benefit limits
+    const benefitValidation = await validateBenefitLimit(
+      supabase,
+      member.id,
+      benefitType,
+      totalAmount,
+      member.plan_id
+    );
+
+    // Validate waiting period
+    const waitingPeriodValidation = await validateWaitingPeriod(
+      supabase,
+      member.id,
+      benefitType,
+      member.plan_id
+    );
+
+    // Collect all warnings and errors
+    const allWarnings = [
+      ...benefitValidation.warnings,
+      ...waitingPeriodValidation.warnings
+    ];
+    const allErrors = [
+      ...benefitValidation.errors,
+      ...waitingPeriodValidation.errors
+    ];
+
+    // If there are errors, auto-reject or pend the claim
+    let initialStatus = 'pending';
+    let rejectionReason = null;
+    let pendedReason = null;
+
+    if (allErrors.length > 0) {
+      // If waiting period not met or limit exceeded, pend for review
+      initialStatus = 'pended';
+      pendedReason = allErrors.join('; ');
     }
 
     // Generate claim number
@@ -58,7 +105,7 @@ export async function POST(request: NextRequest) {
         claim_type: claimType,
         benefit_type: benefitType,
         claimed_amount: totalAmount.toString(),
-        status: 'pending',
+        status: initialStatus,
         submission_date: new Date().toISOString(),
         icd10_codes: icd10Codes,
         tariff_codes: tariffCodes,
@@ -66,8 +113,15 @@ export async function POST(request: NextRequest) {
         is_pmb: false,
         fraud_alert_triggered: false,
         claim_source: 'provider_portal',
-        claim_data: formData, // Store all form data as JSON
-        document_urls: documentUrls // Store uploaded document URLs
+        claim_data: {
+          ...formData,
+          validation_warnings: allWarnings,
+          validation_errors: allErrors
+        },
+        document_urls: documentUrls,
+        pended_reason: pendedReason,
+        pended_date: pendedReason ? new Date().toISOString() : null,
+        additional_info_requested: pendedReason ? 'Please review benefit limits and waiting periods' : null
       })
       .select()
       .single();
@@ -82,17 +136,21 @@ export async function POST(request: NextRequest) {
       claim_id: claim.id,
       action: 'submitted',
       performed_by: providerId,
-      performed_at: new Date().toISOString(),
-      old_status: null,
-      new_status: 'pending',
-      notes: `Claim submitted via provider portal`
+      previous_status: null,
+      new_status: initialStatus,
+      notes: `Claim submitted via provider portal${allWarnings.length > 0 ? '. Warnings: ' + allWarnings.join('; ') : ''}${allErrors.length > 0 ? '. Errors: ' + allErrors.join('; ') : ''}`
     });
 
     return NextResponse.json({
       success: true,
       claimNumber: claim.claim_number,
       claimId: claim.id,
-      message: 'Claim submitted successfully'
+      status: initialStatus,
+      warnings: allWarnings,
+      errors: allErrors,
+      message: initialStatus === 'pended' 
+        ? 'Claim submitted but requires review due to validation issues'
+        : 'Claim submitted successfully'
     });
   } catch (error) {
     console.error('Error submitting claim:', error);
