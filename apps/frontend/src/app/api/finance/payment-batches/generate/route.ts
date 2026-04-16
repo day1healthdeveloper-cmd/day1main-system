@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
         payee_type: (isProviderClaim ? 'provider' : 'member') as 'provider' | 'member',
         payee_id: payee.id,
         payee_name: isProviderClaim 
-          ? payee.name 
-          : `${payee.first_name} ${payee.last_name}`,
+          ? (payee as any).name 
+          : `${(payee as any).first_name} ${(payee as any).last_name}`,
         bank_name: payee.bank_name,
         account_number: payee.account_number,
         branch_code: payee.branch_code,
