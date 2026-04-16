@@ -6,6 +6,19 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Plus1 Plan Pricing Reference
+// These are fixed prices for Plus1 upgrade plans
+const PLUS1_PLAN_PRICING: Record<string, number> = {
+  'Day-to-Day Plan': 385.00,
+  'Hospital Value Plus': 390.00,
+  'Comprehensive - Value Plus': 665.00,
+};
+
+// Helper function to get plan price
+function getPlanPrice(planName: string): number | null {
+  return PLUS1_PLAN_PRICING[planName] || null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -69,18 +82,26 @@ export async function POST(request: NextRequest) {
     console.log('Current Premium (DB):', member.monthly_premium);
     console.log('Current Premium (Request):', currentPrice);
 
-    console.log('\n💾 STEP 2: Saving upgrade request to database...');
+    console.log('\n💾 STEP 2: Determining pricing from plan names...');
     
-    // Parse pricing values to ensure they're numbers
-    const parsedCurrentPrice = currentPrice ? parseFloat(String(currentPrice)) : null;
-    const parsedUpgradedPrice = upgradedPrice ? parseFloat(String(upgradedPrice)) : null;
+    // Get pricing from plan name reference
+    const currentPriceFromPlan = getPlanPrice(currentPlan);
+    const upgradedPriceFromPlan = getPlanPrice(upgradedPlan);
     
-    console.log('Pricing values:');
-    console.log('  - currentPrice (raw):', currentPrice, typeof currentPrice);
-    console.log('  - currentPrice (parsed):', parsedCurrentPrice);
-    console.log('  - upgradedPrice (raw):', upgradedPrice, typeof upgradedPrice);
-    console.log('  - upgradedPrice (parsed):', parsedUpgradedPrice);
-    console.log('  - member.monthly_premium (fallback):', member.monthly_premium);
+    console.log('Plan-based pricing:');
+    console.log('  - Current Plan:', currentPlan, '→', currentPriceFromPlan);
+    console.log('  - Upgraded Plan:', upgradedPlan, '→', upgradedPriceFromPlan);
+    
+    // Use plan-based pricing first, fallback to request data, then DB
+    const finalCurrentPrice = currentPriceFromPlan || (currentPrice ? parseFloat(String(currentPrice)) : null) || member.monthly_premium;
+    const finalUpgradedPrice = upgradedPriceFromPlan || (upgradedPrice ? parseFloat(String(upgradedPrice)) : null);
+    
+    console.log('Final pricing:');
+    console.log('  - current_price:', finalCurrentPrice);
+    console.log('  - upgraded_price:', finalUpgradedPrice);
+    console.log('  - Premium increase:', finalUpgradedPrice && finalCurrentPrice ? (finalUpgradedPrice - finalCurrentPrice) : 'N/A');
+    
+    console.log('\n💾 STEP 3: Saving upgrade request to database...');
     
     const upgradeData = {
       member_id: member.id,
@@ -90,8 +111,8 @@ export async function POST(request: NextRequest) {
       member_email: memberData?.email || member.email,
       current_plan: currentPlan,
       upgraded_plan: upgradedPlan,
-      current_price: parsedCurrentPrice || member.monthly_premium, // Use request price first, fallback to DB
-      upgraded_price: parsedUpgradedPrice, // Use the price from Plus1Rewards
+      current_price: finalCurrentPrice,
+      upgraded_price: finalUpgradedPrice,
       status: 'pending',
       requested_at: new Date().toISOString(),
     };

@@ -15,6 +15,28 @@ The Plus1 upgrade process allows existing Plus1Rewards members with Day1Health m
 
 ## Upgrade Flow
 
+### Plus1 Plan Pricing Reference
+
+**IMPORTANT:** Plus1 upgrades use a fixed set of plans with standard pricing. Use this reference table to populate `current_price` and `upgraded_price` columns in the `plus1_upgrade_requests` table.
+
+| Plan Name | Monthly Premium | Notes |
+|-----------|----------------|-------|
+| Day-to-Day Plan | R385.00 | Default starter plan |
+| Hospital Value Plus | R390.00 | Default hospital plan |
+| Comprehensive - Value Plus | R665.00 | First upgrade option |
+
+**Common Upgrade Paths:**
+- Day-to-Day Plan (R385) → Comprehensive - Value Plus (R665) = **+R280/month**
+- Hospital Value Plus (R390) → Comprehensive - Value Plus (R665) = **+R275/month**
+
+**Implementation:**
+When saving upgrade requests to `plus1_upgrade_requests` table:
+1. Match `current_plan` name to get `current_price`
+2. Match `upgraded_plan` name to get `upgraded_price`
+3. Calculate premium increase: `upgraded_price - current_price`
+
+This ensures consistent pricing in verification forms and approval workflows.
+
 ### Step 1: Member Submits Upgrade Request
 
 **Route:** `/plus1upgrade`
