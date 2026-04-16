@@ -65,82 +65,91 @@ export default function EligibilityCheckPage() {
         return;
       }
 
+      // Handle member not found or not eligible
+      if (!data.eligible) {
+        setSearchResult({
+          eligible: false,
+          message: data.message,
+          member: data.member,
+          policy: null,
+          coverage: null,
+          benefits: [],
+          dependants: [],
+        });
+        setIsSearching(false);
+        return;
+      }
+
       // Transform API response to match UI format
+      // Calculate total annual limit and usage from all benefits
+      let totalLimit = 0;
+      let totalUsed = 0;
+      const benefitsArray = [];
+
+      if (data.benefits) {
+        for (const [key, benefit] of Object.entries(data.benefits)) {
+          const b = benefit as any;
+          
+          // Add to totals if benefit has amount limits
+          if (b.limitAmount > 0) {
+            totalLimit += b.limitAmount;
+            totalUsed += b.used;
+          }
+
+          // Determine if pre-auth is required (typically for specialist, hospital, maternity)
+          const preAuthRequired = ['specialist_visits', 'hospital', 'maternity', 'surgery'].includes(key);
+
+          benefitsArray.push({
+            category: b.name,
+            limit: b.limit,
+            used: b.limitAmount > 0 ? `R${b.used.toLocaleString()}` : `${b.usedCount} visits`,
+            remaining: b.remaining,
+            coPayment: 'None', // TODO: Add co-payment info to product_benefits table
+            preAuthRequired: preAuthRequired,
+            usagePercentage: b.usagePercentage,
+          });
+        }
+      }
+
+      // If no benefits with amount limits, use a default
+      if (totalLimit === 0) {
+        totalLimit = 500000; // Default annual limit
+      }
+
       setSearchResult({
         eligible: data.eligible,
         message: data.message,
         member: {
-          memberNumber: data.member.memberNumber,
-          firstName: data.member.firstName,
-          lastName: data.member.lastName,
-          idNumber: data.member.idNumber,
-          dateOfBirth: data.member.dateOfBirth,
-          contactNumber: '-',
-          email: '-',
+          memberNumber: data.member?.memberNumber || 'N/A',
+          firstName: data.member?.firstName || 'N/A',
+          lastName: data.member?.lastName || 'N/A',
+          idNumber: data.member?.idNumber || 'N/A',
+          dateOfBirth: data.member?.dateOfBirth || 'N/A',
+          contactNumber: '-', // TODO: Add to members table
+          email: '-', // TODO: Add to members table
         },
-        policy: {
+        policy: data.policy ? {
           policyNumber: data.policy.policyNumber,
-          planName: data.policy.planType || 'Medical Plan',
+          planName: data.member?.planName || data.policy.planType || 'Medical Plan',
           status: data.policy.status,
-          startDate: data.policy.startDate,
-          renewalDate: data.policy.endDate,
-          premium: 0,
-        },
-        coverage: {
+          startDate: data.policy.startDate ? new Date(data.policy.startDate).toLocaleDateString('en-ZA') : 'N/A',
+          renewalDate: data.policy.startDate ? new Date(new Date(data.policy.startDate).setFullYear(new Date(data.policy.startDate).getFullYear() + 1)).toLocaleDateString('en-ZA') : 'N/A',
+          premium: data.policy.monthlyPremium || 0,
+        } : null,
+        coverage: data.waitingPeriods ? {
           inNetwork: true,
           outOfNetwork: true,
-          annualLimit: 500000,
-          annualUsed: 0,
-          annualRemaining: 500000,
+          annualLimit: totalLimit,
+          annualUsed: totalUsed,
+          annualRemaining: totalLimit - totalUsed,
           waitingPeriods: {
             general: data.waitingPeriods.general.completed ? 'Completed' : `${data.waitingPeriods.general.daysRemaining} days remaining`,
             specialist: data.waitingPeriods.specialist.completed ? 'Completed' : `${data.waitingPeriods.specialist.daysRemaining} days remaining`,
             hospital: data.waitingPeriods.hospital.completed ? 'Completed' : `${data.waitingPeriods.hospital.daysRemaining} days remaining`,
           },
-        },
-        benefits: [
-          {
-            category: 'General Practitioner',
-            limit: data.benefits.gp_visits.limit,
-            used: `${data.benefits.gp_visits.used}`,
-            remaining: data.benefits.gp_visits.remaining,
-            coPayment: 'None',
-            preAuthRequired: false,
-          },
-          {
-            category: 'Specialist Consultation',
-            limit: `${data.benefits.specialist_visits.limit} visits`,
-            used: `${data.benefits.specialist_visits.used} visits`,
-            remaining: `${data.benefits.specialist_visits.remaining} visits`,
-            coPayment: '10%',
-            preAuthRequired: true,
-          },
-          {
-            category: 'Dental',
-            limit: `R${data.benefits.dental.limit}`,
-            used: `R${data.benefits.dental.used}`,
-            remaining: `R${data.benefits.dental.remaining}`,
-            coPayment: 'None',
-            preAuthRequired: false,
-          },
-          {
-            category: 'Optical',
-            limit: `R${data.benefits.optical.limit}`,
-            used: `R${data.benefits.optical.used}`,
-            remaining: `R${data.benefits.optical.remaining}`,
-            coPayment: 'None',
-            preAuthRequired: false,
-          },
-          {
-            category: 'Hospital Admission',
-            limit: data.benefits.hospital.limit,
-            used: `R${data.benefits.hospital.used}`,
-            remaining: data.benefits.hospital.remaining,
-            coPayment: 'None',
-            preAuthRequired: true,
-          },
-        ],
-        dependants: [],
+        } : null,
+        benefits: benefitsArray,
+        dependants: [], // TODO: Fetch dependants from member_dependants table
       });
     } catch (error: any) {
       console.error('Error checking eligibility:', error);
@@ -236,41 +245,51 @@ export default function EligibilityCheckPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <p className="text-sm text-gray-500">Full Name</p>
-                    <p className="font-medium mt-1">
-                      {searchResult.member.firstName} {searchResult.member.lastName}
-                    </p>
+                {!searchResult.eligible && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-800 font-medium">{searchResult.message}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Member Number</p>
-                    <p className="font-medium mt-1 font-mono">
-                      {searchResult.member.memberNumber}
-                    </p>
+                )}
+                {searchResult.member && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <p className="text-sm text-gray-500">Full Name</p>
+                      <p className="font-medium mt-1">
+                        {searchResult.member.firstName} {searchResult.member.lastName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Member Number</p>
+                      <p className="font-medium mt-1 font-mono">
+                        {searchResult.member.memberNumber}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">ID Number</p>
+                      <p className="font-medium mt-1">{searchResult.member.idNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Date of Birth</p>
+                      <p className="font-medium mt-1">{searchResult.member.dateOfBirth}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Contact Number</p>
+                      <p className="font-medium mt-1">{searchResult.member.contactNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="font-medium mt-1">{searchResult.member.email}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">ID Number</p>
-                    <p className="font-medium mt-1">{searchResult.member.idNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Date of Birth</p>
-                    <p className="font-medium mt-1">{searchResult.member.dateOfBirth}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Contact Number</p>
-                    <p className="font-medium mt-1">{searchResult.member.contactNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium mt-1">{searchResult.member.email}</p>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
-            {/* Policy Information */}
-            <Card>
+            {/* Only show policy, coverage, and benefits if member is eligible */}
+            {searchResult.eligible && searchResult.policy && (
+              <>
+                {/* Policy Information */}
+                <Card>
               <CardHeader>
                 <CardTitle>Policy Information</CardTitle>
                 <CardDescription>Active policy and plan details</CardDescription>
@@ -312,6 +331,7 @@ export default function EligibilityCheckPage() {
             </Card>
 
             {/* Coverage Summary */}
+            {searchResult.coverage && (
             <Card>
               <CardHeader>
                 <CardTitle>Coverage Summary</CardTitle>
@@ -395,8 +415,10 @@ export default function EligibilityCheckPage() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Benefit Details */}
+            {searchResult.benefits && searchResult.benefits.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Benefit Details</CardTitle>
@@ -441,8 +463,10 @@ export default function EligibilityCheckPage() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Dependants */}
+            {searchResult.dependants && searchResult.dependants.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Covered Dependants</CardTitle>
@@ -477,13 +501,18 @@ export default function EligibilityCheckPage() {
                 </div>
               </CardContent>
             </Card>
+            )}
+              </>
+            )}
 
             {/* Actions */}
-            <div className="flex gap-3">
-              <Button>Submit Claim for This Patient</Button>
-              <Button variant="outline">Request Pre-Authorization</Button>
-              <Button variant="outline">Print Summary</Button>
-            </div>
+            {searchResult.eligible && (
+              <div className="flex gap-3">
+                <Button>Submit Claim for This Patient</Button>
+                <Button variant="outline">Request Pre-Authorization</Button>
+                <Button variant="outline">Print Summary</Button>
+              </div>
+            )}
           </>
         )}
 
