@@ -295,8 +295,8 @@ export default function MemberClaimSubmissionPage() {
                 required
               >
                 {availableClaimTypes.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
+                  <option key={type.benefitType} value={type.benefitType}>
+                    {type.displayName}
                   </option>
                 ))}
               </select>
