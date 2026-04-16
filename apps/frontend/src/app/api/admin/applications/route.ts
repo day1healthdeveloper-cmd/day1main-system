@@ -332,6 +332,26 @@ export async function PATCH(request: NextRequest) {
         throw new Error(`Failed to create member: ${memberError.message}`)
       }
 
+      // Initialize benefit usage for the new member
+      if (finalPlanId) {
+        try {
+          console.log(`🔄 Initializing benefit usage for member ${memberNumber} with plan ${finalPlanId}`)
+          
+          // Import the initialization function
+          const { initializeBenefitUsage } = await import('@/lib/benefit-validation-server')
+          
+          await initializeBenefitUsage(supabaseAdmin, member.id, finalPlanId)
+          
+          console.log(`✅ Benefit usage initialized for member ${memberNumber}`)
+        } catch (benefitError) {
+          console.error('❌ Failed to initialize benefit usage:', benefitError)
+          // Don't fail the approval if benefit initialization fails - can be done manually
+          console.log('⚠️  Member created successfully but benefit usage initialization failed. This can be fixed manually.')
+        }
+      } else {
+        console.log('⚠️  No plan_id available, skipping benefit usage initialization')
+      }
+
       // Copy dependents to member_dependents if any
       const { data: appDependents } = await supabaseAdmin
         .from('application_dependents')

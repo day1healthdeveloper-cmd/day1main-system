@@ -15,42 +15,92 @@ async function updateBenefitUsage(
 ) {
   const currentYear = new Date().getFullYear();
 
-  // Get or create benefit usage record
-  const { data: existing } = await supabase
-    .from('benefit_usage')
-    .select('*')
-    .eq('member_id', memberId)
-    .eq('benefit_type', benefitType)
-    .eq('year', currentYear)
-    .single();
-
-  if (existing) {
-    // Update existing record
-    const newUsedAmount = (parseFloat(existing.used_amount) || 0) + approvedAmount;
-    const newUsedCount = (existing.used_count || 0) + 1;
-
-    await supabase
+  try {
+    // Get or create benefit usage record
+    const { data: existing, error: fetchError } = await supabase
       .from('benefit_usage')
-      .update({
-        used_amount: newUsedAmount,
-        used_count: newUsedCount,
-        last_claim_date: new Date().toISOString().split('T')[0],
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', existing.id);
-  } else {
-    // Create new record - we'll need to get limits from product_benefits
-    // For now, create with just the usage
-    await supabase
-      .from('benefit_usage')
-      .insert({
-        member_id: memberId,
-        benefit_type: benefitType,
-        year: currentYear,
-        used_amount: approvedAmount,
-        used_count: 1,
-        last_claim_date: new Date().toISOString().split('T')[0],
-      });
+      .select('*')
+      .eq('member_id', memberId)
+      .eq('benefit_type', benefitType)
+      .eq('year', currentYear)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      // PGRST116 is "not found" error, which is expected if no record exists
+      throw fetchError;
+    }
+
+    if (existing) {
+      // Update existing record
+      const newUsedAmount = (parseFloat(existing.used_amount) || 0) + approvedAmount;
+      const newUsedCount = (existing.used_count || 0) + 1;
+
+      const { error: updateError } = await supabase
+        .from('benefit_usage')
+        .update({
+          used_amount: newUsedAmount,
+          used_count: newUsedCount,
+          last_claim_date: new Date().toISOString().split('T')[0],
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      console.log(`✅ Benefit usage updated for member ${memberId}, benefit ${benefitType}: +R${approvedAmount} (total: R${newUsedAmount}, count: ${newUsedCount})`);
+    } else {
+      // Create new record - get limits from product_benefits
+      console.log(`⚠️  No benefit usage record found for member ${memberId}, benefit ${benefitType}. Creating new record.`);
+      
+      // Get member's plan_id
+      const { data: member } = await supabase
+        .from('members')
+        .select('plan_id')
+        .eq('id', memberId)
+        .single();
+
+      let totalLimitAmount = null;
+      let totalLimitCount = null;
+
+      if (member && member.plan_id) {
+        // Get benefit limits from product_benefits
+        const { data: benefit } = await supabase
+          .from('product_benefits')
+          .select('annual_limit, cover_amount, total_limit_count')
+          .eq('product_id', member.plan_id)
+          .eq('type', benefitType)
+          .single();
+
+        if (benefit) {
+          totalLimitAmount = benefit.annual_limit || benefit.cover_amount;
+          totalLimitCount = benefit.total_limit_count;
+        }
+      }
+
+      const { error: insertError } = await supabase
+        .from('benefit_usage')
+        .insert({
+          member_id: memberId,
+          benefit_type: benefitType,
+          year: currentYear,
+          total_limit_amount: totalLimitAmount,
+          total_limit_count: totalLimitCount,
+          used_amount: approvedAmount,
+          used_count: 1,
+          last_claim_date: new Date().toISOString().split('T')[0],
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      console.log(`✅ Benefit usage record created for member ${memberId}, benefit ${benefitType}: R${approvedAmount}`);
+    }
+  } catch (error) {
+    console.error('❌ Error updating benefit usage:', error);
+    throw error;
   }
 }
 
@@ -227,16 +277,24 @@ export async function PATCH(
     // Update benefit usage if claim is approved
     if (action === 'approve' && claim.benefit_type && claim.member_id) {
       try {
+        console.log(`🔄 Updating benefit usage for claim ${claimId}: member ${claim.member_id}, benefit ${claim.benefit_type}, amount R${approved_amount}`);
+        
         await updateBenefitUsage(
           supabase,
           claim.member_id,
           claim.benefit_type,
           approved_amount
         );
+        
+        console.log(`✅ Benefit usage updated successfully for claim ${claimId}`);
       } catch (benefitError) {
-        console.error('Error updating benefit usage:', benefitError);
+        console.error('❌ Error updating benefit usage for claim', claimId, ':', benefitError);
         // Don't fail the request if benefit usage update fails
+        // The claim is still approved, but usage tracking failed
+        console.log('⚠️  Claim approved but benefit usage update failed. This should be investigated.');
       }
+    } else if (action === 'approve') {
+      console.log(`⚠️  Skipping benefit usage update for claim ${claimId}: benefit_type=${claim.benefit_type}, member_id=${claim.member_id}`);
     }
 
     // TODO: Send notifications
