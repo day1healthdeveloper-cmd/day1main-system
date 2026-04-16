@@ -53,7 +53,7 @@ export async function GET(
       mobile: member.mobile,
       status: member.status,
       brokerCode: member.broker_code,
-      brokerName: member.brokers?.name || 'N/A',
+      brokerName: (Array.isArray(member.brokers) ? member.brokers[0]?.name : member.brokers?.name) || 'N/A',
       policyNumber: member.member_number, // Policy number = Member number
       product: member.plan_name,
       planId: member.plan_id,

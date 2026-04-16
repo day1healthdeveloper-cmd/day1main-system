@@ -97,28 +97,28 @@ export async function POST(request: NextRequest) {
     // Transform claims into payment records
     const payments = claims.map(claim => {
       const isProviderClaim = claim.claim_source === 'provider';
-      const payee = isProviderClaim ? claim.providers : claim.members;
+      const payeeRaw = isProviderClaim ? claim.providers : claim.members;
+      
+      // Handle array or single object
+      const payee = Array.isArray(payeeRaw) ? payeeRaw[0] : payeeRaw;
       
       if (!payee) {
         console.warn(`Missing payee data for claim ${claim.claim_number}`);
         return null;
       }
 
-      // Type assertion to handle union type
-      const payeeData = payee as any;
-
       return {
         claim_id: claim.id,
         claim_number: claim.claim_number,
         payee_type: (isProviderClaim ? 'provider' : 'member') as 'provider' | 'member',
-        payee_id: payeeData.id,
+        payee_id: payee.id,
         payee_name: isProviderClaim 
-          ? payeeData.name 
-          : `${payeeData.first_name} ${payeeData.last_name}`,
-        bank_name: payeeData.bank_name,
-        account_number: payeeData.account_number,
-        branch_code: payeeData.branch_code,
-        account_holder_name: payeeData.account_holder_name,
+          ? payee.name 
+          : `${payee.first_name} ${payee.last_name}`,
+        bank_name: payee.bank_name,
+        account_number: payee.account_number,
+        branch_code: payee.branch_code,
+        account_holder_name: payee.account_holder_name,
         payment_amount: parseFloat(claim.approved_amount),
         service_date: claim.service_date,
         approved_date: claim.approved_at
