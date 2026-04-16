@@ -172,7 +172,6 @@ export default function MemberLayout({
                       className={`w-full !h-10 !px-4 text-sm ${
                         isActive ? 'ring-2 ring-offset-2' : ''
                       }`}
-                      style={isActive ? { ringColor: item.glowColor } : {}}
                     >
                       {item.icon}
                       <span className="ml-3">{item.name}</span>

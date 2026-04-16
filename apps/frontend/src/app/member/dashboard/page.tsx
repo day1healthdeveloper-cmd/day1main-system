@@ -482,7 +482,7 @@ export default function MemberDashboardPage() {
                             </span>
                             
                             {/* Countdown Timer - only show if there's a waiting period > 0 */}
-                            {benefit.waiting_period_days > 0 && coverStartDate && (
+                            {benefit.waiting_period_days && benefit.waiting_period_days > 0 && coverStartDate && (
                               <div className="mt-2 flex items-center gap-2">
                                 {isActive ? (
                                   <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">

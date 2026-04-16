@@ -235,7 +235,7 @@ export default function ClaimSubmissionPage() {
         const tempClaimNumber = generateTempClaimNumber();
         
         try {
-          documentUrls = await uploadClaimDocuments(documents, tempClaimNumber);
+          documentUrls = await uploadClaimDocuments(tempClaimNumber, documents);
           setUploadProgress(`Documents uploaded successfully`);
         } catch (uploadError) {
           console.error('Document upload error:', uploadError);

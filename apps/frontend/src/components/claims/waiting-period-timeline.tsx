@@ -26,8 +26,13 @@ export function WaitingPeriodTimeline({
   const waitingEndDate = new Date(waitingPeriodEndDate);
   const preExistingEndDate = preExistingExclusionEndDate ? new Date(preExistingExclusionEndDate) : null;
 
-  // Calculate timeline milestones
-  const milestones = [
+  const milestones: Array<{
+    label: string;
+    date: Date;
+    status: 'completed' | 'pending' | 'blocked';
+    icon: any;
+    color: string;
+  }> = [
     {
       label: 'Membership Start',
       date: startDate,

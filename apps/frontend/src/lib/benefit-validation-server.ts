@@ -78,7 +78,7 @@ export async function validateBenefitLimit(
       }
       
       // No usage yet, claim is valid
-      return { valid: true, warnings, errors, limit };
+      return { valid: true, warnings, errors, limit: limit || undefined };
     }
 
     // Check if adding this claim would exceed limits
