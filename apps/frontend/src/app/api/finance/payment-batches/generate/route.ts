@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       return {
         claim_id: claim.id,
         claim_number: claim.claim_number,
-        payee_type: isProviderClaim ? 'provider' : 'member',
+        payee_type: (isProviderClaim ? 'provider' : 'member') as 'provider' | 'member',
         payee_id: payeeData.id,
         payee_name: isProviderClaim 
           ? payeeData.name 
