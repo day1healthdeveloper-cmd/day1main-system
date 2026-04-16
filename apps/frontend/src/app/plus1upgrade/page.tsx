@@ -30,35 +30,7 @@ export default function Plus1UpgradePage() {
 
     setLoading(true);
     try {
-      // Search Day1Main database for current plan
-      const day1Response = await fetch(`/api/admin/members?mobile=${encodeURIComponent(mobileNumber)}`);
-      
-      if (!day1Response.ok) {
-        addToast({
-          type: 'error',
-          title: '❌ Member Not Found',
-          description: 'No member found in Day1Main database with this mobile number.',
-          duration: 4000,
-        });
-        setLoading(false);
-        return;
-      }
-
-      const day1Data = await day1Response.json();
-      const day1Member = day1Data.members?.[0];
-
-      if (!day1Member) {
-        addToast({
-          type: 'error',
-          title: '❌ Member Not Found',
-          description: 'No member found in Day1Main database with this mobile number.',
-          duration: 4000,
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Search Plus1Rewards database for upgrade plan
+      // First search Plus1Rewards database to get member info
       const plus1Response = await fetch(`/api/plus1/search-member?mobile=${encodeURIComponent(mobileNumber)}`);
       
       if (!plus1Response.ok) {
@@ -97,26 +69,25 @@ export default function Plus1UpgradePage() {
         return;
       }
 
-      // Set current plan from Day1Main
-      setCurrentPlan(day1Member.plan_name || 'No plan');
-      setCurrentPremium(parseFloat(day1Member.monthly_premium) || null);
+      // The /api/plus1/search-member already fetches from Day1Main database
+      const day1Member = plus1Data.member;
+
+      // Set current plan from Day1Main (already fetched by /api/plus1/search-member)
+      setCurrentPlan(day1Member.currentPlan || 'No plan');
+      setCurrentPremium(parseFloat(day1Member.currentPremium) || null);
 
       // Set upgraded plan from Plus1Rewards
-      setUpgradedPlan(plus1Data.member.coverPlanName || '');
-      setUpgradedPremium(parseFloat(plus1Data.member.coverPlanPrice) || null);
+      setUpgradedPlan(day1Member.coverPlanName || '');
+      setUpgradedPremium(parseFloat(day1Member.coverPlanPrice) || null);
 
       // Set member data
-      setMemberData({
-        ...plus1Data.member,
-        day1MemberId: day1Member.id,
-        day1MemberNumber: day1Member.member_number,
-      });
+      setMemberData(day1Member);
 
       setMemberFound(true);
       addToast({
         type: 'success',
         title: '✅ Upgrade Found',
-        description: `Welcome ${plus1Data.member.firstName} ${plus1Data.member.lastName}! Your upgrade is ready for confirmation.`,
+        description: `Welcome ${day1Member.firstName} ${day1Member.lastName}! Your upgrade is ready for confirmation.`,
         duration: 3000,
       });
     } catch (error) {
