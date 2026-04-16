@@ -120,8 +120,8 @@ export async function POST(request: NextRequest) {
       },
       policy: {
         policyNumber: member.member_number,
-        planType: member.products?.regime || 'Unknown',
-        planCode: member.products?.code || 'Unknown',
+        planType: (Array.isArray(member.products) ? member.products[0]?.regime : member.products?.regime) || 'Unknown',
+        planCode: (Array.isArray(member.products) ? member.products[0]?.code : member.products?.code) || 'Unknown',
         status: member.status,
         startDate: member.start_date,
         brokerCode: member.broker_code,
