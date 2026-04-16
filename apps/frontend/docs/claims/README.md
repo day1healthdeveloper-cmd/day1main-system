@@ -10,6 +10,7 @@ This folder contains all claims-related company documents including procedures, 
 - **tariffs/** - Tariff codes, pricing schedules, and rate tables
 - **rejection-codes/** - Rejection code definitions and usage guidelines
 - **workflows/** - Process flowcharts and decision trees
+- **pre-authorization/** - Pre-authorization and Guarantee of Payment (GOP) documents
 
 ## Usage
 

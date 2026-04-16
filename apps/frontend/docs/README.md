@@ -14,6 +14,7 @@ All claims-related documents including procedures, guidelines, forms, tariffs, a
 - `tariffs/` - Tariff codes and pricing
 - `rejection-codes/` - Rejection code definitions
 - `workflows/` - Process flowcharts
+- `pre-authorization/` - Pre-authorization and GOP documents
 
 ### 💊 Benefits Documentation (`benefits/`)
 Benefit-related documentation including limits, waiting periods, and exclusions.
