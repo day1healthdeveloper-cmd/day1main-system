@@ -86,8 +86,9 @@ export async function GET(request: NextRequest) {
       const searchLower = search.toLowerCase();
       filteredClaims = filteredClaims.filter(claim => {
         const claimNumber = claim.claim_number?.toLowerCase() || '';
-        const memberNumber = claim.members?.member_number?.toLowerCase() || '';
-        const patientName = `${claim.members?.first_name || ''} ${claim.members?.last_name || ''}`.toLowerCase();
+        const member = Array.isArray(claim.members) ? claim.members[0] : claim.members;
+        const memberNumber = member?.member_number?.toLowerCase() || '';
+        const patientName = `${member?.first_name || ''} ${member?.last_name || ''}`.toLowerCase();
         
         return claimNumber.includes(searchLower) ||
                memberNumber.includes(searchLower) ||
