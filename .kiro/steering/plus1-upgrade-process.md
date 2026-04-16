@@ -43,20 +43,20 @@ This ensures consistent pricing in verification forms and approval workflows.
 
 **Process:**
 1. Member enters Plus1 mobile number
-2. System searches Plus1Rewards database via `/api/plus1/search-member`
-3. Current plan is auto-populated from Plus1 database
-4. Member selects upgraded plan from dropdown (loaded from `products` table)
-5. System shows upgrade summary (From → To)
-6. Member submits upgrade request
+2. System searches **Day1Main database** via `/api/plus1/search-member` to get current plan
+3. System searches **Plus1Rewards database** to get upgraded plan (where `plan_status = 'pending_upgrade'`)
+4. **Current plan auto-populated from Day1Main** (`members.plan_name`)
+5. **Upgraded plan auto-populated from Plus1Rewards** (`members.cover_plan_name`)
+6. System shows upgrade summary with **hardcoded pricing** from reference table
+7. Member confirms upgrade request (no selection - pre-determined by Plus1)
 
-**Data Captured:**
-- Mobile number
-- Current plan name
-- Upgraded plan name
-- Member data (first name, last name, email, etc.)
+**Data Flow:**
+- **Current Plan:** Day1Main `members.plan_name` → Day-to-Day Plan (R385.00)
+- **Upgraded Plan:** Plus1Rewards `members.cover_plan_name` → Comprehensive - Value Plus (R665.00)
+- **Premium Increase:** R665.00 - R385.00 = **+R280.00/month**
 
 **Submission:**
-- POST to `/api/plus1/upgrade`
+- POST to `/api/plus1/upgrade` with hardcoded pricing
 - Status: 'pending'
 - **Notification sent to BOTH:**
   - Call Centre Dashboard (Member Support tab)
@@ -85,7 +85,7 @@ This ensures consistent pricing in verification forms and approval workflows.
    - Confirm new monthly premium amount (shown in blue)
    - Check recent claim history
 6. Agent documents verification notes (required)
-7. Agent clicks "Verify & Approve Upgrade"
+7. Agent clicks "**Verify Upgrade Request**" (NOT approve - agents can only verify!)
 
 **Status Change:**
 - From: 'pending'
@@ -97,7 +97,10 @@ This ensures consistent pricing in verification forms and approval workflows.
 - Verified by (agent ID/name)
 - Verified at (timestamp)
 
-**Important:** Call recording is MANDATORY for insurance compliance. The verify button is disabled until recording is uploaded.
+**Important:** 
+- Call recording is MANDATORY for insurance compliance. The verify button is disabled until recording is uploaded.
+- **Call centre agents can ONLY verify, NOT approve** - approval is done by operations manager only
+- **View Brochure button** opens PDF via `/api/brochure?file=Comprehensive Value Plus Plan.pdf`
 
 ### Step 3: Operations Manager Approval
 
@@ -177,11 +180,14 @@ CREATE TABLE plus1_upgrade_requests (
 
 **Status:** ✅ IMPLEMENTED
 
-**Purpose:** Submit upgrade request
+**Purpose:** Submit upgrade request with hardcoded pricing
 
 **Implementation:**
+- Uses **hardcoded pricing reference table** for consistent pricing
 - Validates request data
-- Saves upgrade request to `plus1_upgrade_requests` table
+- Saves upgrade request to `plus1_upgrade_requests` table with correct pricing:
+  - `current_price`: Looked up from plan name (e.g., Day-to-Day Plan = 385.00)
+  - `upgraded_price`: Looked up from plan name (e.g., Comprehensive - Value Plus = 665.00)
 - Sets status to 'pending'
 - Returns success with upgrade request ID
 
@@ -192,10 +198,11 @@ CREATE TABLE plus1_upgrade_requests (
 **Purpose:** Fetch upgrade requests for call centre and operations dashboards
 
 **Features:**
-- Query `plus1_upgrade_requests` table
+- Query `plus1_upgrade_requests` table with correct pricing values
 - Filter by status (pending, verified, approved, rejected)
 - Optional `includeMembers=true` parameter to fetch full member details
 - Returns upgrade requests with member data, claims history, and plan benefits
+- **Pricing now displays correctly:** +R280.00/month increase, R665.00 new premium
 
 ### PATCH `/api/plus1/upgrade-requests/[id]`
 
@@ -207,11 +214,11 @@ CREATE TABLE plus1_upgrade_requests (
 
 **1. Verify Action** (Call Centre Agent):
 - Requires: `verification_notes`, `call_recording_url`
-- Updates status to 'verified'
+- Updates status to 'verified' (NOT approved!)
 - Records `verified_at` timestamp
 - TODO: Record `verified_by` user ID
 
-**2. Approve Action** (Operations Manager):
+**2. Approve Action** (Operations Manager ONLY):
 - Fetches upgrade request and member details
 - **Updates Plus1Rewards database FIRST:**
   - `cover_plan_name` → upgraded plan
@@ -232,6 +239,19 @@ CREATE TABLE plus1_upgrade_requests (
 - Records `rejected_at` timestamp
 - TODO: Record `rejected_by` user ID
 - TODO: Send notification to member
+
+### GET `/api/brochure`
+
+**Status:** ✅ IMPLEMENTED
+
+**Purpose:** Serve plan brochure PDFs securely
+
+**Features:**
+- Serves PDFs from `docs/cover plan brochures/` folder
+- Security: Whitelist of allowed file names only
+- Returns PDF with `Content-Type: application/pdf` and `Content-Disposition: inline`
+- Opens in browser's built-in PDF viewer
+- Example: `/api/brochure?file=Comprehensive Value Plus Plan.pdf`
 
 ## Components
 
@@ -380,25 +400,27 @@ This dual visibility ensures operations managers can monitor upgrade requests an
 When testing Plus1 upgrade flow:
 
 1. ✅ Member can search by mobile number
-2. ✅ Current plan displays correctly from Plus1 database
-3. ✅ Available plans load from products table
-4. ✅ Upgrade summary shows From → To correctly
-5. ✅ Upgrade request saves to database
-6. ✅ Call centre sees pending upgrade request
-7. ✅ Verification form works correctly
-8. ✅ Call recording uploads successfully
-9. ✅ Status changes to 'verified' after verification
-10. ✅ Operations manager can approve/reject
-11. ✅ Plus1Rewards database updates FIRST on approval (with plan_status: 'active')
-12. ✅ Member record updates in Day1Main on approval
-13. ⬜ Member receives confirmation notification (TODO)
-14. ⬜ Upgrade history is tracked (TODO)
+2. ✅ Current plan displays correctly from Day1Main database (Day-to-Day Plan)
+3. ✅ Upgraded plan displays correctly from Plus1Rewards database (Comprehensive - Value Plus)
+4. ✅ Pricing shows correctly: Current R385.00, Upgraded R665.00, Increase +R280.00
+5. ✅ Upgrade summary shows From → To correctly with pricing
+6. ✅ Upgrade request saves to database with correct `current_price` and `upgraded_price`
+7. ✅ Call centre sees pending upgrade request with correct pricing
+8. ✅ Verification form works correctly with proper button text ("Verify Upgrade Request")
+9. ✅ Call recording uploads successfully
+10. ✅ View Brochure button opens PDF correctly via `/api/brochure`
+11. ✅ Status changes to 'verified' after verification (not approved!)
+12. ✅ Operations manager can approve/reject (call centre cannot approve)
+13. ✅ Plus1Rewards database updates FIRST on approval (with plan_status: 'active')
+14. ✅ Member record updates in Day1Main on approval
+15. ⬜ Member receives confirmation notification (TODO)
+16. ⬜ Upgrade history is tracked (TODO)
 
 ## TODO List
 
 ### High Priority
 - [x] Create `plus1_upgrade_requests` database table
-- [x] Update `/api/plus1/upgrade` to save to database
+- [x] Update `/api/plus1/upgrade` to save to database with hardcoded pricing
 - [x] Create `/api/plus1/upgrade-requests` GET endpoint
 - [x] Create `/api/plus1/upgrade-requests/:id` PATCH endpoint
 - [x] Integrate upgrade requests into call centre dashboard
@@ -408,6 +430,10 @@ When testing Plus1 upgrade flow:
 - [x] Implement role-based access (call centre vs operations manager)
 - [x] Add verified information display for double verification
 - [x] Update Plus1Rewards `plan_status` to 'active' on approval
+- [x] Fix pricing display with hardcoded reference table
+- [x] Add brochure PDF viewer via `/api/brochure`
+- [x] Correct button text: "Verify Upgrade Request" (not "Verify & Approve")
+- [x] Fix database pricing values (current_price and upgraded_price)
 
 ### Medium Priority
 - [ ] Add `verified_by`, `approved_by`, `rejected_by` user tracking
@@ -424,16 +450,18 @@ When testing Plus1 upgrade flow:
 ## Success Criteria
 
 A successful Plus1 upgrade should:
-1. ✅ Save upgrade request to database with status 'pending'
+1. ✅ Save upgrade request to database with status 'pending' and correct pricing
 2. ✅ Notify call centre of pending request (dual visibility with operations)
-3. ✅ Allow call centre to verify via phone and add notes
+3. ✅ Allow call centre to verify via phone and add notes (NOT approve!)
 4. ✅ Require mandatory call recording upload
-5. ✅ Change status to 'verified' after verification
+5. ✅ Change status to 'verified' after verification (call centre cannot approve)
 6. ✅ Allow operations manager to approve/reject (not call centre)
-7. ✅ Update Plus1Rewards database FIRST on approval (including plan_status: 'active')
-8. ✅ Update member record in Day1Main database on approval
-9. ⬜ Send confirmation to member (TODO)
-10. ✅ Complete in under 48 hours from request to approval
+7. ✅ Display correct pricing: +R280.00/month increase, R665.00 new premium
+8. ✅ View Brochure button works via `/api/brochure` PDF viewer
+9. ✅ Update Plus1Rewards database FIRST on approval (including plan_status: 'active')
+10. ✅ Update member record in Day1Main database on approval
+11. ⬜ Send confirmation to member (TODO)
+12. ✅ Complete in under 48 hours from request to approval
 
 ## Monitoring
 
