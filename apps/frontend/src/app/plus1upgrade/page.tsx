@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
@@ -12,26 +12,10 @@ export default function Plus1UpgradePage() {
   const [currentPlan, setCurrentPlan] = useState('');
   const [currentPremium, setCurrentPremium] = useState<number | null>(null);
   const [upgradedPlan, setUpgradedPlan] = useState('');
+  const [upgradedPremium, setUpgradedPremium] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [memberFound, setMemberFound] = useState(false);
   const [memberData, setMemberData] = useState<any>(null);
-  const [availablePlans, setAvailablePlans] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchAvailablePlans();
-  }, []);
-
-  const fetchAvailablePlans = async () => {
-    try {
-      const response = await fetch('/api/products');
-      if (response.ok) {
-        const data = await response.json();
-        setAvailablePlans(data.products || []);
-      }
-    } catch (error) {
-      console.error('Error fetching plans:', error);
-    }
-  };
 
   const handleSearch = async () => {
     if (!mobileNumber) {
@@ -46,38 +30,95 @@ export default function Plus1UpgradePage() {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/plus1/search-member?mobile=${encodeURIComponent(mobileNumber)}`);
+      // Search Day1Main database for current plan
+      const day1Response = await fetch(`/api/admin/members?mobile=${encodeURIComponent(mobileNumber)}`);
       
-      if (response.ok) {
-        const data = await response.json();
-        if (data.found) {
-          setMemberFound(true);
-          setMemberData(data.member);
-          setCurrentPlan(data.member.coverPlanName || 'No plan');
-          setCurrentPremium(parseFloat(data.member.coverPlanPrice) || null);
-          addToast({
-            type: 'success',
-            title: '✅ Member Found',
-            description: `Welcome ${data.member.firstName} ${data.member.lastName}!`,
-            duration: 3000,
-          });
-        } else {
-          setMemberFound(false);
-          addToast({
-            type: 'error',
-            title: '❌ Member Not Found',
-            description: 'Please check your mobile number and try again.',
-            duration: 4000,
-          });
-        }
-      } else {
+      if (!day1Response.ok) {
         addToast({
           type: 'error',
-          title: '⚠️ Search Failed',
-          description: 'Error searching for member. Please try again.',
+          title: '❌ Member Not Found',
+          description: 'No member found in Day1Main database with this mobile number.',
           duration: 4000,
         });
+        setLoading(false);
+        return;
       }
+
+      const day1Data = await day1Response.json();
+      const day1Member = day1Data.members?.[0];
+
+      if (!day1Member) {
+        addToast({
+          type: 'error',
+          title: '❌ Member Not Found',
+          description: 'No member found in Day1Main database with this mobile number.',
+          duration: 4000,
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Search Plus1Rewards database for upgrade plan
+      const plus1Response = await fetch(`/api/plus1/search-member?mobile=${encodeURIComponent(mobileNumber)}`);
+      
+      if (!plus1Response.ok) {
+        addToast({
+          type: 'error',
+          title: '❌ Plus1 Member Not Found',
+          description: 'No member found in Plus1Rewards database.',
+          duration: 4000,
+        });
+        setLoading(false);
+        return;
+      }
+
+      const plus1Data = await plus1Response.json();
+
+      if (!plus1Data.found) {
+        addToast({
+          type: 'error',
+          title: '❌ Plus1 Member Not Found',
+          description: 'No member found in Plus1Rewards database.',
+          duration: 4000,
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Check if Plus1 has set an upgrade (plan_status = pending_upgrade)
+      if (plus1Data.member.planStatus !== 'pending_upgrade') {
+        addToast({
+          type: 'error',
+          title: '❌ No Upgrade Available',
+          description: 'No pending upgrade found for this member in Plus1Rewards.',
+          duration: 4000,
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Set current plan from Day1Main
+      setCurrentPlan(day1Member.plan_name || 'No plan');
+      setCurrentPremium(parseFloat(day1Member.monthly_premium) || null);
+
+      // Set upgraded plan from Plus1Rewards
+      setUpgradedPlan(plus1Data.member.coverPlanName || '');
+      setUpgradedPremium(parseFloat(plus1Data.member.coverPlanPrice) || null);
+
+      // Set member data
+      setMemberData({
+        ...plus1Data.member,
+        day1MemberId: day1Member.id,
+        day1MemberNumber: day1Member.member_number,
+      });
+
+      setMemberFound(true);
+      addToast({
+        type: 'success',
+        title: '✅ Upgrade Found',
+        description: `Welcome ${plus1Data.member.firstName} ${plus1Data.member.lastName}! Your upgrade is ready for confirmation.`,
+        duration: 3000,
+      });
     } catch (error) {
       console.error('Error searching member:', error);
       addToast({
@@ -91,27 +132,12 @@ export default function Plus1UpgradePage() {
     }
   };
 
-  const getSelectedPlanPrice = () => {
-    const plan = availablePlans.find(p => p.name === upgradedPlan);
-    return plan ? parseFloat(plan.monthly_premium) : null;
-  };
-
   const handleSubmit = async () => {
     if (!upgradedPlan) {
       addToast({
         type: 'error',
-        title: '⚠️ Plan Selection Required',
-        description: 'Please select an upgraded plan to continue',
-        duration: 3000,
-      });
-      return;
-    }
-
-    if (upgradedPlan === currentPlan) {
-      addToast({
-        type: 'error',
-        title: '⚠️ Same Plan Selected',
-        description: 'Please select a different plan to upgrade',
+        title: '⚠️ No Upgrade Plan',
+        description: 'No upgraded plan found. Please contact support.',
         duration: 3000,
       });
       return;
@@ -120,8 +146,6 @@ export default function Plus1UpgradePage() {
     setLoading(true);
 
     try {
-      const upgradedPlanPrice = getSelectedPlanPrice();
-      
       const response = await fetch('/api/plus1/upgrade', {
         method: 'POST',
         headers: {
@@ -132,7 +156,7 @@ export default function Plus1UpgradePage() {
           currentPlan,
           currentPrice: currentPremium,
           upgradedPlan,
-          upgradedPrice: upgradedPlanPrice,
+          upgradedPrice: upgradedPremium,
           memberData,
         }),
       });
@@ -147,10 +171,12 @@ export default function Plus1UpgradePage() {
           duration: 6000,
         });
         
+        // Reset form
         setMobileNumber('');
         setCurrentPlan('');
         setCurrentPremium(null);
         setUpgradedPlan('');
+        setUpgradedPremium(null);
         setMemberFound(false);
         setMemberData(null);
       } else {
@@ -173,8 +199,6 @@ export default function Plus1UpgradePage() {
       setLoading(false);
     }
   };
-
-  const upgradedPlanPrice = getSelectedPlanPrice();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -236,6 +260,7 @@ export default function Plus1UpgradePage() {
                         setCurrentPlan('');
                         setCurrentPremium(null);
                         setUpgradedPlan('');
+                        setUpgradedPremium(null);
                       }}
                       variant="outline"
                       className="px-6"
@@ -299,56 +324,53 @@ export default function Plus1UpgradePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Upgraded Plan *
                   </label>
-                  <select
-                    value={upgradedPlan}
-                    onChange={(e) => setUpgradedPlan(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select a plan</option>
-                    {availablePlans.map((plan) => (
-                      <option key={plan.id} value={plan.name}>
-                        {plan.name} - R{parseFloat(plan.monthly_premium).toFixed(2)}/month
-                      </option>
-                    ))}
-                  </select>
+                  <div className="px-4 py-3 bg-blue-50 border border-blue-300 rounded-lg">
+                    <p className="font-medium text-blue-900">{upgradedPlan}</p>
+                    {upgradedPremium && (
+                      <p className="text-sm text-blue-700 mt-1">
+                        R{upgradedPremium.toFixed(2)}/month
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    This upgrade has been suggested by Plus1Rewards
+                  </p>
                 </div>
 
-                {upgradedPlan && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-900 mb-3">Upgrade Summary</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Current Plan:</span>
-                        <span className="font-medium text-gray-900">{currentPlan}</span>
-                      </div>
-                      {currentPremium && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Current Premium:</span>
-                          <span className="font-medium text-gray-900">R{currentPremium.toFixed(2)}/month</span>
-                        </div>
-                      )}
-                      <div className="border-t border-blue-200 my-2"></div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600">Upgraded Plan:</span>
-                        <span className="font-semibold text-blue-600">{upgradedPlan}</span>
-                      </div>
-                      {upgradedPlanPrice && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">New Premium:</span>
-                          <span className="font-semibold text-blue-600">R{upgradedPlanPrice.toFixed(2)}/month</span>
-                        </div>
-                      )}
-                      {currentPremium && upgradedPlanPrice && (
-                        <div className="flex items-center justify-between text-sm bg-blue-100 -mx-4 -mb-4 mt-3 p-3 rounded-b-lg">
-                          <span className="text-blue-800 font-medium">Increase:</span>
-                          <span className="font-bold text-blue-800">
-                            +R{(upgradedPlanPrice - currentPremium).toFixed(2)}/month
-                          </span>
-                        </div>
-                      )}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-blue-900 mb-3">Upgrade Summary</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Current Plan:</span>
+                      <span className="font-medium text-gray-900">{currentPlan}</span>
                     </div>
+                    {currentPremium && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Current Premium:</span>
+                        <span className="font-medium text-gray-900">R{currentPremium.toFixed(2)}/month</span>
+                      </div>
+                    )}
+                    <div className="border-t border-blue-200 my-2"></div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Upgraded Plan:</span>
+                      <span className="font-semibold text-blue-600">{upgradedPlan}</span>
+                    </div>
+                    {upgradedPremium && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">New Premium:</span>
+                        <span className="font-semibold text-blue-600">R{upgradedPremium.toFixed(2)}/month</span>
+                      </div>
+                    )}
+                    {currentPremium && upgradedPremium && (
+                      <div className="flex items-center justify-between text-sm bg-blue-100 -mx-4 -mb-4 mt-3 p-3 rounded-b-lg">
+                        <span className="text-blue-800 font-medium">Increase:</span>
+                        <span className="font-bold text-blue-800">
+                          +R{(upgradedPremium - currentPremium).toFixed(2)}/month
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
 
                 <div className="pt-4">
                   <Button
@@ -356,7 +378,7 @@ export default function Plus1UpgradePage() {
                     disabled={loading || !upgradedPlan}
                     className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-4 text-lg font-semibold"
                   >
-                    {loading ? 'Submitting...' : 'Submit Upgrade Request'}
+                    {loading ? 'Submitting...' : 'Confirm Upgrade Request'}
                   </Button>
                 </div>
 

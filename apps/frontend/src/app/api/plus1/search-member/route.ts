@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     console.log('\n📍 STEP 1: Checking Plus1Rewards database...');
     const { data: members, error } = await plus1Supabase
       .from('members')
-      .select('first_name, last_name, sa_id, date_of_birth, email, cell_phone, address_line_1, city, postal_code, cover_plan_name, cover_plan_price')
+      .select('first_name, last_name, sa_id, date_of_birth, email, cell_phone, address_line_1, city, postal_code, cover_plan_name, cover_plan_price, plan_status')
       .eq('cell_phone', mobile)
       .limit(1)
 
@@ -140,6 +140,10 @@ export async function GET(request: NextRequest) {
         status: day1Member.status || '',
         startDate: day1Member.start_date || '',
         brokerCode: day1Member.broker_code || '',
+        // Plus1Rewards data for upgrade
+        coverPlanName: member.cover_plan_name || '',
+        coverPlanPrice: member.cover_plan_price || '',
+        planStatus: member.plan_status || '',
       }
     })
 
