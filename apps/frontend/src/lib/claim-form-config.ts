@@ -6,6 +6,7 @@ export interface ClaimFormField {
   label: string;
   type: 'text' | 'number' | 'date' | 'select' | 'file' | 'textarea';
   required: boolean;
+  fullWidth?: boolean;
   options?: { value: string; label: string }[];
   validation?: {
     min?: number;
