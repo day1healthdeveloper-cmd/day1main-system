@@ -37,9 +37,10 @@ The Plus1 application funnel is a **specialized 6-step application process** for
 
 **Process:**
 1. User enters their Plus1Rewards mobile number
-2. System calls `/api/plus1/search-member?mobile={mobile}`
+2. System calls `/api/plus1/search-application-member?mobile={mobile}` (NOT `/api/plus1/search-member`)
 3. API searches Plus1Rewards database for member by `cell_phone`
-4. If found, auto-fills ALL personal information:
+4. API verifies member does NOT exist in Day1Main database (critical for new applications)
+5. If found in Plus1 but NOT in Day1Main, auto-fills ALL personal information:
    - First name, last name
    - ID number
    - Date of birth
@@ -56,7 +57,10 @@ The Plus1 application funnel is a **specialized 6-step application process** for
 7. On submit, saves lead to `contacts` table with `source: 'website_application'`
 8. Proceeds to Step 2
 
-**Important:** Member MUST be found in Plus1Rewards database to proceed.
+**Important:** 
+- Member MUST be found in Plus1Rewards database to proceed
+- Member must NOT exist in Day1Main database (new application)
+- If member exists in Day1Main, show error: "use upgrade process instead"
 
 ### Step 2: Documents
 **Component:** `Step2Documents.tsx`
@@ -260,10 +264,12 @@ PLUS1_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 ## API Endpoints
 
-### Search Plus1 Member
-**Endpoint:** `GET /api/plus1/search-member?mobile={mobile}`
+### Search Plus1 Application Member
+**Endpoint:** `GET /api/plus1/search-application-member?mobile={mobile}`
 
-**Purpose:** Search Plus1Rewards database for member by mobile number
+**Purpose:** Search Plus1Rewards database for NEW APPLICATION members (who should NOT exist in Day1Main yet)
+
+**CRITICAL:** This is different from `/api/plus1/search-member` which is for UPGRADES where member must exist in both databases.
 
 **Returns:**
 ```json
@@ -343,7 +349,8 @@ When testing Plus1 application flow:
 **Backend:**
 - Application submission: `apps/frontend/src/app/api/applications/route.ts`
 - Application approval: `apps/frontend/src/app/api/admin/applications/route.ts`
-- Plus1 member search: `apps/frontend/src/app/api/plus1/search-member/route.ts`
+- Plus1 application member search: `apps/frontend/src/app/api/plus1/search-application-member/route.ts` (NEW APPLICATIONS)
+- Plus1 upgrade member search: `apps/frontend/src/app/api/plus1/search-member/route.ts` (UPGRADES ONLY)
 
 ## Important Notes for Future Development
 

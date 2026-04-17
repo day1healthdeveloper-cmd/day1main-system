@@ -71,9 +71,9 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
     abortControllerRef.current = new AbortController()
     
     try {
-      // Search for member by mobile number in Plus1Rewards database
+      // Search for member by mobile number in Plus1Rewards database (for new applications)
       const response = await fetch(
-        `/api/plus1/search-member?mobile=${encodeURIComponent(searchQuery)}`,
+        `/api/plus1/search-application-member?mobile=${encodeURIComponent(searchQuery)}`,
         { signal: abortControllerRef.current.signal }
       )
       
@@ -119,8 +119,12 @@ export default function Step1Plus1Confirm({ data, updateData, nextStep }: Props)
           planName: member.coverPlanName || '',
           monthlyPrice: member.coverPlanPrice ? parseFloat(member.coverPlanPrice) : undefined,
         })
+      } else if (result.existingMember) {
+        // Member already exists in Day1Main
+        alert(`Member already exists in Day1Main database.\n\nMember: ${result.existingMember.name}\nMember Number: ${result.existingMember.memberNumber}\n\nPlease use the upgrade process instead of applying again.`)
+        setMemberFound(false)
       } else {
-        alert('Member not found. Please check the mobile number and try again.')
+        alert('Member not found in Plus1Rewards. Please check the mobile number and try again.')
         setMemberFound(false)
       }
       setSearching(false)
