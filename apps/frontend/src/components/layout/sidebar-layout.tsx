@@ -53,7 +53,11 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           // Fetch applications count
           const appResponse = await fetch('/api/admin/applications');
           const appData = await appResponse.json();
-          const submittedCount = appData.applications?.filter((app: any) => app.status === 'submitted' || app.status === 'under_review').length || 0;
+          
+          // Call centre only sees 'submitted', admin sees both 'submitted' and 'under_review'
+          const submittedCount = isCallCentre 
+            ? appData.applications?.filter((app: any) => app.status === 'submitted').length || 0
+            : appData.applications?.filter((app: any) => app.status === 'submitted' || app.status === 'under_review').length || 0;
           
           // Fetch upgrade requests count
           const upgradeResponse = await fetch('/api/plus1/upgrade-requests?status=pending');
