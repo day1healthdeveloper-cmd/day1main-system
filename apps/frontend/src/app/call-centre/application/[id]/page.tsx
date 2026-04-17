@@ -47,6 +47,10 @@ export default function CallCentreApplicationDetailPage() {
   const [verifying, setVerifying] = useState(false);
   const [verificationNotes, setVerificationNotes] = useState('');
   
+  // Document collapse states
+  const [idDocExpanded, setIdDocExpanded] = useState(false);
+  const [proofAddressExpanded, setProofAddressExpanded] = useState(false);
+  
   // Call recording states
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -395,11 +399,21 @@ export default function CallCentreApplicationDetailPage() {
               {/* ID Document */}
               {application.id_document_url ? (
                 <div>
-                  <p className="text-sm font-semibold text-blue-900 mb-2">ID Document</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-semibold text-blue-900">ID Document</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIdDocExpanded(!idDocExpanded)}
+                      className="text-xs"
+                    >
+                      {idDocExpanded ? 'Collapse' : 'Expand'}
+                    </Button>
+                  </div>
                   <div className="border-2 border-blue-200 rounded-lg overflow-hidden bg-white">
                     <iframe
                       src={application.id_document_url}
-                      className="w-full h-[600px]"
+                      className={`w-full transition-all duration-300 ${idDocExpanded ? 'h-[800px]' : 'h-[300px]'}`}
                       title="ID Document"
                     />
                   </div>
@@ -413,11 +427,21 @@ export default function CallCentreApplicationDetailPage() {
               {/* Proof of Address */}
               {application.proof_of_address_url ? (
                 <div>
-                  <p className="text-sm font-semibold text-green-900 mb-2">Proof of Address</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-semibold text-green-900">Proof of Address</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setProofAddressExpanded(!proofAddressExpanded)}
+                      className="text-xs"
+                    >
+                      {proofAddressExpanded ? 'Collapse' : 'Expand'}
+                    </Button>
+                  </div>
                   <div className="border-2 border-green-200 rounded-lg overflow-hidden bg-white">
                     <iframe
                       src={application.proof_of_address_url}
-                      className="w-full h-[600px]"
+                      className={`w-full transition-all duration-300 ${proofAddressExpanded ? 'h-[800px]' : 'h-[300px]'}`}
                       title="Proof of Address"
                     />
                   </div>
