@@ -223,7 +223,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
               {showChronicForm && (
                 <div className="bg-white border border-gray-300 rounded p-2 space-y-2">
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Person *</label>
+                    <label className="block text-xs font-medium mb-0.5">Person</label>
                     <select
                       value={chronicForm.person}
                       onChange={(e) => setChronicForm({ ...chronicForm, person: e.target.value })}
@@ -236,7 +236,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Condition *</label>
+                    <label className="block text-xs font-medium mb-0.5">Condition</label>
                     <input
                       type="text"
                       value={chronicForm.condition}
@@ -245,7 +245,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Medication *</label>
+                    <label className="block text-xs font-medium mb-0.5">Medication</label>
                     <input
                       type="text"
                       value={chronicForm.medication}
@@ -256,7 +256,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        if (chronicForm.person && chronicForm.condition && chronicForm.medication) {
+                        if (chronicForm.person || chronicForm.condition || chronicForm.medication) {
                           setChronicEntries([...chronicEntries, chronicForm])
                           setChronicForm({ person: '', condition: '', medication: '' })
                           setShowChronicForm(false)
@@ -345,7 +345,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
               {showOtherForm && (
                 <div className="bg-white border border-gray-300 rounded p-2 space-y-2">
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Person *</label>
+                    <label className="block text-xs font-medium mb-0.5">Person</label>
                     <select
                       value={otherForm.person}
                       onChange={(e) => setOtherForm({ ...otherForm, person: e.target.value })}
@@ -358,7 +358,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Condition *</label>
+                    <label className="block text-xs font-medium mb-0.5">Condition</label>
                     <input
                       type="text"
                       value={otherForm.condition}
@@ -367,7 +367,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Medication *</label>
+                    <label className="block text-xs font-medium mb-0.5">Medication</label>
                     <input
                       type="text"
                       value={otherForm.medication}
@@ -378,7 +378,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        if (otherForm.person && otherForm.condition && otherForm.medication) {
+                        if (otherForm.person || otherForm.condition || otherForm.medication) {
                           setOtherEntries([...otherEntries, otherForm])
                           setOtherForm({ person: '', condition: '', medication: '' })
                           setShowOtherForm(false)
@@ -467,7 +467,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
               {showDentalForm && (
                 <div className="bg-white border border-gray-300 rounded p-2 space-y-2">
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Person *</label>
+                    <label className="block text-xs font-medium mb-0.5">Person</label>
                     <select
                       value={dentalForm.person}
                       onChange={(e) => setDentalForm({ ...dentalForm, person: e.target.value })}
@@ -480,7 +480,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Condition *</label>
+                    <label className="block text-xs font-medium mb-0.5">Condition</label>
                     <input
                       type="text"
                       value={dentalForm.condition}
@@ -489,7 +489,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Medication *</label>
+                    <label className="block text-xs font-medium mb-0.5">Medication</label>
                     <input
                       type="text"
                       value={dentalForm.medication}
@@ -500,7 +500,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        if (dentalForm.person && dentalForm.condition && dentalForm.medication) {
+                        if (dentalForm.person || dentalForm.condition || dentalForm.medication) {
                           setDentalEntries([...dentalEntries, dentalForm])
                           setDentalForm({ person: '', condition: '', medication: '' })
                           setShowDentalForm(false)
@@ -589,7 +589,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
               {showFutureForm && (
                 <div className="bg-white border border-gray-300 rounded p-2 space-y-2">
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Person *</label>
+                    <label className="block text-xs font-medium mb-0.5">Person</label>
                     <select
                       value={futureForm.person}
                       onChange={(e) => setFutureForm({ ...futureForm, person: e.target.value })}
@@ -602,7 +602,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Condition *</label>
+                    <label className="block text-xs font-medium mb-0.5">Condition</label>
                     <input
                       type="text"
                       value={futureForm.condition}
@@ -611,7 +611,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Medication *</label>
+                    <label className="block text-xs font-medium mb-0.5">Medication</label>
                     <input
                       type="text"
                       value={futureForm.medication}
@@ -622,7 +622,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        if (futureForm.person && futureForm.condition && futureForm.medication) {
+                        if (futureForm.person || futureForm.condition || futureForm.medication) {
                           setFutureEntries([...futureEntries, futureForm])
                           setFutureForm({ person: '', condition: '', medication: '' })
                           setShowFutureForm(false)
@@ -710,7 +710,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
               {showPregnancyForm && (
                 <div className="bg-white border border-gray-300 rounded p-2 space-y-2">
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Person *</label>
+                    <label className="block text-xs font-medium mb-0.5">Person</label>
                     <select
                       value={pregnancyForm.person}
                       onChange={(e) => setPregnancyForm({ ...pregnancyForm, person: e.target.value })}
@@ -723,7 +723,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Expected Due Date *</label>
+                    <label className="block text-xs font-medium mb-0.5">Expected Due Date</label>
                     <input
                       type="date"
                       value={pregnancyForm.dueDate}
@@ -734,7 +734,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        if (pregnancyForm.person && pregnancyForm.dueDate) {
+                        if (pregnancyForm.person || pregnancyForm.dueDate) {
                           setPregnancyEntries([...pregnancyEntries, pregnancyForm])
                           setPregnancyForm({ person: '', dueDate: '' })
                           setShowPregnancyForm(false)
@@ -823,7 +823,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
               {showOperationForm && (
                 <div className="bg-white border border-gray-300 rounded p-2 space-y-2">
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Person *</label>
+                    <label className="block text-xs font-medium mb-0.5">Person</label>
                     <select
                       value={operationForm.person}
                       onChange={(e) => setOperationForm({ ...operationForm, person: e.target.value })}
@@ -836,7 +836,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Procedure *</label>
+                    <label className="block text-xs font-medium mb-0.5">Procedure</label>
                     <input
                       type="text"
                       value={operationForm.procedure}
@@ -845,7 +845,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Date of Procedure *</label>
+                    <label className="block text-xs font-medium mb-0.5">Date of Procedure</label>
                     <input
                       type="date"
                       value={operationForm.date}
@@ -856,7 +856,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        if (operationForm.person && operationForm.procedure && operationForm.date) {
+                        if (operationForm.person || operationForm.procedure || operationForm.date) {
                           setOperationEntries([...operationEntries, operationForm])
                           setOperationForm({ person: '', procedure: '', date: '' })
                           setShowOperationForm(false)
@@ -945,7 +945,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
               {showHospitalForm && (
                 <div className="bg-white border border-gray-300 rounded p-2 space-y-2">
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Person *</label>
+                    <label className="block text-xs font-medium mb-0.5">Person</label>
                     <select
                       value={hospitalForm.person}
                       onChange={(e) => setHospitalForm({ ...hospitalForm, person: e.target.value })}
@@ -958,7 +958,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Reason for Admission *</label>
+                    <label className="block text-xs font-medium mb-0.5">Reason for Admission</label>
                     <input
                       type="text"
                       value={hospitalForm.reason}
@@ -967,7 +967,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Date of Admission *</label>
+                    <label className="block text-xs font-medium mb-0.5">Date of Admission</label>
                     <input
                       type="date"
                       value={hospitalForm.date}
@@ -978,7 +978,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        if (hospitalForm.person && hospitalForm.reason && hospitalForm.date) {
+                        if (hospitalForm.person || hospitalForm.reason || hospitalForm.date) {
                           setHospitalEntries([...hospitalEntries, hospitalForm])
                           setHospitalForm({ person: '', reason: '', date: '' })
                           setShowHospitalForm(false)
@@ -1067,7 +1067,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
               {showMedicalAidForm && (
                 <div className="bg-white border border-gray-300 rounded p-2 space-y-2">
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Person *</label>
+                    <label className="block text-xs font-medium mb-0.5">Person</label>
                     <select
                       value={medicalAidForm.person}
                       onChange={(e) => setMedicalAidForm({ ...medicalAidForm, person: e.target.value })}
@@ -1080,7 +1080,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Name of Scheme/Plan *</label>
+                    <label className="block text-xs font-medium mb-0.5">Name of Scheme/Plan</label>
                     <input
                       type="text"
                       value={medicalAidForm.schemeName}
@@ -1089,7 +1089,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium mb-0.5">Date of Inception *</label>
+                    <label className="block text-xs font-medium mb-0.5">Date of Inception</label>
                     <input
                       type="date"
                       value={medicalAidForm.inceptionDate}
@@ -1100,7 +1100,7 @@ export default function Step6MedicalHistory({ data, updateData, nextStep, prevSt
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
-                        if (medicalAidForm.person && medicalAidForm.schemeName && medicalAidForm.inceptionDate) {
+                        if (medicalAidForm.person || medicalAidForm.schemeName || medicalAidForm.inceptionDate) {
                           setMedicalAidEntries([...medicalAidEntries, medicalAidForm])
                           setMedicalAidForm({ person: '', schemeName: '', inceptionDate: '' })
                           setShowMedicalAidForm(false)
