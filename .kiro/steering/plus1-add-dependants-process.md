@@ -1,5 +1,20 @@
 # Plus1 Add Dependants Process
 
+## 🎉 IMPLEMENTATION STATUS: PHASE 1 COMPLETE
+
+**Last Updated:** April 17, 2026  
+**Status:** ✅ SUBMISSION FLOW OPERATIONAL  
+**Testing:** ✅ PRICING AND FORM VALIDATION VERIFIED  
+
+The Plus1 add dependants submission flow is now fully functional with:
+- ✅ Correct pricing from official plan data (R266 for child on Comprehensive - Value Plus)
+- ✅ Plan name display throughout the flow
+- ✅ Form validation and document upload
+- ✅ API endpoint for submitting dependant requests
+- ✅ Database table ready for storing requests
+- ⬜ Call centre verification workflow (TODO - Phase 2)
+- ⬜ Operations manager approval workflow (TODO - Phase 2)
+
 ## Overview
 
 The Plus1 add dependants process allows existing Plus1Rewards members with Day1Health medical cover to add dependants (spouse/partner or children) to their existing plan. This is a specialized workflow that requires call centre verification before final approval by operations manager.
@@ -245,9 +260,17 @@ CREATE TABLE plus1_dependant_requests (
 
 ### POST `/api/plus1/add-dependant`
 
-**Status:** NOT YET CREATED
+**Status:** ✅ IMPLEMENTED
 
 **Purpose:** Submit dependant addition request
+
+**Implementation:**
+- Validates all required fields
+- Finds member by mobile number in Day1Main database
+- Inserts dependant request into `plus1_dependant_requests` table
+- Sets status to 'pending'
+- Includes member plan name for verification display
+- Returns request_id for tracking
 
 **Request Body:**
 ```json
@@ -262,17 +285,27 @@ CREATE TABLE plus1_dependant_requests (
   "id_document_url": "https://...",
   "birth_certificate_url": "https://...",
   "marriage_certificate_url": "https://...",
-  "current_premium": 385.00,
-  "dependant_cost": 150.00,
-  "new_premium": 535.00
+  "current_premium": 665.00,
+  "dependant_cost": 266.00,
+  "new_premium": 931.00
 }
 ```
 
-**Implementation:**
-- Validates request data
-- Saves dependant request to `plus1_dependant_requests` table
-- Sets status to 'pending'
-- Returns success with dependant request ID
+**Response:**
+```json
+{
+  "success": true,
+  "request_id": "uuid",
+  "message": "Dependant request submitted successfully"
+}
+```
+
+**Logging:**
+```
+✅ Plus1 dependant request submitted: 0215551111
+   Dependant: Riki Du Toit (child)
+   Premium increase: R266 (R665 → R931)
+```
 
 ### GET `/api/plus1/dependant-requests`
 
@@ -487,48 +520,51 @@ This dual visibility ensures operations managers can monitor dependant requests 
 
 When testing Plus1 add dependants flow:
 
-1. ⬜ Member can search by mobile number
-2. ⬜ Current plan and premium display correctly from Plus1 database
+1. ✅ Member can search by mobile number
+2. ✅ Current plan and premium display correctly from Plus1 database
 3. ✅ Pricing data loaded correctly from `/plan-dependant-pricing.json`
 4. ✅ Comprehensive - Value Plus + child = R665 + R266 = R931 (correct pricing)
 5. ✅ Hospital Value Plus + spouse = R390 + R312 = R702 (correct pricing)
 6. ✅ Plan name displays next to dependant cost values
-7. ⬜ Dependant form validates all required fields
-8. ⬜ Document uploads work correctly
-9. ⬜ Premium calculator shows correct new premium with plan name
-10. ⬜ Dependant addition summary shows correctly with plan name
-11. ⬜ Dependant request saves to database with correct pricing
+7. ✅ Dependant form validates all required fields
+8. ✅ Document uploads work correctly
+9. ✅ Premium calculator shows correct new premium with plan name
+10. ✅ Dependant addition summary shows correctly with plan name
+11. ✅ Dependant request saves to database with correct pricing
 12. ⬜ Call centre sees pending dependant request with plan name
 13. ⬜ Verification form works correctly with plan name display
 14. ⬜ Call recording uploads successfully
 15. ⬜ Document review works in verification form
-12. ⬜ Status changes to 'verified' after verification
-13. ⬜ Operations manager can approve/reject
-14. ⬜ Dependant code is assigned correctly (01-05 or 06+)
-15. ⬜ Plus1Rewards database updates FIRST on approval (with plan_status: 'active')
-16. ⬜ Dependant created in Day1Main with correct code
-17. ⬜ Member premium updated in Day1Main on approval
-18. ⬜ Member receives confirmation notification (TODO)
-19. ⬜ Dependant history is tracked (TODO)
+16. ⬜ Status changes to 'verified' after verification
+17. ⬜ Operations manager can approve/reject
+18. ⬜ Dependant code is assigned correctly (01-05 or 06+)
+19. ⬜ Plus1Rewards database updates FIRST on approval (with plan_status: 'active')
+20. ⬜ Dependant created in Day1Main with correct code
+21. ⬜ Member premium updated in Day1Main on approval
+22. ⬜ Member receives confirmation notification (TODO)
+23. ⬜ Dependant history is tracked (TODO)
 
 ## TODO List
 
-### High Priority
+### High Priority - ✅ COMPLETED
 - [x] ✅ Create official plan pricing data file (`plan-dependant-pricing.json`)
 - [x] ✅ Fix pricing calculation to use official plan data (no fallback values)
 - [x] ✅ Add plan name display next to dependant cost values
 - [x] ✅ Update verification form to show plan name in premium summary
-- [ ] Create `plus1_dependant_requests` database table
-- [ ] Create `/api/plus1/add-dependant` POST endpoint
+- [x] ✅ Add plan name variations for Plus1 database compatibility
+- [x] ✅ Create `plus1_dependant_requests` database table (already exists)
+- [x] ✅ Create `/api/plus1/add-dependant` POST endpoint
+- [x] ✅ Create `/plus1adddependant` page with dependant form
+- [x] ✅ Create `DependantVerificationForm` component
+- [x] ✅ Implement call recording upload to Supabase Storage
+- [x] ✅ Implement role-based access (call centre vs operations manager)
+
+### High Priority - TODO
 - [ ] Create `/api/plus1/dependant-requests` GET endpoint
 - [ ] Create `/api/plus1/dependant-requests/[id]` PATCH endpoint
-- [ ] Create `/plus1adddependant` page with dependant form (✅ CREATED - needs API integration)
-- [ ] Create `DependantVerificationForm` component (✅ CREATED - needs API integration)
 - [ ] Integrate dependant requests into call centre dashboard
 - [ ] Update operations call centre page with dependant requests tab
-- [ ] Implement dependant code assignment logic
-- [ ] Implement call recording upload to Supabase Storage (✅ IMPLEMENTED in form)
-- [ ] Implement role-based access (call centre vs operations manager) (✅ IMPLEMENTED in form)
+- [ ] Implement dependant code assignment logic in approval endpoint
 
 ### Medium Priority
 - [ ] Add `verified_by`, `approved_by`, `rejected_by` user tracking
@@ -547,22 +583,30 @@ When testing Plus1 add dependants flow:
 
 ## Success Criteria
 
-A successful Plus1 add dependant should:
-1. ✅ Save dependant request to database with status 'pending' and correct pricing
-2. ✅ Notify call centre of pending request (dual visibility with operations)
-3. ✅ Allow call centre to verify via phone and add notes
-4. ✅ Require mandatory call recording upload
-5. ✅ Require document verification
-6. ✅ Change status to 'verified' after verification
-7. ✅ Allow operations manager to approve/reject (not call centre)
-8. ✅ Assign correct dependant code (01-05 for spouse/partner, 06+ for child)
-9. ✅ Update Plus1Rewards database FIRST on approval (including plan_status: 'active')
-10. ✅ Create dependant in Day1Main database with correct code
-11. ✅ Update member premium in Day1Main database on approval
-12. ⬜ Send confirmation to member (TODO)
-13. ✅ Complete in under 48 hours from request to approval
+### Phase 1: Submission Flow ✅ COMPLETE
+1. ✅ Member can search by mobile number
+2. ✅ Current plan and premium display correctly
+3. ✅ Pricing calculated correctly from official plan data
+4. ✅ Plan name displays throughout the flow
+5. ✅ Form validates all required fields
+6. ✅ Documents upload successfully
+7. ✅ Dependant request saves to database with correct pricing
+8. ✅ API endpoint returns success with request_id
 
-**Status:** ✅ FULLY IMPLEMENTED - Ready for testing
+### Phase 2: Verification & Approval (TODO)
+9. ⬜ Call centre sees pending dependant request with plan name
+10. ⬜ Verification form displays all information correctly
+11. ⬜ Call recording uploads and saves successfully
+12. ⬜ Status changes to 'verified' after verification
+13. ⬜ Operations manager can approve/reject (not call centre)
+14. ⬜ Dependant code assigned correctly (01-05 for spouse/partner, 06+ for child)
+15. ⬜ Plus1Rewards database updates FIRST on approval (including plan_status: 'active')
+16. ⬜ Dependant created in Day1Main database with correct code
+17. ⬜ Member premium updated in Day1Main database on approval
+18. ⬜ Send confirmation to member (TODO)
+19. ⬜ Complete in under 48 hours from request to approval
+
+**Current Status:** ✅ Phase 1 Complete - Ready for Phase 2 implementation
 
 ## Monitoring
 
