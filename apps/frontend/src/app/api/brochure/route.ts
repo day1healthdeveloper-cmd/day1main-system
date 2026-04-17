@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Read the PDF file
-    const filePath = path.join(process.cwd(), 'docs', 'cover plan brochures', fileName);
+    // Read the PDF file from apps/frontend/docs/cover plan brochures
+    const filePath = path.join(process.cwd(), 'apps', 'frontend', 'docs', 'cover plan brochures', fileName);
     const fileBuffer = await readFile(filePath);
 
     // Return the PDF with proper headers
