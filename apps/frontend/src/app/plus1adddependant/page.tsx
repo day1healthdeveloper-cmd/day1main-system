@@ -216,8 +216,6 @@ export default function Plus1AddDependantPage() {
           dependant_gender: dependantData.gender,
           dependant_relationship: dependantData.relationship,
           id_document_url: idDocUrl,
-          birth_certificate_url: null,
-          marriage_certificate_url: null,
           current_premium: memberData?.currentPremium || 0,
           dependant_cost: dependantCost,
           new_premium: (memberData?.currentPremium || 0) + dependantCost
