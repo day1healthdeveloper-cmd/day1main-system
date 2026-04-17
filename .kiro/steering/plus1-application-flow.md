@@ -333,6 +333,51 @@ ALTER TABLE members ADD COLUMN IF NOT EXISTS suburb text NULL;
 
 **Solution:** Medical history detail fields are now optional (not required). Only yes/no questions are required. Call centre can follow up for details if needed.
 
+## Call Centre Verification
+
+**Route:** `/call-centre/application/[id]`
+
+**Status:** ✅ IMPLEMENTED
+
+**Purpose:** Call centre agents verify Plus1 applications before admin approval
+
+**Features:**
+- **Personal Information Display** - Shows all member details with phone call link
+- **Address Display** - Full address information
+- **Plan Details** - Plan name and monthly premium
+- **Dependants Display** - Shows any dependants (typically none for Plus1)
+- **Banking Details** - Shows payment method (EFT or Debit Order)
+- **Document Viewing** - Enhanced document display:
+  - ID Document - Blue card with "View Document" button
+  - Proof of Address - Green card with "View Document" button
+  - Opens documents in new tab for verification
+  - Shows "No document uploaded" if missing
+- **Call Recording** - MANDATORY verification call recording:
+  - MediaRecorder API for recording
+  - Start/Stop recording with timer
+  - Audio playback preview
+  - Upload to Supabase Storage (`call-recordings/verification-calls/`)
+  - Verify button disabled until recording uploaded
+- **Verification Notes** - Required textarea for documenting call
+- **Status Update** - Changes application status to 'under_review' after verification
+
+**Verification Workflow:**
+1. Call centre agent opens application from support dashboard
+2. Reviews all member information and documents
+3. Clicks "Start Recording" before calling member
+4. Calls member to verify details (phone link provided)
+5. Confirms identity, plan details, and documents
+6. Stops recording and uploads to storage
+7. Adds verification notes
+8. Clicks "Mark as Verified & Send to Admin"
+9. Application moves to admin for final approval
+
+**Important:** 
+- Call recording is MANDATORY for insurance compliance
+- Documents must be viewable and verified
+- Verification notes are required
+- Status changes to 'under_review' (not 'approved' - only admin can approve)
+
 ## Testing Checklist
 
 When testing Plus1 application flow:
@@ -351,11 +396,17 @@ When testing Plus1 application flow:
 12. ✅ Product guide link works (served from `public/Day1 Health Product Guide.pdf`)
 13. ✅ Policy wording link works (served from `public/plan exact wording/`)
 14. ✅ Application submits successfully
-15. ✅ Admin can see application with broker code 'POR'
-16. ✅ Admin approval updates Plus1Rewards database FIRST
-17. ✅ Member is created in Day1Main database
-18. ✅ Application is deleted after successful approval
-19. ✅ No duplicate members created if Plus1 update fails
+15. ✅ Call centre can view application with all details
+16. ✅ ID document displays in blue card with view button
+17. ✅ Proof of address displays in green card with view button
+18. ✅ Call recording works and uploads successfully
+19. ✅ Verification notes can be added
+20. ✅ Application status changes to 'under_review' after verification
+21. ✅ Admin can see application with broker code 'POR'
+22. ✅ Admin approval updates Plus1Rewards database FIRST
+23. ✅ Member is created in Day1Main database
+24. ✅ Application is deleted after successful approval
+25. ✅ No duplicate members created if Plus1 update fails
 
 ## File Locations
 
@@ -366,6 +417,7 @@ When testing Plus1 application flow:
 - Step 4: `apps/frontend/src/components/apply-steps/Step6MedicalHistory.tsx` (fields optional, not required)
 - Step 5: `apps/frontend/src/components/apply-steps/Step5Plus1CoverPlan.tsx`
 - Step 6: `apps/frontend/src/components/apply-steps/Step6Plus1ReviewSubmit.tsx` (includes brochure links)
+- Call centre verification: `apps/frontend/src/app/call-centre/application/[id]/page.tsx` (enhanced document display)
 
 **Backend:**
 - Application submission: `apps/frontend/src/app/api/applications/route.ts`

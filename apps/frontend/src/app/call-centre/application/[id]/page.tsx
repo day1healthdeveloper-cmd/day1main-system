@@ -385,24 +385,56 @@ export default function CallCentreApplicationDetailPage() {
         {/* Documents */}
         <Card>
           <CardHeader>
-            <CardTitle>Documents</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Documents
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {application.id_document_url && (
-                <div className="p-3 bg-gray-50 rounded">
-                  <p className="text-sm font-medium mb-2">ID Document</p>
-                  <Button size="sm" onClick={() => window.open(application.id_document_url, '_blank')}>
-                    View Document
-                  </Button>
+            <div className="space-y-3">
+              {application.id_document_url ? (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-blue-900 mb-1">ID Document</p>
+                      <p className="text-xs text-blue-700">Click to view in new tab</p>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => window.open(application.id_document_url, '_blank')}
+                    >
+                      <FileText className="w-3 h-3 mr-1" />
+                      View Document
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-sm text-gray-500">No ID document uploaded</p>
                 </div>
               )}
-              {application.proof_of_address_url && (
-                <div className="p-3 bg-gray-50 rounded">
-                  <p className="text-sm font-medium mb-2">Proof of Address</p>
-                  <Button size="sm" onClick={() => window.open(application.proof_of_address_url, '_blank')}>
-                    View Document
-                  </Button>
+              
+              {application.proof_of_address_url ? (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-green-900 mb-1">Proof of Address</p>
+                      <p className="text-xs text-green-700">Click to view in new tab</p>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => window.open(application.proof_of_address_url, '_blank')}
+                    >
+                      <FileText className="w-3 h-3 mr-1" />
+                      View Document
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-sm text-gray-500">No proof of address uploaded</p>
                 </div>
               )}
             </div>
