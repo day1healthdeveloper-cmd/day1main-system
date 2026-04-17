@@ -518,11 +518,11 @@ curl -X GET https://your-domain.com/api/cron/sync-plus1-status \
 
 
 ### Issue: Brochure/Product Guide links not working (404 errors)
-**Cause:** PDFs were in `docs/` folder but Next.js can only serve from `public/` folder
+**Cause:** PDFs were in `docs/` folder but Next.js can only serve from `public/` folder. Also, `/api/brochure` endpoint was failing.
 
-**Solution:** All PDFs now copied to public folder:
-- Brochures: `public/cover plan brochures/*.pdf`
-- Product Guide: `public/Day1 Health Product Guide.pdf`
-- Policy Wording: `public/plan exact wording/*.pdf`
+**Solution:** All PDFs now copied to public folder and links updated to use direct public paths:
+- Brochures: `public/cover plan brochures/*.pdf` → `/cover plan brochures/Comprehensive Value Plus Plan.pdf`
+- Product Guide: `public/Day1 Health Product Guide.pdf` → `/Day1 Health Product Guide.pdf`
+- Policy Wording: `public/plan exact wording/*.pdf` → `/plan exact wording/Value Plus Plan - Exact Policy Wording - Final.pdf`
 
-Links updated to use direct public paths (e.g., `/cover plan brochures/Comprehensive Value Plus Plan.pdf`)
+**Status:** ✅ FIXED - All brochure links now work correctly using direct public folder paths
