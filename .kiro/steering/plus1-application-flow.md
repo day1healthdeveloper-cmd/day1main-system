@@ -333,6 +333,27 @@ ALTER TABLE members ADD COLUMN IF NOT EXISTS suburb text NULL;
 
 **Solution:** Medical history detail fields are now optional (not required). Only yes/no questions are required. Call centre can follow up for details if needed.
 
+## Call Centre Dashboard Filtering
+
+**Route:** `/call-centre/support`
+
+**Application Status Filter:**
+- **Shows:** Applications with status = 'submitted' ONLY
+- **Hides:** Applications with status = 'under_review' (these go to admin)
+- **Hides:** Applications with status = 'approved' or 'rejected'
+
+**Why This Matters:**
+- Call centre only handles NEW applications that need verification
+- Once verified (status='under_review'), application moves to admin queue
+- This prevents call centre from seeing applications they've already processed
+- Admin dashboard shows 'under_review' applications for final approval
+
+**Code Implementation:**
+```typescript
+// Call centre support page filters for 'submitted' only
+setApplications(allApps.filter((app: Application) => app.status === 'submitted'));
+```
+
 ## Call Centre Verification
 
 **Route:** `/call-centre/application/[id]`
@@ -373,11 +394,17 @@ ALTER TABLE members ADD COLUMN IF NOT EXISTS suburb text NULL;
 6. Stops recording and uploads to storage
 7. Adds verification notes
 8. Clicks "Mark as Verified & Send to Admin"
-9. Application moves to admin for final approval
+9. **Application status changes to 'under_review'**
+10. **Application REMOVED from call centre dashboard**
+11. **Application appears in admin dashboard for final approval**
 
 **Important:** 
 - Call recording is MANDATORY for insurance compliance
 - Documents must be viewable and verified
+- Verification notes are required
+- Status changes to 'under_review' (not 'approved' - only admin can approve)
+- **Once verified, application is NO LONGER visible in call centre dashboard**
+- **Verified applications (status='under_review') only show in admin dashboard**
 - Verification notes are required
 - Status changes to 'under_review' (not 'approved' - only admin can approve)
 
