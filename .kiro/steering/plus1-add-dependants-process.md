@@ -68,14 +68,13 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
 3. Current plan and premium are auto-populated from Plus1 database
 4. Member fills in dependant details:
    - First name, last name
-   - ID number (or passport for non-SA residents)
-   - Date of birth
-   - Gender
+   - ID number (13-digit SA ID - auto-extracts DOB and gender)
+   - Date of birth (auto-populated from ID)
+   - Gender (auto-populated from ID)
    - Relationship (spouse, partner, child)
-5. Member uploads dependant documents:
-   - ID document or passport
-   - Birth certificate (if child under 16)
-   - Marriage certificate (if spouse)
+5. Member uploads dependant document:
+   - ID document (only document required)
+   - No birth certificate or marriage certificate needed
 6. System calculates new premium based on:
    - Current premium
    - Dependant type (spouse/partner vs child)
@@ -90,11 +89,16 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
 **Data Captured:**
 - Mobile number
 - Member data (first name, last name, email, etc.)
-- Dependant personal information
-- Dependant relationship
-- Document URLs
+- Dependant personal information (name, ID, DOB, gender, relationship)
+- Dependant ID document URL (only document required)
 - Current premium
+- Dependant cost
 - New premium (current + dependant cost)
+
+**Important Notes:**
+- **No birth certificate or marriage certificate required** - ID document is sufficient
+- **No member plan name stored** - Dependant inherits plan from main member when added to member_dependants table
+- **ID number auto-extraction** - System automatically extracts DOB and gender from SA ID number
 
 **Submission:**
 - POST to `/api/plus1/add-dependant`
@@ -122,7 +126,7 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
    - Confirm member identity (ID number displayed from database)
    - Verify dependant relationship (spouse/partner/child)
    - Confirm dependant details (ID number, date of birth)
-   - Review uploaded documents (ID, birth certificate, marriage certificate)
+   - Review uploaded ID document
    - Explain new plan premium (shown in blue)
    - Confirm member understands waiting periods for dependant
    - Confirm premium increase amount
@@ -154,7 +158,7 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
    - Verification notes (what the agent documented)
    - Call recording (can listen to the full call)
 3. Reviews member information and dependant details
-4. Checks uploaded documents (ID, birth certificate, marriage certificate)
+4. Checks uploaded ID document
 5. Verifies dependant relationship is valid
 6. Checks member's claim history
 7. Verifies new premium calculation
@@ -195,7 +199,7 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
 
 **Status:** ✅ CREATED
 
-**Proposed Schema:**
+**Schema:**
 ```sql
 CREATE TABLE plus1_dependant_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -213,10 +217,8 @@ CREATE TABLE plus1_dependant_requests (
   dependant_gender TEXT NOT NULL,
   dependant_relationship TEXT NOT NULL, -- spouse, partner, child
   
-  -- Documents
+  -- Document (only ID document required)
   id_document_url TEXT,
-  birth_certificate_url TEXT,
-  marriage_certificate_url TEXT,
   
   -- Premium Information
   current_premium DECIMAL(10,2) NOT NULL,
@@ -241,6 +243,11 @@ CREATE TABLE plus1_dependant_requests (
   updated_at TIMESTAMP
 );
 ```
+
+**Important Notes:**
+- **No birth_certificate_url or marriage_certificate_url** - Only ID document is required
+- **No member_plan_name** - Dependant inherits plan from main member when added to member_dependants table
+- **Simplified document verification** - Single ID document is sufficient for all dependant types
 
 ### Dependant Code Assignment Logic
 
@@ -276,20 +283,23 @@ CREATE TABLE plus1_dependant_requests (
 ```json
 {
   "mobile_number": "0821234567",
-  "dependant_first_name": "Jane",
-  "dependant_last_name": "Doe",
-  "dependant_id_number": "0001015800084",
-  "dependant_date_of_birth": "2000-01-01",
-  "dependant_gender": "female",
-  "dependant_relationship": "spouse",
+  "dependant_first_name": "Riki",
+  "dependant_last_name": "Du Toit",
+  "dependant_id_number": "1404245228080",
+  "dependant_date_of_birth": "2014-04-24",
+  "dependant_gender": "male",
+  "dependant_relationship": "child",
   "id_document_url": "https://...",
-  "birth_certificate_url": "https://...",
-  "marriage_certificate_url": "https://...",
   "current_premium": 665.00,
   "dependant_cost": 266.00,
   "new_premium": 931.00
 }
 ```
+
+**Important Notes:**
+- **Only ID document required** - No birth certificate or marriage certificate
+- **No member_plan_name** - Dependant inherits plan from main member
+- **ID auto-extraction** - DOB and gender extracted from SA ID number on frontend
 
 **Response:**
 ```json
@@ -500,7 +510,7 @@ This dual visibility ensures operations managers can monitor dependant requests 
 
 1. **Identity Verification Required** - Call centre must verify member identity before approval
 2. **Call Recording Mandatory** - Call recording is REQUIRED (not optional) for insurance compliance
-3. **Document Verification** - All uploaded documents must be reviewed and validated
+3. **Document Verification** - ID document must be reviewed and validated (no birth certificate or marriage certificate required)
 4. **Relationship Validation** - Dependant relationship must be valid (spouse, partner, child)
 5. **Dependant Code Assignment** - System automatically assigns proper code (01-05 for spouse/partner, 06+ for child)
 6. **Age Validation** - Children must be under 21 (or 25 if student)
@@ -515,6 +525,8 @@ This dual visibility ensures operations managers can monitor dependant requests 
 15. **Dual Visibility** - Dependant requests visible to both Call Centre and Operations simultaneously
 16. **Operations Follow-up** - Operations manager can follow up with call centre if verification is delayed
 17. **Role-Based Approval** - Only operations managers can approve; call centre can only verify
+18. **Plan Inheritance** - Dependant inherits plan name from main member (no separate plan_name field needed)
+19. **Simplified Documentation** - Only ID document required for all dependant types (no birth certificates or marriage certificates)
 
 ## Testing Checklist
 
