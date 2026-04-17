@@ -70,6 +70,8 @@ export function UpgradeVerificationForm({ upgradeRequest, onVerify, onReject, us
   const [verificationNotes, setVerificationNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [showBrochure, setShowBrochure] = useState(false);
+  const [brochureExpanded, setBrochureExpanded] = useState(false);
   
   // Call recording states
   const [isRecording, setIsRecording] = useState(false);
@@ -694,8 +696,54 @@ export function UpgradeVerificationForm({ upgradeRequest, onVerify, onReject, us
                 size="sm"
                 variant="outline"
                 className="text-xs h-7 shrink-0"
-                onClick={() => {
-                  // Find the brochure file name based on plan name
+                onClick={() => setShowBrochure(!showBrochure)}
+              >
+                {showBrochure ? 'Hide Brochure' : 'View Brochure'}
+              </Button>
+            </li>
+            <li className="flex items-start gap-2">
+              <span>• Confirm member understands waiting periods (if any)</span>
+            </li>
+            <li className="flex items-start justify-between gap-4">
+              <span>• Confirm new monthly premium amount</span>
+              <span className="font-semibold text-blue-600 text-right">
+                R{upgradeRequest.upgraded_price?.toFixed(2)}/month
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span>• Check recent claim history</span>
+            </li>
+          </ul>
+        </div>
+
+        {/* Plan Brochure Display - Collapsible */}
+        {showBrochure && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-blue-600">Plan Brochure - {upgradeRequest.upgraded_plan}</label>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setBrochureExpanded(!brochureExpanded)}
+                  className="text-xs"
+                >
+                  {brochureExpanded ? 'Collapse' : 'Expand'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowBrochure(false)}
+                  className="text-xs text-red-600"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+            
+            <div className="border-2 border-blue-300 rounded-lg overflow-hidden">
+              <iframe
+                src={(() => {
                   const planBrochures: Record<string, string> = {
                     // Plus1 Upgrade Plans
                     'Day-to-Day Plan': 'Day-To-Day Single Plan .pdf',
@@ -727,35 +775,38 @@ export function UpgradeVerificationForm({ upgradeRequest, onVerify, onReject, us
                   };
                   
                   const brochureFileName = planBrochures[upgradeRequest.upgraded_plan];
-                  if (brochureFileName) {
-                    window.open(`/api/brochure?file=${encodeURIComponent(brochureFileName)}`, '_blank');
-                  } else {
-                    addToast({
-                      type: 'error',
-                      title: 'Brochure Not Found',
-                      description: 'Plan brochure is not available.',
-                      duration: 3000,
-                    });
-                  }
-                }}
+                  return brochureFileName ? `/cover plan brochures/${encodeURIComponent(brochureFileName)}` : '';
+                })()}
+                className="w-full transition-all duration-300 ease-in-out"
+                style={{ height: brochureExpanded ? '800px' : '400px' }}
+                title={`${upgradeRequest.upgraded_plan} Brochure`}
               >
-                View Brochure
-              </Button>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>• Confirm member understands waiting periods (if any)</span>
-            </li>
-            <li className="flex items-start justify-between gap-4">
-              <span>• Confirm new monthly premium amount</span>
-              <span className="font-semibold text-blue-600 text-right">
-                R{upgradeRequest.upgraded_price?.toFixed(2)}/month
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>• Check recent claim history</span>
-            </li>
-          </ul>
-        </div>
+                <p className="p-4 text-center text-gray-500">
+                  Your browser does not support PDFs. 
+                  <a 
+                    href={(() => {
+                      const planBrochures: Record<string, string> = {
+                        'Day-to-Day Plan': 'Day-To-Day Single Plan .pdf',
+                        'Hospital Value Plus': 'Hospital Value Plus Plan.pdf',
+                        'Comprehensive - Value Plus': 'Comprehensive Value Plus Plan.pdf',
+                      };
+                      const brochureFileName = planBrochures[upgradeRequest.upgraded_plan];
+                      return brochureFileName ? `/cover plan brochures/${encodeURIComponent(brochureFileName)}` : '#';
+                    })()}
+                    target="_blank"
+                    className="text-blue-600 underline ml-1"
+                  >
+                    Download the PDF
+                  </a>
+                </p>
+              </iframe>
+            </div>
+            
+            <p className="text-xs text-gray-500 text-center">
+              Review the plan benefits and coverage details with the member during the call
+            </p>
+          </div>
+        )}
 
         {/* Verification Notes */}
         <div className="space-y-2">

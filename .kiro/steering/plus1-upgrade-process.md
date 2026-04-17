@@ -275,10 +275,19 @@ CREATE TABLE plus1_upgrade_requests (
 - **Verification Checklist:**
   - Confirm member identity (ID number shown in blue)
   - Verify current plan details (shown in blue)
-  - Explain new plan benefits (View Brochure button opens PDF)
+  - Explain new plan benefits (View Brochure button shows inline collapsible PDF viewer)
   - Confirm member understands waiting periods
   - Confirm new monthly premium (shown in blue)
   - Check recent claim history
+- **Plan Brochure Display:**
+  - Inline collapsible PDF viewer (similar to application document display)
+  - Toggle View/Hide Brochure button
+  - Default height: 400px (readable preview)
+  - Expand/Collapse: 400px ↔ 800px with smooth transitions
+  - Blue border styling consistent with verification theme
+  - Direct PDF serving from `/cover plan brochures/` folder
+  - Plan-specific brochure mapping (Hospital Value Plus → Hospital Value Plus Plan.pdf)
+  - Fallback download link for browsers without PDF support
 - **Verification Notes:** Required textarea for documenting call
 - **Verified View (for Operations Manager):**
   - Shows verified information (ID, plans, premiums, increase)
@@ -410,8 +419,9 @@ When testing Plus1 upgrade flow:
 7. ✅ Call centre sees pending upgrade request with correct pricing
 8. ✅ Verification form works correctly with proper button text ("Verify Upgrade Request")
 9. ✅ Call recording uploads successfully
-10. ✅ View Brochure button opens PDF correctly via `/api/brochure`
-11. ✅ Status changes to 'verified' after verification (not approved!)
+10. ✅ View Brochure button shows inline collapsible PDF viewer (400px ↔ 800px)
+11. ✅ Plan brochure displays correctly with expand/collapse functionality
+12. ✅ Status changes to 'verified' after verification (not approved!)
 12. ✅ Operations manager can approve/reject (call centre cannot approve)
 13. ✅ Plus1Rewards database updates FIRST on approval (with plan_status: 'active')
 14. ✅ Member record updates in Day1Main on approval
