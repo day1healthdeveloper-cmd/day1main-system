@@ -66,38 +66,38 @@ export default function Step6Plus1ReviewSubmit({ data, updateData, prevStep, goT
     
     // Match the actual brochure filenames
     if (planName.includes('comprehensive') && planName.includes('executive')) {
-      return '/api/brochure?file=Comprehensive Executive Plan.pdf'
+      return '/cover plan brochures/Comprehensive Executive Plan.pdf'
     }
     if (planName.includes('comprehensive') && planName.includes('platinum')) {
-      return '/api/brochure?file=Comprehensive Platinum Plan.pdf'
+      return '/cover plan brochures/Comprehensive Platinum Plan.pdf'
     }
     if (planName.includes('comprehensive') && planName.includes('value plus')) {
-      return '/api/brochure?file=Comprehensive Value Plus Plan.pdf'
+      return '/cover plan brochures/Comprehensive Value Plus Plan.pdf'
     }
     if (planName.includes('day-to-day') || planName.includes('day to day')) {
-      return '/api/brochure?file=Day-To-Day Single Plan .pdf'
+      return '/cover plan brochures/Day-To-Day Single Plan .pdf'
     }
     if (planName.includes('hospital') && planName.includes('executive')) {
-      return '/api/brochure?file=Hospital Executive Plan.pdf'
+      return '/cover plan brochures/Hospital Executive Plan.pdf'
     }
     if (planName.includes('hospital') && planName.includes('platinum')) {
-      return '/api/brochure?file=Hospital Platinum Plan.pdf'
+      return '/cover plan brochures/Hospital Platinum Plan.pdf'
     }
     if (planName.includes('hospital') && planName.includes('value plus')) {
-      return '/api/brochure?file=Hospital Value Plus Plan.pdf'
+      return '/cover plan brochures/Hospital Value Plus Plan.pdf'
     }
     if (planName.includes('senior') && planName.includes('comprehensive')) {
-      return '/api/brochure?file=Senior Comprehensive Plan.pdf'
+      return '/cover plan brochures/Senior Comprehensive Plan.pdf'
     }
     if (planName.includes('senior') && planName.includes('day-to-day')) {
-      return '/api/brochure?file=Senior Day-To-Day Plan.pdf'
+      return '/cover plan brochures/Senior Day-To-Day Plan.pdf'
     }
     if (planName.includes('senior') && planName.includes('hospital')) {
-      return '/api/brochure?file=Senior Hospital Plan.pdf'
+      return '/cover plan brochures/Senior Hospital Plan.pdf'
     }
     
     // Default fallback
-    return '/api/brochure?file=Comprehensive Value Plus Plan.pdf'
+    return '/cover plan brochures/Comprehensive Value Plus Plan.pdf'
   }
 
   const getPolicyWordingUrl = () => {
