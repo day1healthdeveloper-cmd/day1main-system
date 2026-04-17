@@ -9,6 +9,7 @@ interface DependantRequest {
   member_first_name: string
   member_last_name: string
   member_email: string
+  member_plan_name?: string
   dependant_first_name: string
   dependant_last_name: string
   dependant_id_number: string
@@ -280,10 +281,14 @@ export default function DependantVerificationForm({ request, userRole, onClose, 
           <div>
             <p className="text-gray-600 text-xs mb-1">Current Premium</p>
             <p className="font-bold text-lg text-gray-900">R{request.current_premium.toFixed(2)}</p>
+            {request.member_plan_name && (
+              <p className="text-xs text-gray-500 mt-1">{request.member_plan_name}</p>
+            )}
           </div>
           <div>
             <p className="text-gray-600 text-xs mb-1">Dependant Cost</p>
             <p className="font-bold text-lg text-green-600">+R{request.dependant_cost.toFixed(2)}</p>
+            <p className="text-xs text-gray-500 mt-1 capitalize">{request.dependant_relationship}</p>
           </div>
           <div>
             <p className="text-gray-600 text-xs mb-1">New Premium</p>

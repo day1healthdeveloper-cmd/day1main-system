@@ -1,92 +1,42 @@
 {
-  "Day to Day Plan": {
-    "single_base": 385,
-    "couple_base": 674,
-    "per_adult": 385,
-    "per_child": 193,
-    "spouse_cost": 289,
-    "partner_cost": 289,
-    "child_cost": 193
-  },
-  "Comprehensive Plan – Value Plus": {
-    "single_base": 665,
-    "couple_base": 1151,
-    "per_adult": 665,
-    "per_child": 266,
-    "spouse_cost": 486,
-    "partner_cost": 486,
-    "child_cost": 266
-  },
   "Hospital Plan – Value Plus": {
-    "single_base": 390,
-    "couple_base": 702,
-    "per_adult": 390,
-    "per_child": 156,
     "spouse_cost": 312,
-    "partner_cost": 312,
     "child_cost": 156
   },
-  "Comprehensive Plan – Platinum": {
-    "single_base": 896,
-    "couple_base": 1611,
-    "per_adult": 896,
-    "per_child": 358,
-    "spouse_cost": 715,
-    "partner_cost": 715,
-    "child_cost": 358
-  },
   "Hospital Plan – Platinum": {
-    "single_base": 560,
-    "couple_base": 1008,
-    "per_adult": 560,
-    "per_child": 224,
     "spouse_cost": 448,
-    "partner_cost": 448,
     "child_cost": 224
   },
-  "Comprehensive Plan – Executive": {
-    "single_base": 985,
-    "couple_base": 1724,
-    "per_adult": 985,
-    "per_child": 394,
-    "spouse_cost": 739,
-    "partner_cost": 739,
-    "child_cost": 394
-  },
   "Hospital Plan – Executive": {
-    "single_base": 640,
-    "couple_base": 1152,
-    "per_adult": 640,
-    "per_child": 256,
     "spouse_cost": 512,
-    "partner_cost": 512,
     "child_cost": 256
   },
-  "Senior Comprehensive Plan": {
-    "single_base": 875,
-    "couple_base": 1750,
-    "per_adult": 875,
-    "per_child": 0,
-    "spouse_cost": 875,
-    "partner_cost": 875,
-    "child_cost": 0
+  "Comprehensive Plan – Value Plus": {
+    "spouse_cost": 486,
+    "child_cost": 266
+  },
+  "Comprehensive Plan – Platinum": {
+    "spouse_cost": 715,
+    "child_cost": 358
+  },
+  "Comprehensive Plan – Executive": {
+    "spouse_cost": 739,
+    "child_cost": 394
+  },
+  "Day-to-Day Plan": {
+    "spouse_cost": 289,
+    "child_cost": 193
   },
   "Senior Hospital Plan": {
-    "single_base": 580,
-    "couple_base": 1160,
-    "per_adult": 580,
-    "per_child": 0,
     "spouse_cost": 580,
-    "partner_cost": 580,
     "child_cost": 0
   },
-  "Senior Day to Day Plan": {
-    "single_base": 425,
-    "couple_base": 850,
-    "per_adult": 425,
-    "per_child": 0,
+  "Senior Day-to-Day Plan": {
     "spouse_cost": 425,
-    "partner_cost": 425,
+    "child_cost": 0
+  },
+  "Senior Comprehensive Plan": {
+    "spouse_cost": 875,
     "child_cost": 0
   }
 }

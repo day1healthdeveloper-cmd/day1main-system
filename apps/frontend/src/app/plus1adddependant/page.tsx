@@ -115,12 +115,15 @@ export default function Plus1AddDependantPage() {
             setDependantCost(pricing.child_cost)
           }
         } else {
-          // Fallback
-          setDependantCost(150)
+          // If plan not found in pricing file, show error
+          console.error('Plan not found in pricing data:', memberData.currentPlan)
+          alert(`Pricing data not found for plan: ${memberData.currentPlan}. Please contact support.`)
+          setDependantCost(0)
         }
       } catch (error) {
         console.error('Error loading pricing:', error)
-        setDependantCost(150)
+        alert('Failed to load pricing data. Please try again.')
+        setDependantCost(0)
       }
     }
   }
@@ -154,8 +157,10 @@ export default function Plus1AddDependantPage() {
         // Will be updated when relationship is selected
         setDependantCost(0)
       } else {
-        // Fallback if plan not found
-        setDependantCost(150)
+        // If plan not found, show error
+        console.error('Plan not found in pricing data:', planName)
+        alert(`Pricing data not found for plan: ${planName}. Please contact support.`)
+        setDependantCost(0)
       }
       
       setStep(2)
@@ -422,7 +427,7 @@ export default function Plus1AddDependantPage() {
                 {dependantCost > 0 && (
                   <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
                     <p className="text-sm text-blue-900">
-                      <strong>Dependant Cost:</strong> R{dependantCost.toFixed(2)}/month
+                      <strong>Dependant Cost ({memberData?.currentPlan}):</strong> R{dependantCost.toFixed(2)}/month
                     </p>
                     <p className="text-sm text-blue-700 mt-1">
                       New Premium: R{((memberData?.currentPremium || 0) + dependantCost).toFixed(2)}/month
@@ -533,11 +538,11 @@ export default function Plus1AddDependantPage() {
                   <h3 className="font-semibold text-gray-900 mb-2">Premium Summary</h3>
                   <div className="bg-blue-50 p-4 rounded-lg space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Current Premium:</span>
+                      <span>Current Premium ({memberData.currentPlan}):</span>
                       <span className="font-medium">R{memberData.currentPremium.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-green-600">
-                      <span>Dependant Cost:</span>
+                      <span>Dependant Cost ({dependantData.relationship}):</span>
                       <span className="font-medium">+R{dependantCost.toFixed(2)}</span>
                     </div>
                     <div className="border-t border-blue-200 pt-2 flex justify-between font-semibold text-lg">

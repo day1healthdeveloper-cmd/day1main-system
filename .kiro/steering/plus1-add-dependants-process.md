@@ -16,6 +16,33 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
 
 ## Add Dependants Flow
 
+### Dependant Pricing Reference
+
+**IMPORTANT:** Plus1 dependant additions use official plan pricing. Use this reference table to verify dependant costs are calculated correctly.
+
+| Plan Name | Spouse/Partner Cost | Child Cost |
+|-----------|-------------------|-----------|
+| Hospital Plan – Value Plus | R312.00 | R156.00 |
+| Hospital Plan – Platinum | R448.00 | R224.00 |
+| Hospital Plan – Executive | R512.00 | R256.00 |
+| Comprehensive Plan – Value Plus | R486.00 | R266.00 |
+| Comprehensive Plan – Platinum | R715.00 | R358.00 |
+| Comprehensive Plan – Executive | R739.00 | R394.00 |
+| Day-to-Day Plan | R289.00 | R193.00 |
+| Senior Hospital Plan | R580.00 | R0.00 (no children) |
+| Senior Day-to-Day Plan | R425.00 | R0.00 (no children) |
+| Senior Comprehensive Plan | R875.00 | R0.00 (no children) |
+
+**Example Calculations:**
+- Frikkie on Comprehensive - Value Plus (R665) + child = R665 + R266 = **R931.00/month**
+- Member on Hospital Value Plus (R390) + spouse = R390 + R312 = **R702.00/month**
+- Member on Day-to-Day (R385) + child = R385 + R193 = **R578.00/month**
+
+**Implementation:**
+- Pricing data stored in `apps/frontend/public/plan-dependant-pricing.json`
+- System automatically looks up correct pricing based on plan name and relationship
+- If pricing not found, system shows error (no fallback values)
+
 ### Step 1: Member Submits Dependant Request
 
 **Route:** `/plus1adddependant`
@@ -462,15 +489,19 @@ When testing Plus1 add dependants flow:
 
 1. ⬜ Member can search by mobile number
 2. ⬜ Current plan and premium display correctly from Plus1 database
-3. ⬜ Dependant form validates all required fields
-4. ⬜ Document uploads work correctly
-5. ⬜ Premium calculator shows correct new premium
-6. ⬜ Dependant addition summary shows correctly
-7. ⬜ Dependant request saves to database
-8. ⬜ Call centre sees pending dependant request
-9. ⬜ Verification form works correctly
-10. ⬜ Call recording uploads successfully
-11. ⬜ Document review works in verification form
+3. ✅ Pricing data loaded correctly from `/plan-dependant-pricing.json`
+4. ✅ Comprehensive - Value Plus + child = R665 + R266 = R931 (correct pricing)
+5. ✅ Hospital Value Plus + spouse = R390 + R312 = R702 (correct pricing)
+6. ✅ Plan name displays next to dependant cost values
+7. ⬜ Dependant form validates all required fields
+8. ⬜ Document uploads work correctly
+9. ⬜ Premium calculator shows correct new premium with plan name
+10. ⬜ Dependant addition summary shows correctly with plan name
+11. ⬜ Dependant request saves to database with correct pricing
+12. ⬜ Call centre sees pending dependant request with plan name
+13. ⬜ Verification form works correctly with plan name display
+14. ⬜ Call recording uploads successfully
+15. ⬜ Document review works in verification form
 12. ⬜ Status changes to 'verified' after verification
 13. ⬜ Operations manager can approve/reject
 14. ⬜ Dependant code is assigned correctly (01-05 or 06+)
@@ -483,17 +514,21 @@ When testing Plus1 add dependants flow:
 ## TODO List
 
 ### High Priority
+- [x] ✅ Create official plan pricing data file (`plan-dependant-pricing.json`)
+- [x] ✅ Fix pricing calculation to use official plan data (no fallback values)
+- [x] ✅ Add plan name display next to dependant cost values
+- [x] ✅ Update verification form to show plan name in premium summary
 - [ ] Create `plus1_dependant_requests` database table
 - [ ] Create `/api/plus1/add-dependant` POST endpoint
 - [ ] Create `/api/plus1/dependant-requests` GET endpoint
 - [ ] Create `/api/plus1/dependant-requests/[id]` PATCH endpoint
-- [ ] Create `/plus1adddependant` page with dependant form
-- [ ] Create `DependantVerificationForm` component
+- [ ] Create `/plus1adddependant` page with dependant form (✅ CREATED - needs API integration)
+- [ ] Create `DependantVerificationForm` component (✅ CREATED - needs API integration)
 - [ ] Integrate dependant requests into call centre dashboard
 - [ ] Update operations call centre page with dependant requests tab
 - [ ] Implement dependant code assignment logic
-- [ ] Implement call recording upload to Supabase Storage
-- [ ] Implement role-based access (call centre vs operations manager)
+- [ ] Implement call recording upload to Supabase Storage (✅ IMPLEMENTED in form)
+- [ ] Implement role-based access (call centre vs operations manager) (✅ IMPLEMENTED in form)
 
 ### Medium Priority
 - [ ] Add `verified_by`, `approved_by`, `rejected_by` user tracking
@@ -501,7 +536,7 @@ When testing Plus1 add dependants flow:
 - [ ] Create dependant history view for members
 - [ ] Add dependant request analytics to operations dashboard
 - [ ] Implement document preview/download in verification form
-- [ ] Add premium calculator validation
+- [x] ✅ Add premium calculator validation (now shows error if plan not found)
 
 ### Low Priority
 - [ ] Add dependant request search/filter
@@ -513,7 +548,7 @@ When testing Plus1 add dependants flow:
 ## Success Criteria
 
 A successful Plus1 add dependant should:
-1. ✅ Save dependant request to database with status 'pending'
+1. ✅ Save dependant request to database with status 'pending' and correct pricing
 2. ✅ Notify call centre of pending request (dual visibility with operations)
 3. ✅ Allow call centre to verify via phone and add notes
 4. ✅ Require mandatory call recording upload
