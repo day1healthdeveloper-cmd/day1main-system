@@ -391,22 +391,17 @@ export default function CallCentreApplicationDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* ID Document */}
               {application.id_document_url ? (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-blue-900 mb-1">ID Document</p>
-                      <p className="text-xs text-blue-700">Click to view in new tab</p>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      className="bg-blue-600 hover:bg-blue-700"
-                      onClick={() => window.open(application.id_document_url, '_blank')}
-                    >
-                      <FileText className="w-3 h-3 mr-1" />
-                      View Document
-                    </Button>
+                <div>
+                  <p className="text-sm font-semibold text-blue-900 mb-2">ID Document</p>
+                  <div className="border-2 border-blue-200 rounded-lg overflow-hidden bg-white">
+                    <iframe
+                      src={application.id_document_url}
+                      className="w-full h-[600px]"
+                      title="ID Document"
+                    />
                   </div>
                 </div>
               ) : (
@@ -415,21 +410,16 @@ export default function CallCentreApplicationDetailPage() {
                 </div>
               )}
               
+              {/* Proof of Address */}
               {application.proof_of_address_url ? (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-green-900 mb-1">Proof of Address</p>
-                      <p className="text-xs text-green-700">Click to view in new tab</p>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => window.open(application.proof_of_address_url, '_blank')}
-                    >
-                      <FileText className="w-3 h-3 mr-1" />
-                      View Document
-                    </Button>
+                <div>
+                  <p className="text-sm font-semibold text-green-900 mb-2">Proof of Address</p>
+                  <div className="border-2 border-green-200 rounded-lg overflow-hidden bg-white">
+                    <iframe
+                      src={application.proof_of_address_url}
+                      className="w-full h-[600px]"
+                      title="Proof of Address"
+                    />
                   </div>
                 </div>
               ) : (

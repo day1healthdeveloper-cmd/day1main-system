@@ -347,10 +347,10 @@ ALTER TABLE members ADD COLUMN IF NOT EXISTS suburb text NULL;
 - **Plan Details** - Plan name and monthly premium
 - **Dependants Display** - Shows any dependants (typically none for Plus1)
 - **Banking Details** - Shows payment method (EFT or Debit Order)
-- **Document Viewing** - Enhanced document display:
-  - ID Document - Blue card with "View Document" button
-  - Proof of Address - Green card with "View Document" button
-  - Opens documents in new tab for verification
+- **Document Viewing** - Inline document display with iframes:
+  - ID Document - Displayed inline in 600px iframe with blue border
+  - Proof of Address - Displayed inline in 600px iframe with green border
+  - Documents readable directly in the page (no new tabs)
   - Shows "No document uploaded" if missing
 - **Call Recording** - MANDATORY verification call recording:
   - MediaRecorder API for recording
@@ -397,8 +397,9 @@ When testing Plus1 application flow:
 13. ✅ Policy wording link works (served from `public/plan exact wording/`)
 14. ✅ Application submits successfully
 15. ✅ Call centre can view application with all details
-16. ✅ ID document displays in blue card with view button
-17. ✅ Proof of address displays in green card with view button
+16. ✅ ID document displays inline in iframe (600px, blue border)
+17. ✅ Proof of address displays inline in iframe (600px, green border)
+18. ✅ Documents readable directly in page without opening new tabs
 18. ✅ Call recording works and uploads successfully
 19. ✅ Verification notes can be added
 20. ✅ Application status changes to 'under_review' after verification
