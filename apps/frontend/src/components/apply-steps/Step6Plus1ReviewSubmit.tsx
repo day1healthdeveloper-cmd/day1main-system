@@ -61,21 +61,43 @@ export default function Step6Plus1ReviewSubmit({ data, updateData, prevStep, goT
   }
 
   const getBrochureUrl = () => {
-    // Map plan names to brochure filenames
+    // Map plan names to brochure filenames from docs/cover plan brochures folder
     const planName = data.planName?.toLowerCase() || ''
     
-    // Match the actual brochure filenames in the brochures folder
-    if (planName.includes('value plus hospital')) return '/brochures/Day 1 Health Value Plus Hospital Plan 2025.pdf'
-    if (planName.includes('value plus senior hospital')) return '/brochures/Day1 Health Value Plus Senior Hospital Plan 2025.pdf'
-    if (planName.includes('value plus')) return '/brochures/Day1 Health Value Plus Plan 2025.pdf'
-    if (planName.includes('executive hospital')) return '/brochures/Day1 Health Executive Hospital Plan 2025.pdf'
-    if (planName.includes('executive')) return '/brochures/Day1 Health Executive Plan 2025.pdf'
-    if (planName.includes('platinum hospital')) return '/brochures/Day1 Health Platinum Hospital Plan 2025.pdf'
-    if (planName.includes('platinum')) return '/brochures/Day1 Health Platinum Plan 2025.pdf'
-    if (planName.includes('senior comprehensive')) return '/brochures/Day1 Health Senior Comprehensive Plan 2025.pdf'
+    // Match the actual brochure filenames
+    if (planName.includes('comprehensive') && planName.includes('executive')) {
+      return '/api/brochure?file=Comprehensive Executive Plan.pdf'
+    }
+    if (planName.includes('comprehensive') && planName.includes('platinum')) {
+      return '/api/brochure?file=Comprehensive Platinum Plan.pdf'
+    }
+    if (planName.includes('comprehensive') && planName.includes('value plus')) {
+      return '/api/brochure?file=Comprehensive Value Plus Plan.pdf'
+    }
+    if (planName.includes('day-to-day') || planName.includes('day to day')) {
+      return '/api/brochure?file=Day-To-Day Single Plan .pdf'
+    }
+    if (planName.includes('hospital') && planName.includes('executive')) {
+      return '/api/brochure?file=Hospital Executive Plan.pdf'
+    }
+    if (planName.includes('hospital') && planName.includes('platinum')) {
+      return '/api/brochure?file=Hospital Platinum Plan.pdf'
+    }
+    if (planName.includes('hospital') && planName.includes('value plus')) {
+      return '/api/brochure?file=Hospital Value Plus Plan.pdf'
+    }
+    if (planName.includes('senior') && planName.includes('comprehensive')) {
+      return '/api/brochure?file=Senior Comprehensive Plan.pdf'
+    }
+    if (planName.includes('senior') && planName.includes('day-to-day')) {
+      return '/api/brochure?file=Senior Day-To-Day Plan.pdf'
+    }
+    if (planName.includes('senior') && planName.includes('hospital')) {
+      return '/api/brochure?file=Senior Hospital Plan.pdf'
+    }
     
-    // Default fallback to Value Plus Hospital
-    return '/brochures/Day 1 Health Value Plus Hospital Plan 2025.pdf'
+    // Default fallback
+    return '/api/brochure?file=Comprehensive Value Plus Plan.pdf'
   }
 
   const getPolicyWordingUrl = () => {
