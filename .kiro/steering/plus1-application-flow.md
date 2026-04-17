@@ -347,10 +347,13 @@ ALTER TABLE members ADD COLUMN IF NOT EXISTS suburb text NULL;
 - **Plan Details** - Plan name and monthly premium
 - **Dependants Display** - Shows any dependants (typically none for Plus1)
 - **Banking Details** - Shows payment method (EFT or Debit Order)
-- **Document Viewing** - Inline document display with iframes:
-  - ID Document - Displayed inline in 600px iframe with blue border
-  - Proof of Address - Displayed inline in 600px iframe with green border
-  - Documents readable directly in the page (no new tabs)
+- **Document Viewing** - Collapsible inline document display:
+  - ID Document - Inline iframe with blue border, default 300px height
+  - Proof of Address - Inline iframe with green border, default 300px height
+  - Expand/Collapse buttons for each document (300px ↔ 800px)
+  - Smooth transition animation
+  - Documents readable directly in page (no new tabs)
+  - Independent collapse state for each document
   - Shows "No document uploaded" if missing
 - **Call Recording** - MANDATORY verification call recording:
   - MediaRecorder API for recording
@@ -397,9 +400,10 @@ When testing Plus1 application flow:
 13. ✅ Policy wording link works (served from `public/plan exact wording/`)
 14. ✅ Application submits successfully
 15. ✅ Call centre can view application with all details
-16. ✅ ID document displays inline in iframe (600px, blue border)
-17. ✅ Proof of address displays inline in iframe (600px, green border)
-18. ✅ Documents readable directly in page without opening new tabs
+16. ✅ ID document displays inline in collapsible iframe (300px default, 800px expanded)
+17. ✅ Proof of address displays inline in collapsible iframe (300px default, 800px expanded)
+18. ✅ Documents readable directly in page with expand/collapse buttons
+19. ✅ Smooth transition animation between collapsed and expanded states
 18. ✅ Call recording works and uploads successfully
 19. ✅ Verification notes can be added
 20. ✅ Application status changes to 'under_review' after verification
