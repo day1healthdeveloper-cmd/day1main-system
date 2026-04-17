@@ -267,9 +267,17 @@ PLUS1_SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ### Search Plus1 Application Member
 **Endpoint:** `GET /api/plus1/search-application-member?mobile={mobile}`
 
+**Status:** ✅ IMPLEMENTED
+
 **Purpose:** Search Plus1Rewards database for NEW APPLICATION members (who should NOT exist in Day1Main yet)
 
 **CRITICAL:** This is different from `/api/plus1/search-member` which is for UPGRADES where member must exist in both databases.
+
+**Process:**
+1. Searches Plus1Rewards database by `cell_phone`
+2. Verifies member does NOT exist in Day1Main (critical for new applications)
+3. If found in Plus1 but NOT in Day1Main, returns member data
+4. If found in both databases, returns error: "use upgrade process instead"
 
 **Returns:**
 ```json
@@ -307,35 +315,47 @@ ALTER TABLE members ADD COLUMN IF NOT EXISTS suburb text NULL;
 
 **Solution:** Code now updates Plus1 FIRST, before creating member. If Plus1 fails, no member is created.
 
+### Issue: Member search returns "member not found" for Plus1 members
+**Cause:** Using wrong API endpoint - `/api/plus1/search-member` is for upgrades, not new applications
+
+**Solution:** Use `/api/plus1/search-application-member` for new Plus1 applications. This endpoint:
+- Searches Plus1Rewards database
+- Verifies member does NOT exist in Day1Main yet
+- Returns error if member already exists (should use upgrade process instead)
+
 ### Issue: Member cannot edit pre-filled information
 **Cause:** This is intentional - data comes from Plus1Rewards and should not be editable
 
 **Solution:** If member data is incorrect, they must update it in Plus1Rewards first, then restart application.
 
-### Issue: Dependents step is disabled
-**Cause:** This is intentional - Plus1 manages dependents separately
+### Issue: Medical history fields showing as required
+**Cause:** Fields were marked as required with asterisks
 
-**Solution:** Dependents are added later through Plus1Rewards account or support team.
+**Solution:** Medical history detail fields are now optional (not required). Only yes/no questions are required. Call centre can follow up for details if needed.
 
 ## Testing Checklist
 
 When testing Plus1 application flow:
 
-1. ✅ Member search finds Plus1 member by mobile number
-2. ✅ All personal information auto-fills correctly
-3. ✅ All personal fields are read-only (disabled)
-4. ✅ Cover plan name and price display correctly
-5. ✅ Documents upload successfully
-6. ✅ Dependents step shows disabled message
-7. ✅ Medical history saves correctly
-8. ✅ Voice recording is required and saves
-9. ✅ Digital signature is required and saves
-10. ✅ Application submits successfully
-11. ✅ Admin can see application with broker code 'POR'
-12. ✅ Admin approval updates Plus1Rewards database FIRST
-13. ✅ Member is created in Day1Main database
-14. ✅ Application is deleted after successful approval
-15. ✅ No duplicate members created if Plus1 update fails
+1. ✅ Member search finds Plus1 member by mobile number (uses `/api/plus1/search-application-member`)
+2. ✅ System verifies member does NOT exist in Day1Main database
+3. ✅ All personal information auto-fills correctly from Plus1Rewards
+4. ✅ All personal fields are read-only (disabled)
+5. ✅ Cover plan name and price display correctly
+6. ✅ Documents upload successfully
+7. ✅ Dependents step shows disabled message
+8. ✅ Medical history saves correctly (fields are optional, not required)
+9. ✅ Voice recording is required and saves
+10. ✅ Digital signature is required and saves
+11. ✅ Plan brochure link works (served from `public/cover plan brochures/`)
+12. ✅ Product guide link works (served from `public/Day1 Health Product Guide.pdf`)
+13. ✅ Policy wording link works (served from `public/plan exact wording/`)
+14. ✅ Application submits successfully
+15. ✅ Admin can see application with broker code 'POR'
+16. ✅ Admin approval updates Plus1Rewards database FIRST
+17. ✅ Member is created in Day1Main database
+18. ✅ Application is deleted after successful approval
+19. ✅ No duplicate members created if Plus1 update fails
 
 ## File Locations
 
@@ -343,14 +363,20 @@ When testing Plus1 application flow:
 - Application page: `apps/frontend/src/app/plus1confirm/page.tsx`
 - Step 1: `apps/frontend/src/components/apply-steps/Step1Plus1Confirm.tsx`
 - Step 3: `apps/frontend/src/components/apply-steps/Step3Plus1Dependents.tsx`
+- Step 4: `apps/frontend/src/components/apply-steps/Step6MedicalHistory.tsx` (fields optional, not required)
 - Step 5: `apps/frontend/src/components/apply-steps/Step5Plus1CoverPlan.tsx`
-- Step 6: `apps/frontend/src/components/apply-steps/Step6Plus1ReviewSubmit.tsx`
+- Step 6: `apps/frontend/src/components/apply-steps/Step6Plus1ReviewSubmit.tsx` (includes brochure links)
 
 **Backend:**
 - Application submission: `apps/frontend/src/app/api/applications/route.ts`
 - Application approval: `apps/frontend/src/app/api/admin/applications/route.ts`
 - Plus1 application member search: `apps/frontend/src/app/api/plus1/search-application-member/route.ts` (NEW APPLICATIONS)
 - Plus1 upgrade member search: `apps/frontend/src/app/api/plus1/search-member/route.ts` (UPGRADES ONLY)
+
+**Assets:**
+- Brochures: `apps/frontend/public/cover plan brochures/*.pdf`
+- Product Guide: `apps/frontend/public/Day1 Health Product Guide.pdf`
+- Policy Wording: `apps/frontend/public/plan exact wording/*.pdf`
 
 ## Important Notes for Future Development
 
@@ -489,3 +515,14 @@ curl -X GET https://your-domain.com/api/cron/sync-plus1-status \
 3. Update Plus1Rewards `plan_status` to 'inactive'
 4. Run cron job manually
 5. Verify Day1Main member status changed to 'suspended'
+
+
+### Issue: Brochure/Product Guide links not working (404 errors)
+**Cause:** PDFs were in `docs/` folder but Next.js can only serve from `public/` folder
+
+**Solution:** All PDFs now copied to public folder:
+- Brochures: `public/cover plan brochures/*.pdf`
+- Product Guide: `public/Day1 Health Product Guide.pdf`
+- Policy Wording: `public/plan exact wording/*.pdf`
+
+Links updated to use direct public paths (e.g., `/cover plan brochures/Comprehensive Value Plus Plan.pdf`)
