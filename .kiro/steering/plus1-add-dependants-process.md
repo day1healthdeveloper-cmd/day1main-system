@@ -2,7 +2,7 @@
 
 ## 🎉 IMPLEMENTATION STATUS: FULLY OPERATIONAL
 
-**Last Updated:** April 17, 2026  
+**Last Updated:** April 18, 2026  
 **Status:** ✅ COMPLETE END-TO-END WORKFLOW  
 **Testing:** ✅ SUCCESSFULLY TESTED WITH LIVE DATA  
 
@@ -15,16 +15,29 @@ The Plus1 add dependants system is now fully functional with:
 - ✅ Call centre verification workflow (OPERATIONAL)
 - ✅ Operations manager approval workflow (OPERATIONAL)
 - ✅ Dependant code assignment (WORKING)
-- ✅ Plus1Rewards database synchronization (WORKING - trigger issue resolved)
+- ✅ Plus1Rewards database synchronization (WORKING - status field issue resolved)
 - ✅ Member premium updates (WORKING)
 
-**Live Test Results (2026-04-17):**
-- Member: Frikkie Du Toit (DAY17057010, mobile: 0215551111)
-- Dependant: Riki du Toit (child, ID: 1404245228080)
-- Premium: R665 → R931 (+R266) ✅
-- Dependant Code: 1 (correct - first dependant, no spouse/partner) ✅
-- Day1Main Status: Approved and Active ✅
-- Plus1Rewards Status: Successfully synced ✅
+**Live Test Results (2026-04-18):**
+- **Test 1:** Frikkie Du Toit (DAY17057010, mobile: 0215551111)
+  - Dependant: Riki du Toit (child, ID: 1404245228080)
+  - Premium: R665 → R931 (+R266) ✅
+  - Dependant Code: 1 (correct - first dependant, no spouse/partner) ✅
+  - Day1Main Status: Approved and Active ✅
+  - Plus1Rewards Status: Successfully synced ✅
+
+- **Test 2:** Jack Sparrow (DAY17057012, mobile: 0215551113)
+  - Dependant: Jim Sparrow (child, ID: 1304245228080)
+  - Premium: R665 → R931 (+R266) ✅
+  - Dependant Code: 1 (correct - first dependant, no spouse/partner) ✅
+  - Day1Main Status: Approved and Active ✅
+  - Plus1Rewards Status: Successfully synced ✅
+  - Plus1 Dependants Table: Successfully created ✅
+
+**Critical Fix Applied (2026-04-18):**
+- Removed `status` field from Plus1 dependants table insert
+- Plus1 dependants inherit status from main member (no separate status column)
+- This was causing silent failures in dependant creation
 
 ## Overview
 
@@ -185,9 +198,19 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
      - If spouse/partner exists: Assign code 2, 3, 4, etc.
      - If no spouse/partner: Assign code 1, 2, 3, etc.
 4. **Update Plus1Rewards database FIRST** (critical order to prevent data inconsistency):
-   - Update `cover_plan_price` to new premium (current + dependant cost)
-   - **Update `plan_status` to 'active'** (critical - enables all member functionality)
-   - **Insert dependant into Plus1 `dependants` table** with member_cover_plan_id and linked_to_main_member_id
+   - Update `members` table:
+     - `cover_plan_price` to new premium
+     - `cover_plan_variant` to 'Family' (when dependants exist)
+     - `plan_status` to 'active' (critical - enables all member functionality)
+   - Update `member_cover_plans` table:
+     - `target_amount` to new premium
+     - `funded_amount` to new premium
+   - **Insert dependant into Plus1 `dependants` table:**
+     - `member_cover_plan_id` (from member_cover_plans)
+     - `dependant_type` (spouse/partner/child)
+     - `id_number`, `first_name`, `last_name`
+     - `linked_to_main_member_id` (main member ID)
+     - **NOTE:** No `status` field - status is inherited from main member
    - If this fails, STOP - nothing else happens
 5. Create dependant record in Day1Main `member_dependants` table:
    - Link to member via `member_id`
@@ -202,13 +225,15 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
 8. Record `approved_at` timestamp
 9. TODO: Send confirmation email/SMS to member
 
-**Verified Results (2026-04-17):**
-- ✅ Dependant code assigned: 1 (for Riki du Toit - child)
+**Verified Results (2026-04-18):**
+- ✅ Dependant code assigned correctly (1 for first child when no spouse/partner)
 - ✅ Member premium updated: R665 → R931
 - ✅ Dependant created in member_dependants table
 - ✅ Status: active
 - ✅ All timestamps recorded correctly
-- ✅ Plus1Rewards dependants table: Successfully synced (trigger issue resolved)
+- ✅ Plus1Rewards members table: Successfully updated (price, variant, status)
+- ✅ Plus1Rewards member_cover_plans: Successfully updated (target_amount, funded_amount)
+- ✅ Plus1Rewards dependants table: Successfully created (without status field)
 
 **On Rejection:**
 1. Update dependant request status to 'rejected'
@@ -687,8 +712,9 @@ Watch for these log messages:
 ✅ Dependant code assigned: [code] for relationship: [spouse/child]
 ✅ Dependant request verified by: [agent]
 ✅ Dependant approved for member: [member_number]
-✅ Plus1 members table updated: [mobile] - new premium: R[amount]
-✅ Plus1 dependants table updated: [dependant_name] added successfully
+✅ Plus1Rewards members table updated - new price: R[amount] variant: [Family]
+✅ Plus1Rewards member_cover_plans updated
+✅ Plus1Rewards dependant created
 ✅ Day1Main dependant created: [dependant_code] for member: [member_number]
 ✅ Day1Main member premium updated: [member_number]
 ```
@@ -698,14 +724,16 @@ If you see:
 ❌ Failed to save dependant request: ...
 ❌ Failed to assign dependant code: ...
 ❌ Failed to update Plus1 database: ...
+❌ Failed to create Plus1 dependant: ...
 ❌ Failed to create dependant record: ...
 ❌ Failed to update member premium: ...
 ```
 
 The dependant addition will fail and should be retried or handled manually.
 
-### Verified Production Logs (2026-04-17)
+### Verified Production Logs (2026-04-18)
 
+**Test 1 - Frikkie Du Toit + Riki:**
 ```
 ✅ Plus1 dependant request submitted: 0215551111
    Dependant: Riki du Toit (child)
@@ -729,6 +757,27 @@ The dependant addition will fail and should be retried or handled manually.
    Old: R665.00 → New: R931.00
 ```
 
+**Test 2 - Jack Sparrow + Jim:**
+```
+✅ Plus1 dependant request submitted: 0215551113
+   Dependant: Jim Sparrow (child)
+   Premium increase: R266 (R665 → R931)
+
+✅ Dependant code assigned: 1 for relationship: child
+   Member: Jack Sparrow (DAY17057012)
+   No spouse/partner exists - child gets code 1
+
+✅ Plus1Rewards members table updated - new price: R931 variant: Family
+✅ Plus1Rewards member_cover_plans updated
+✅ Plus1Rewards dependant created (without status field)
+
+✅ Day1Main dependant created: 1 for member: DAY17057012
+   Status: active
+
+✅ Day1Main member premium updated: DAY17057012
+   Old: R665.00 → New: R931.00
+```
+
 ## Notes
 
 - This process is specifically for Plus1Rewards members (broker code 'POR')
@@ -739,4 +788,6 @@ The dependant addition will fail and should be retried or handled manually.
 - No limit on total dependants
 - Codes are sequential integers (1, 2, 3, 4, 5, etc.)
 - Documents are mandatory for verification and compliance
-- Plus1Rewards `dependants` table trigger issue resolved (2026-04-17)
+- **Plus1 dependants table does NOT have a status column** - status is inherited from main member
+- Plus1 `cover_plan_variant` automatically updates to 'Family' when dependants are added
+- All three databases sync correctly: Day1Main members, Day1Main member_dependants, Plus1 dependants
