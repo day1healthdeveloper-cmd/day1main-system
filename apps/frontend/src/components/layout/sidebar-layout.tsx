@@ -84,7 +84,16 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           // Count both pending and verified requests
           const pendingCount = upgradeData.stats?.pending || 0;
           const verifiedCount = upgradeData.stats?.verified || 0;
-          setVerifiedUpgradesCount(pendingCount + verifiedCount);
+          
+          // Fetch dependant requests count
+          const dependantResponse = await fetch('/api/plus1/dependant-requests');
+          const dependantData = await dependantResponse.json();
+          // Count pending and verified dependant requests
+          const dependantPendingAndVerified = (dependantData.requests || []).filter(
+            (req: any) => req.status === 'pending' || req.status === 'verified'
+          ).length;
+          
+          setVerifiedUpgradesCount(pendingCount + verifiedCount + dependantPendingAndVerified);
         } catch (error) {
           console.error('Failed to fetch verified upgrades count:', error);
         }
