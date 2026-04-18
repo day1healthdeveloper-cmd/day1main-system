@@ -379,7 +379,11 @@ export default function CallCentreApplicationDetailPage() {
                 </div>
                 <div>
                   <p className="text-gray-600">Debit Order Day</p>
-                  <p className="font-medium">{application.debit_order_day}th of each month</p>
+                  <p className="font-medium">
+                    {application.collection_method === null 
+                      ? 'N/A' 
+                      : `${application.debit_order_day}th of each month`}
+                  </p>
                 </div>
               </div>
             </div>
