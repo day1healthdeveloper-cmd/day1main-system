@@ -64,8 +64,13 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           const upgradeData = await upgradeResponse.json();
           const upgradeCount = upgradeData.stats?.pending || 0;
           
-          // Combine both counts
-          setNewApplicationsCount(submittedCount + upgradeCount);
+          // Fetch dependant requests count
+          const dependantResponse = await fetch('/api/plus1/dependant-requests?status=pending');
+          const dependantData = await dependantResponse.json();
+          const dependantCount = dependantData.requests?.length || 0;
+          
+          // Combine all counts
+          setNewApplicationsCount(submittedCount + upgradeCount + dependantCount);
         } catch (error) {
           console.error('Failed to fetch applications count:', error);
         }
