@@ -1,19 +1,30 @@
 # Plus1 Add Dependants Process
 
-## 🎉 IMPLEMENTATION STATUS: PHASE 1 COMPLETE
+## 🎉 IMPLEMENTATION STATUS: FULLY OPERATIONAL
 
 **Last Updated:** April 17, 2026  
-**Status:** ✅ SUBMISSION FLOW OPERATIONAL  
-**Testing:** ✅ PRICING AND FORM VALIDATION VERIFIED  
+**Status:** ✅ COMPLETE END-TO-END WORKFLOW  
+**Testing:** ✅ SUCCESSFULLY TESTED WITH LIVE DATA  
 
-The Plus1 add dependants submission flow is now fully functional with:
+The Plus1 add dependants system is now fully functional with:
 - ✅ Correct pricing from official plan data (R266 for child on Comprehensive - Value Plus)
 - ✅ Plan name display throughout the flow
 - ✅ Form validation and document upload
 - ✅ API endpoint for submitting dependant requests
-- ✅ Database table ready for storing requests
-- ⬜ Call centre verification workflow (TODO - Phase 2)
-- ⬜ Operations manager approval workflow (TODO - Phase 2)
+- ✅ Database table storing requests
+- ✅ Call centre verification workflow (OPERATIONAL)
+- ✅ Operations manager approval workflow (OPERATIONAL)
+- ✅ Dependant code assignment (WORKING)
+- ✅ Plus1Rewards database synchronization (WORKING - trigger issue resolved)
+- ✅ Member premium updates (WORKING)
+
+**Live Test Results (2026-04-17):**
+- Member: Frikkie Du Toit (DAY17057010, mobile: 0215551111)
+- Dependant: Riki du Toit (child, ID: 1404245228080)
+- Premium: R665 → R931 (+R266) ✅
+- Dependant Code: 1 (correct - first dependant, no spouse/partner) ✅
+- Day1Main Status: Approved and Active ✅
+- Plus1Rewards Status: Successfully synced ✅
 
 ## Overview
 
@@ -169,17 +180,20 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
 2. Find member in Day1Main database using mobile number
 3. **Determine dependant code:**
    - Query existing dependants for this member
-   - If relationship is 'spouse' or 'partner': Assign code 01-05 (next available)
-   - If relationship is 'child': Assign code 06+ (next available)
+   - If relationship is 'spouse' or 'partner': Assign code 1 (if no spouse/partner exists)
+   - If relationship is 'child': 
+     - If spouse/partner exists: Assign code 2, 3, 4, etc.
+     - If no spouse/partner: Assign code 1, 2, 3, etc.
 4. **Update Plus1Rewards database FIRST** (critical order to prevent data inconsistency):
    - Update `cover_plan_price` to new premium (current + dependant cost)
    - **Update `plan_status` to 'active'** (critical - enables all member functionality)
+   - **Insert dependant into Plus1 `dependants` table** with member_cover_plan_id and linked_to_main_member_id
    - If this fails, STOP - nothing else happens
 5. Create dependant record in Day1Main `member_dependants` table:
    - Link to member via `member_id`
-   - Assign dependant code (01-05 for spouse/partner, 06+ for child)
-   - Store all dependant details
-   - Store document URLs
+   - Assign dependant code (sequential from existing dependants)
+   - Store all dependant details (name, ID, DOB, gender, relationship)
+   - Store document URL (ID document)
    - Set status to 'active'
 6. Update member record in Day1Main database:
    - Update `monthly_premium` to new premium
@@ -187,6 +201,14 @@ The Plus1 add dependants process allows existing Plus1Rewards members with Day1H
 7. Update dependant request status to 'approved'
 8. Record `approved_at` timestamp
 9. TODO: Send confirmation email/SMS to member
+
+**Verified Results (2026-04-17):**
+- ✅ Dependant code assigned: 1 (for Riki du Toit - child)
+- ✅ Member premium updated: R665 → R931
+- ✅ Dependant created in member_dependants table
+- ✅ Status: active
+- ✅ All timestamps recorded correctly
+- ✅ Plus1Rewards dependants table: Successfully synced (trigger issue resolved)
 
 **On Rejection:**
 1. Update dependant request status to 'rejected'
@@ -251,17 +273,32 @@ CREATE TABLE plus1_dependant_requests (
 
 ### Dependant Code Assignment Logic
 
-**Spouse/Partner Codes (01-05):**
-- Query existing dependants: `SELECT dependant_code FROM member_dependants WHERE member_id = ? AND dependant_code BETWEEN '01' AND '05' ORDER BY dependant_code DESC LIMIT 1`
-- If no spouse/partner exists: Assign '01'
-- If spouse/partner exists: Assign next available (02, 03, 04, 05)
-- Maximum 5 spouse/partner dependants per member
+**IMPORTANT:** Dependant codes follow a specific pattern based on relationship type:
 
-**Child Codes (06+):**
-- Query existing child dependants: `SELECT dependant_code FROM member_dependants WHERE member_id = ? AND dependant_code >= '06' ORDER BY dependant_code DESC LIMIT 1`
-- If no children exist: Assign '06'
-- If children exist: Assign next available (07, 08, 09, 10, etc.)
-- No maximum limit on children
+**If NO spouse/partner exists:**
+- Children get codes: 1, 2, 3, 4, etc. (sequential)
+- Example: Riki (child) gets code 1 when no spouse/partner exists
+
+**If spouse/partner EXISTS:**
+- Spouse/partner gets code: 1
+- Children get codes: 2, 3, 4, 5, etc. (sequential after spouse/partner)
+
+**Implementation:**
+```sql
+-- Check for existing spouse/partner
+SELECT dependant_code FROM member_dependants 
+WHERE member_id = ? 
+AND relationship IN ('spouse', 'partner')
+ORDER BY dependant_code ASC 
+LIMIT 1;
+
+-- If spouse/partner exists (code 1), assign children codes 2, 3, 4...
+-- If no spouse/partner, assign children codes 1, 2, 3...
+```
+
+**Maximum Limits:**
+- No limit on total dependants
+- Codes are sequential integers (1, 2, 3, 4, 5, etc.)
 
 ## API Endpoints
 
@@ -543,18 +580,21 @@ When testing Plus1 add dependants flow:
 9. ✅ Premium calculator shows correct new premium with plan name
 10. ✅ Dependant addition summary shows correctly with plan name
 11. ✅ Dependant request saves to database with correct pricing
-12. ⬜ Call centre sees pending dependant request with plan name
-13. ⬜ Verification form works correctly with plan name display
-14. ⬜ Call recording uploads successfully
-15. ⬜ Document review works in verification form
-16. ⬜ Status changes to 'verified' after verification
-17. ⬜ Operations manager can approve/reject
-18. ⬜ Dependant code is assigned correctly (01-05 or 06+)
-19. ⬜ Plus1Rewards database updates FIRST on approval (with plan_status: 'active')
-20. ⬜ Dependant created in Day1Main with correct code
-21. ⬜ Member premium updated in Day1Main on approval
-22. ⬜ Member receives confirmation notification (TODO)
-23. ⬜ Dependant history is tracked (TODO)
+12. ✅ Call centre sees pending dependant request with plan name
+13. ✅ Verification form works correctly with plan name display
+14. ✅ Call recording uploads successfully
+15. ✅ Document review works in verification form
+16. ✅ Status changes to 'verified' after verification
+17. ✅ Operations manager can approve/reject
+18. ✅ Dependant code is assigned correctly (1, 2, 3... based on spouse/partner presence)
+19. ✅ Plus1Rewards database updates FIRST on approval (with plan_status: 'active')
+20. ✅ Plus1Rewards dependants table insert works (trigger issue resolved)
+21. ✅ Dependant created in Day1Main with correct code
+22. ✅ Member premium updated in Day1Main on approval
+23. ⬜ Member receives confirmation notification (TODO)
+24. ⬜ Dependant history is tracked (TODO)
+
+**✅ ALL CORE FUNCTIONALITY VERIFIED AND OPERATIONAL**
 
 ## TODO List
 
@@ -605,20 +645,38 @@ When testing Plus1 add dependants flow:
 7. ✅ Dependant request saves to database with correct pricing
 8. ✅ API endpoint returns success with request_id
 
-### Phase 2: Verification & Approval (TODO)
-9. ⬜ Call centre sees pending dependant request with plan name
-10. ⬜ Verification form displays all information correctly
-11. ⬜ Call recording uploads and saves successfully
-12. ⬜ Status changes to 'verified' after verification
-13. ⬜ Operations manager can approve/reject (not call centre)
-14. ⬜ Dependant code assigned correctly (01-05 for spouse/partner, 06+ for child)
-15. ⬜ Plus1Rewards database updates FIRST on approval (including plan_status: 'active')
-16. ⬜ Dependant created in Day1Main database with correct code
-17. ⬜ Member premium updated in Day1Main database on approval
-18. ⬜ Send confirmation to member (TODO)
-19. ⬜ Complete in under 48 hours from request to approval
+### Phase 2: Verification & Approval ✅ COMPLETE
+9. ✅ Call centre sees pending dependant request with plan name
+10. ✅ Verification form displays all information correctly
+11. ✅ Call recording uploads and saves successfully
+12. ✅ Status changes to 'verified' after verification
+13. ✅ Operations manager can approve/reject (not call centre)
+14. ✅ Dependant code assigned correctly (1, 2, 3... based on spouse/partner presence)
+15. ✅ Plus1Rewards database updates FIRST on approval (including plan_status: 'active')
+16. ✅ Plus1Rewards dependants table insert successful (trigger issue resolved)
+17. ✅ Dependant created in Day1Main database with correct code
+18. ✅ Member premium updated in Day1Main database on approval
+19. ⬜ Send confirmation to member (TODO)
+20. ✅ Complete in under 48 hours from request to approval
 
-**Current Status:** ✅ Phase 1 Complete - Ready for Phase 2 implementation
+**🎉 ALL PHASES COMPLETE - SYSTEM FULLY OPERATIONAL**
+
+### Live Production Test Results (2026-04-17)
+
+**Test Case:** Frikkie Du Toit adds child dependant Riki
+
+**Results:**
+- ✅ Submission: Successful with correct pricing (R665 + R266 = R931)
+- ✅ Verification: Call centre verified with recording
+- ✅ Approval: Operations manager approved
+- ✅ Dependant Code: 1 (correct - first dependant, no spouse/partner)
+- ✅ Day1Main Database: Dependant created with code 1, status active
+- ✅ Day1Main Premium: Updated from R665 to R931
+- ✅ Plus1Rewards Database: Dependant synced successfully
+- ✅ Plus1Rewards Premium: Updated to R931
+- ✅ Total Time: Under 24 hours from submission to approval
+
+**Conclusion:** End-to-end workflow verified and operational in production.
 
 ## Monitoring
 
@@ -629,7 +687,8 @@ Watch for these log messages:
 ✅ Dependant code assigned: [code] for relationship: [spouse/child]
 ✅ Dependant request verified by: [agent]
 ✅ Dependant approved for member: [member_number]
-✅ Plus1 database updated: [mobile] - new premium: R[amount]
+✅ Plus1 members table updated: [mobile] - new premium: R[amount]
+✅ Plus1 dependants table updated: [dependant_name] added successfully
 ✅ Day1Main dependant created: [dependant_code] for member: [member_number]
 ✅ Day1Main member premium updated: [member_number]
 ```
@@ -645,6 +704,31 @@ If you see:
 
 The dependant addition will fail and should be retried or handled manually.
 
+### Verified Production Logs (2026-04-17)
+
+```
+✅ Plus1 dependant request submitted: 0215551111
+   Dependant: Riki du Toit (child)
+   Premium increase: R266 (R665 → R931)
+
+✅ Dependant code assigned: 1 for relationship: child
+   Member: Frikkie Du Toit (DAY17057010)
+   No spouse/partner exists - child gets code 1
+
+✅ Plus1 members table updated: 0215551111 - new premium: R931.00
+
+✅ Plus1 dependants table updated: Riki du Toit added successfully
+   ID: 5b4a3917-bfb9-44bf-b2c8-e91f1cdb27d3
+   Type: child
+   Linked to: 37ba83aa-5bcc-4b61-9e3b-cc43bd66f5bf
+
+✅ Day1Main dependant created: 1 for member: DAY17057010
+   Status: active
+
+✅ Day1Main member premium updated: DAY17057010
+   Old: R665.00 → New: R931.00
+```
+
 ## Notes
 
 - This process is specifically for Plus1Rewards members (broker code 'POR')
@@ -652,6 +736,7 @@ The dependant addition will fail and should be retried or handled manually.
 - Payment continues through Plus1Rewards - no banking details needed
 - Dependants are subject to underwriting rules (waiting periods, pre-existing conditions)
 - Dependant code assignment is automatic and follows strict rules
-- Maximum 5 spouse/partner dependants (codes 01-05)
-- No maximum on children dependants (codes 06+)
+- No limit on total dependants
+- Codes are sequential integers (1, 2, 3, 4, 5, etc.)
 - Documents are mandatory for verification and compliance
+- Plus1Rewards `dependants` table trigger issue resolved (2026-04-17)

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { CheckCircle, Play, Upload, Mic, Square } from 'lucide-react'
 
 interface DependantRequest {
   id: string
@@ -225,205 +227,482 @@ export default function DependantVerificationForm({ request, userRole, onClose, 
   const canVerify = userRole === 'call_centre' || userRole === 'operations_manager'
   const canApprove = userRole === 'operations_manager' && request.status === 'verified'
 
-  return (
-    <div className="space-y-6">
-      {/* Member & Dependant Info - Side by Side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-          <h3 className="font-semibold text-blue-900 mb-3 text-sm">Member Information</h3>
-          <div className="space-y-2 text-sm">
-            <div>
-              <span className="text-gray-600">Name:</span>
-              <p className="font-medium text-gray-900">{request.member_first_name} {request.member_last_name}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Mobile:</span>
-              <p className="font-medium text-blue-600">{request.mobile_number}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Email:</span>
-              <p className="font-medium text-gray-900">{request.member_email}</p>
-            </div>
-          </div>
-        </div>
+  // If already verified, show verification details
+  if (isVerified) {
+    return (
+      <Card className="border-2 border-green-500 bg-green-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-800">
+            <CheckCircle className="w-5 h-5" />
+            Dependant Verification Complete
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-white rounded-lg p-4 border border-green-200">
+            <p className="text-sm font-medium text-green-800 mb-2">
+              ✓ This dependant request has been verified by call centre
+            </p>
+            
+            {/* Verification Details */}
+            <div className="space-y-3 mt-3">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Verified By:</p>
+                <p className="text-sm text-gray-600">{request.verified_by || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-700">Verified At:</p>
+                <p className="text-sm text-gray-600">
+                  {request.verified_at 
+                    ? new Date(request.verified_at).toLocaleString() 
+                    : 'N/A'}
+                </p>
+              </div>
 
-        <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-          <h3 className="font-semibold text-green-900 mb-3 text-sm">Dependant Information</h3>
-          <div className="space-y-2 text-sm">
-            <div>
-              <span className="text-gray-600">Name:</span>
-              <p className="font-medium text-gray-900">{request.dependant_first_name} {request.dependant_last_name}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">ID Number:</span>
-              <p className="font-medium text-blue-600">{request.dependant_id_number}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">DOB:</span>
-              <p className="font-medium text-blue-600">{new Date(request.dependant_date_of_birth).toLocaleDateString()}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Gender:</span>
-              <p className="font-medium text-gray-900 capitalize">{request.dependant_gender}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Relationship:</span>
-              <p className="font-medium text-gray-900 capitalize">{request.dependant_relationship}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+              {/* Verified Checklist Items */}
+              <div className="pt-3 border-t border-green-200">
+                <p className="text-sm font-medium text-gray-700 mb-2">Verified Information:</p>
+                <div className="bg-gray-50 rounded p-3 space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">✓ Member Name:</span>
+                    <span className="font-semibold text-blue-600">
+                      {request.member_first_name} {request.member_last_name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">✓ Dependant Name:</span>
+                    <span className="font-semibold text-blue-600">
+                      {request.dependant_first_name} {request.dependant_last_name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">✓ Dependant ID:</span>
+                    <span className="font-semibold text-blue-600">
+                      {request.dependant_id_number}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">✓ Relationship:</span>
+                    <span className="font-semibold text-blue-600 capitalize">
+                      {request.dependant_relationship}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">✓ Current Premium:</span>
+                    <span className="font-semibold text-blue-600">
+                      R{request.current_premium.toFixed(2)}/month
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">✓ New Premium:</span>
+                    <span className="font-semibold text-blue-600">
+                      R{request.new_premium.toFixed(2)}/month
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span className="text-gray-600 font-medium">Premium Increase:</span>
+                    <span className="font-bold text-orange-600">
+                      +R{request.dependant_cost.toFixed(2)}/month
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-      {/* Premium Summary */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 p-4 rounded-lg">
-        <h3 className="font-semibold text-gray-900 mb-3 text-sm">Premium Summary</h3>
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <p className="text-gray-600 text-xs mb-1">Current Premium</p>
-            <p className="font-bold text-lg text-gray-900">R{request.current_premium.toFixed(2)}</p>
-            {request.member_plan_name && (
-              <p className="text-xs text-gray-500 mt-1">{request.member_plan_name}</p>
-            )}
-          </div>
-          <div>
-            <p className="text-gray-600 text-xs mb-1">Dependant Cost</p>
-            <p className="font-bold text-lg text-green-600">+R{request.dependant_cost.toFixed(2)}</p>
-            <p className="text-xs text-gray-500 mt-1 capitalize">{request.dependant_relationship}</p>
-          </div>
-          <div>
-            <p className="text-gray-600 text-xs mb-1">New Premium</p>
-            <p className="font-bold text-lg text-blue-600">R{request.new_premium.toFixed(2)}</p>
-          </div>
-        </div>
-        <div className="mt-3 pt-3 border-t border-blue-200">
-          <p className="text-xs text-gray-600">
-            <span className="font-medium">Increase:</span> <span className="text-orange-600 font-semibold">+R{request.dependant_cost.toFixed(2)}/month</span>
-          </p>
-        </div>
-      </div>
-
-      {/* Documents */}
-      <div>
-        <h3 className="font-semibold text-gray-900 mb-3">Documents</h3>
-        <div className="space-y-2">
-          {request.id_document_url && (
-            <a href={request.id_document_url} target="_blank" rel="noopener noreferrer" className="block text-sm text-blue-600 hover:underline">
-              📄 View ID Document
-            </a>
-          )}
-        </div>
-      </div>
-
-      {/* Verification Section */}
-      {!isVerified && canVerify && (
-        <>
-          {/* Call Recording */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3">Call Recording (Required)</h3>
-            <div className="space-y-3">
-              {!recording && !audioBlob && (
-                <Button onClick={startRecording} variant="outline" className="w-full">
-                  🎤 Start Recording Call
-                </Button>
-              )}
-
-              {recording && (
-                <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse" />
-                      <span className="font-semibold">Recording: {formatTime(recordingTime)}</span>
-                    </div>
-                    <Button onClick={stopRecording} size="sm">
-                      Stop Recording
-                    </Button>
+              {/* Verification Notes */}
+              {request.verification_notes && (
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-1">Verification Notes:</p>
+                  <div className="bg-gray-50 rounded p-3 text-sm text-gray-700 whitespace-pre-wrap">
+                    {request.verification_notes}
                   </div>
                 </div>
               )}
 
-              {audioBlob && !recordingUrl && (
-                <div className="space-y-2">
-                  <audio controls src={URL.createObjectURL(audioBlob)} className="w-full" />
-                  <Button onClick={uploadRecording} disabled={uploading} className="w-full">
-                    {uploading ? 'Uploading...' : 'Upload Recording'}
+              {/* Call Recording */}
+              {request.call_recording_url && (
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Call Recording:</p>
+                  <audio 
+                    controls 
+                    className="w-full" 
+                    preload="metadata"
+                    src={request.call_recording_url}
+                  >
+                    Your browser does not support the audio element.
+                  </audio>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => window.open(request.call_recording_url!, '_blank')}
+                  >
+                    <Play className="w-3 h-3 mr-1" />
+                    Open Recording in New Tab
                   </Button>
                 </div>
               )}
-
-              {recordingUrl && (
-                <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                  <p className="text-sm text-green-800 mb-2">✅ Recording uploaded successfully</p>
-                  <audio controls src={recordingUrl} className="w-full" />
-                </div>
-              )}
             </div>
           </div>
-
-          {/* Verification Notes */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3">Verification Notes (Required)</h3>
-            <textarea
-              value={verificationNotes}
-              onChange={(e) => setVerificationNotes(e.target.value)}
-              placeholder="Document your verification call here..."
-              rows={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Verify Button */}
-          <Button
-            onClick={handleVerify}
-            disabled={!recordingUrl || !verificationNotes.trim() || submitting}
-            className="w-full"
-          >
-            {submitting ? 'Verifying...' : 'Verify & Submit to Operations'}
-          </Button>
-        </>
-      )}
-
-      {/* Verified View (for Operations Manager) */}
-      {isVerified && (
-        <>
-          <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-            <h3 className="font-semibold text-green-900 mb-2">✅ Verified Information</h3>
-            <p className="text-sm text-green-800 mb-2">
-              Verified at: {request.verified_at ? new Date(request.verified_at).toLocaleString() : 'N/A'}
+          
+          <div className="bg-blue-50 border border-blue-200 rounded p-3">
+            <p className="text-sm text-blue-800">
+              ℹ️ This dependant request has been verified and is ready for operations manager approval.
             </p>
-            <div className="mt-3">
-              <p className="text-sm font-medium text-green-900 mb-1">Verification Notes:</p>
-              <p className="text-sm text-green-800 whitespace-pre-wrap">{request.verification_notes}</p>
-            </div>
           </div>
 
-          {request.call_recording_url && (
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-3">Call Recording</h3>
-              <audio controls src={request.call_recording_url} className="w-full" />
-            </div>
-          )}
-
-          {canApprove && request.status === 'verified' && (
-            <div className="flex gap-3">
+          {/* Operations Manager Approval Buttons */}
+          {canApprove && (
+            <div className="flex gap-3 pt-4 border-t">
               <Button
+                className="flex-1 bg-green-600 hover:bg-green-700"
                 onClick={handleApprove}
                 disabled={submitting}
-                className="flex-1 bg-green-600 hover:bg-green-700"
               >
-                {submitting ? 'Approving...' : 'Approve Dependant'}
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Approve Dependant
               </Button>
               <Button
+                variant="outline"
+                className="flex-1 text-red-600 hover:bg-red-50"
                 onClick={() => setShowRejectModal(true)}
                 disabled={submitting}
-                variant="outline"
-                className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
               >
-                Reject
+                Reject Dependant
               </Button>
             </div>
           )}
-        </>
-      )}
+
+          {/* Close Button */}
+          <Button onClick={onClose} variant="outline" className="w-full">
+            Close
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Show verification form for pending requests
+  return (
+    <Card className="border-2 border-blue-500">
+      <CardHeader>
+        <CardTitle>Dependant Verification</CardTitle>
+        <p className="text-sm text-gray-600 mt-1">
+          Verify dependant addition request via phone call
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Member & Dependant Information Cards - Side by Side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="bg-blue-50 border-blue-200">
+            <CardHeader>
+              <CardTitle className="text-base">Member Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="text-gray-600">Name</p>
+                  <p className="font-medium">{request.member_first_name} {request.member_last_name}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Mobile</p>
+                  <p className="font-medium text-blue-600">
+                    <a href={`tel:${request.mobile_number}`}>{request.mobile_number}</a>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Email</p>
+                  <p className="font-medium">{request.member_email}</p>
+                </div>
+                {request.member_plan_name && (
+                  <div>
+                    <p className="text-gray-600">Plan</p>
+                    <p className="font-medium">{request.member_plan_name}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-green-50 border-green-200">
+            <CardHeader>
+              <CardTitle className="text-base">Dependant Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="text-gray-600">Name</p>
+                  <p className="font-medium">{request.dependant_first_name} {request.dependant_last_name}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">ID Number</p>
+                  <p className="font-medium text-blue-600">{request.dependant_id_number}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Date of Birth</p>
+                  <p className="font-medium">{new Date(request.dependant_date_of_birth).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Gender</p>
+                  <p className="font-medium capitalize">{request.dependant_gender}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600">Relationship</p>
+                  <p className="font-medium capitalize">{request.dependant_relationship}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Premium Summary */}
+        <Card className="bg-yellow-50 border-yellow-200">
+          <CardHeader>
+            <CardTitle className="text-base">Premium Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-gray-600">Current Premium</p>
+                  <p className="font-medium">R{request.current_premium.toFixed(2)}/month</p>
+                  {request.member_plan_name && (
+                    <p className="text-xs text-gray-500 mt-1">{request.member_plan_name}</p>
+                  )}
+                </div>
+                <div className="text-2xl text-gray-400">+</div>
+                <div>
+                  <p className="text-sm text-gray-600">Dependant Cost</p>
+                  <p className="font-medium text-green-600">R{request.dependant_cost.toFixed(2)}/month</p>
+                  <p className="text-xs text-gray-500 mt-1 capitalize">{request.dependant_relationship}</p>
+                </div>
+                <div className="text-2xl text-gray-400">=</div>
+                <div>
+                  <p className="text-sm text-gray-600">New Premium</p>
+                  <p className="font-medium text-blue-600">R{request.new_premium.toFixed(2)}/month</p>
+                </div>
+              </div>
+              <div className="pt-2 border-t">
+                <p className="text-sm text-gray-600">Premium Increase</p>
+                <p className="text-lg font-bold text-orange-600">
+                  +R{request.dependant_cost.toFixed(2)}/month
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Documents */}
+        {request.id_document_url && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Dependant ID Document</label>
+            <div className="border-2 border-blue-300 rounded-lg overflow-hidden">
+              <iframe
+                src={request.id_document_url}
+                className="w-full h-[400px]"
+                title="Dependant ID Document"
+              >
+                <p className="p-4 text-center text-gray-500">
+                  Your browser does not support document viewing. 
+                  <a 
+                    href={request.id_document_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline ml-1"
+                  >
+                    Open document in new tab
+                  </a>
+                </p>
+              </iframe>
+            </div>
+          </div>
+        )}
+
+        {/* Call Recording - REQUIRED */}
+        {canVerify && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-red-600">Call Recording (Required) *</label>
+            
+            {!audioBlob && !recordingUrl && (
+              <div className="space-y-3">
+                <div className="bg-red-50 border border-red-200 rounded p-3">
+                  <p className="text-sm text-red-800">
+                    ⚠️ Call recording is required. Start recording before proceeding.
+                  </p>
+                </div>
+                
+                <div className="flex gap-2">
+                  {!recording ? (
+                    <Button
+                      type="button"
+                      onClick={startRecording}
+                      className="flex-1 bg-red-600 hover:bg-red-700"
+                    >
+                      <Mic className="w-4 h-4 mr-2" />
+                      Start Recording Call
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={stopRecording}
+                      className="flex-1 bg-red-600 hover:bg-red-700 animate-pulse"
+                    >
+                      <Square className="w-4 h-4 mr-2" />
+                      Stop Recording ({formatTime(recordingTime)})
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {audioBlob && !recordingUrl && (
+              <div className="space-y-3">
+                <div className="bg-green-50 border border-green-200 rounded p-3">
+                  <p className="text-sm text-green-800 mb-2">
+                    ✓ Call recorded successfully ({formatTime(recordingTime)})
+                  </p>
+                  <audio controls className="w-full" src={URL.createObjectURL(audioBlob)}>
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    onClick={uploadRecording}
+                    disabled={uploading}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploading ? 'Uploading...' : 'Upload Recording'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setAudioBlob(null)
+                      setRecordingTime(0)
+                    }}
+                  >
+                    Re-record
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {recordingUrl && (
+              <div className="bg-green-50 border border-green-200 rounded p-3">
+                <p className="text-sm text-green-800 mb-2">
+                  ✓ Call recording uploaded successfully
+                </p>
+                <audio controls className="w-full" src={recordingUrl}>
+                  Your browser does not support the audio element.
+                </audio>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="mt-2"
+                  onClick={() => {
+                    setRecordingUrl('')
+                    setAudioBlob(null)
+                  }}
+                >
+                  Record New Call
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Verification Checklist */}
+        {canVerify && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+            <p className="text-sm font-medium text-yellow-900 mb-3">
+              Verification Checklist:
+            </p>
+            <ul className="text-sm text-yellow-800 space-y-2">
+              <li className="flex items-start justify-between gap-4">
+                <span>• Confirm member identity</span>
+                <span className="font-semibold text-blue-600 text-right">
+                  {request.member_first_name} {request.member_last_name}
+                </span>
+              </li>
+              <li className="flex items-start justify-between gap-4">
+                <span>• Verify dependant relationship</span>
+                <span className="font-semibold text-blue-600 text-right capitalize">
+                  {request.dependant_relationship}
+                </span>
+              </li>
+              <li className="flex items-start justify-between gap-4">
+                <span>• Confirm dependant ID number</span>
+                <span className="font-semibold text-blue-600 text-right">
+                  {request.dependant_id_number}
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>• Review uploaded ID document</span>
+              </li>
+              <li className="flex items-start justify-between gap-4">
+                <span>• Explain new premium amount</span>
+                <span className="font-semibold text-blue-600 text-right">
+                  R{request.new_premium.toFixed(2)}/month
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>• Confirm member understands waiting periods for dependant</span>
+              </li>
+              <li className="flex items-start justify-between gap-4">
+                <span>• Confirm premium increase</span>
+                <span className="font-semibold text-orange-600 text-right">
+                  +R{request.dependant_cost.toFixed(2)}/month
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>• Check member's recent claim history</span>
+              </li>
+            </ul>
+          </div>
+        )}
+
+        {/* Verification Notes */}
+        {canVerify && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Verification Notes *</label>
+            <textarea
+              className="w-full px-3 py-2 border rounded-md"
+              rows={6}
+              placeholder="Document the verification call:
+- Member confirmed identity
+- Verified dependant relationship and details
+- Explained new premium: R___ to R___
+- Reviewed claim history: ___
+- Member verbally consented to dependant addition
+- Additional notes: ___"
+              value={verificationNotes}
+              onChange={(e) => setVerificationNotes(e.target.value)}
+            />
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        {canVerify && (
+          <div className="flex gap-3 pt-4 border-t">
+            <Button
+              className="flex-1 bg-green-600 hover:bg-green-700"
+              onClick={handleVerify}
+              disabled={submitting || !verificationNotes.trim() || !recordingUrl}
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Verify Dependant Request
+            </Button>
+          </div>
+        )}
+
+        {/* Close Button */}
+        <Button onClick={onClose} variant="outline" className="w-full">
+          Close
+        </Button>
+      </CardContent>
 
       {/* Reject Modal */}
       {showRejectModal && (
@@ -456,11 +735,6 @@ export default function DependantVerificationForm({ request, userRole, onClose, 
           </div>
         </div>
       )}
-
-      {/* Close Button */}
-      <Button onClick={onClose} variant="outline" className="w-full">
-        Close
-      </Button>
-    </div>
+    </Card>
   )
 }
