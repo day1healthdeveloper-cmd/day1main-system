@@ -69,7 +69,23 @@ export default function OperationsMembersPage() {
     if (!statsLoaded) {
       fetchStats();
     }
+    // Fetch filter options on mount
+    fetchFilterOptions();
   }, []);
+
+  const fetchFilterOptions = async () => {
+    try {
+      const response = await fetch('/api/admin/members?filters_only=true', {
+        cache: 'no-store',
+      });
+      const data = await response.json();
+      if (data.filters) {
+        setFilterOptions(data.filters);
+      }
+    } catch (error) {
+      console.error('Failed to fetch filter options:', error);
+    }
+  };
 
   const fetchStats = async () => {
     try {
