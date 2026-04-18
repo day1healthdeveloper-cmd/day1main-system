@@ -619,7 +619,11 @@ export default function AdminApplicationsPage() {
                         </div>
                         <div className="col-span-2">
                           <p className="text-gray-600">{selectedApplication.collection_method === 'eft' ? 'Payment Date' : 'Debit Order Day'}</p>
-                          <p className="font-medium">{selectedApplication.debit_order_day}{selectedApplication.debit_order_day === 1 ? 'st' : selectedApplication.debit_order_day === 2 ? 'nd' : selectedApplication.debit_order_day === 3 ? 'rd' : 'th'} of each month</p>
+                          <p className="font-medium">
+                            {selectedApplication.collection_method === null || !selectedApplication.debit_order_day
+                              ? 'N/A'
+                              : `${selectedApplication.debit_order_day}${selectedApplication.debit_order_day === 1 ? 'st' : selectedApplication.debit_order_day === 2 ? 'nd' : selectedApplication.debit_order_day === 3 ? 'rd' : 'th'} of each month`}
+                          </p>
                         </div>
                       </div>
                     </div>
