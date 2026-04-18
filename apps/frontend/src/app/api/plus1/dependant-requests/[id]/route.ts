@@ -231,8 +231,7 @@ export async function PATCH(
                 id_number: dependantRequest.dependant_id_number,
                 first_name: dependantRequest.dependant_first_name,
                 last_name: dependantRequest.dependant_last_name,
-                linked_to_main_member_id: plus1MemberId,
-                status: 'pending'
+                linked_to_main_member_id: plus1MemberId
               })
             }
           )
