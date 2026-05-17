@@ -505,7 +505,7 @@ export default function Step6ReviewTermsSubmit({ data, updateData, prevStep, goT
             <div className="bg-white rounded p-2">
               <h4 className="text-xs font-bold mb-1">Broker</h4>
               <div className="text-xs">
-                <p className="font-medium">Plus 1 Rewards</p>
+                <p className="font-medium">Day1 partner broker</p>
                 <p className="text-gray-600">Broker Code: {data.brokerCode}</p>
               </div>
             </div>

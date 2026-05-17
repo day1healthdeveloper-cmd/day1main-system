@@ -42,7 +42,7 @@ export default function MemberDetailPage() {
   const router = useRouter();
   const params = useParams();
   const memberId = params.id as string;
-  
+
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -68,7 +68,7 @@ export default function MemberDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editedData),
       });
-      
+
       if (response.ok) {
         const updated = await response.json();
         setMember(updated);
@@ -489,18 +489,18 @@ export default function MemberDetailPage() {
                         {member.brokerCode === 'POR' ? (
                           <>
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
-                              <p className="text-xs text-blue-600 font-medium mb-1">Plus1Rewards Member</p>
-                              <p className="text-xs text-blue-700">Payment handled by Plus1Rewards</p>
+                              <p className="text-xs text-blue-600 font-medium mb-1">Partner Broker Member</p>
+                              <p className="text-xs text-blue-700">Payment handled through the broker arrangement</p>
                             </div>
                             <div>
                               <p className="text-xs text-gray-600">Active Until</p>
                               <p className="font-medium">
-                                {member.joinDate ? 
-                                  new Date(new Date(member.joinDate).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-ZA', { 
-                                    year: 'numeric', 
-                                    month: 'long', 
-                                    day: 'numeric' 
-                                  }) 
+                                {member.joinDate ?
+                                  new Date(new Date(member.joinDate).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-ZA', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })
                                   : 'N/A'}
                               </p>
                             </div>
@@ -586,8 +586,8 @@ export default function MemberDetailPage() {
                     <p className="text-xs text-gray-600 mb-2">
                       Permanently delete this account. Cannot be undone.
                     </p>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       className="border-red-300 text-red-600 hover:bg-red-50 text-xs h-7 px-2"
                       onClick={() => setShowDeleteModal(true)}
@@ -614,7 +614,7 @@ export default function MemberDetailPage() {
                   </div>
                   <h2 className="text-xl font-bold text-gray-900">Delete Member Account</h2>
                 </div>
-                
+
                 <div className="mb-6">
                   <p className="text-gray-700 mb-4">
                     You are about to permanently delete:
@@ -633,7 +633,7 @@ export default function MemberDetailPage() {
                       <li>Claims records will be removed</li>
                     </ul>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Type <span className="font-mono bg-gray-100 px-2 py-1 rounded">delete</span> to confirm:
@@ -687,4 +687,4 @@ export default function MemberDetailPage() {
   );
 }
 
-    
+

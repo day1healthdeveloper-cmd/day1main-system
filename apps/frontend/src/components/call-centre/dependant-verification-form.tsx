@@ -129,21 +129,7 @@ export default function DependantVerificationForm({ request, userRole, onClose, 
 
     setSubmitting(true)
     try {
-      const response = await fetch(`/api/plus1/dependant-requests/${request.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'verify',
-          verification_notes: verificationNotes,
-          call_recording_url: recordingUrl
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        const errorMsg = errorData.details || errorData.error || 'Verification failed'
-        throw new Error(errorMsg)
-      }
+      throw new Error('Legacy dependant verification workflow is decommissioned')
 
       alert('Dependant request verified successfully')
       onSuccess()
@@ -162,21 +148,10 @@ export default function DependantVerificationForm({ request, userRole, onClose, 
 
     setSubmitting(true)
     try {
-      const response = await fetch(`/api/plus1/dependant-requests/${request.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve' })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        const errorMsg = data.details || data.error || 'Approval failed'
-        throw new Error(errorMsg)
-      }
+      throw new Error('Legacy dependant approval workflow is decommissioned')
 
       // Success - show dependant code in message
-      const dependantCode = data.dependant_code || 'N/A'
+      const dependantCode = 'N/A'
       alert(`Dependant approved and added successfully!\n\nDependant Code: ${dependantCode}\nNew Premium: R${request.new_premium.toFixed(2)}`)
       onSuccess()
     } catch (error) {
@@ -195,16 +170,7 @@ export default function DependantVerificationForm({ request, userRole, onClose, 
 
     setSubmitting(true)
     try {
-      const response = await fetch(`/api/plus1/dependant-requests/${request.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'reject',
-          rejection_reason: rejectionReason
-        })
-      })
-
-      if (!response.ok) throw new Error('Rejection failed')
+      throw new Error('Legacy dependant rejection workflow is decommissioned')
 
       alert('Dependant request rejected')
       onSuccess()

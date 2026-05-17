@@ -24,7 +24,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [newApplicationsCount, setNewApplicationsCount] = useState(0);
-  const [verifiedUpgradesCount, setVerifiedUpgradesCount] = useState(0);
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, logout } = useAuth();
@@ -46,7 +45,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       const userRoles = user?.roles || [];
       const isAdmin = userRoles.includes('system_admin');
       const isCallCentre = userRoles.includes('call_centre_agent');
-      const isOperationsManager = userRoles.includes('operations_manager');
       
       if (isAdmin || isCallCentre) {
         try {
@@ -59,43 +57,9 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
             ? appData.applications?.filter((app: any) => app.status === 'submitted').length || 0
             : appData.applications?.filter((app: any) => app.status === 'submitted' || app.status === 'under_review').length || 0;
           
-          // Fetch upgrade requests count
-          const upgradeResponse = await fetch('/api/plus1/upgrade-requests?status=pending');
-          const upgradeData = await upgradeResponse.json();
-          const upgradeCount = upgradeData.stats?.pending || 0;
-          
-          // Fetch dependant requests count
-          const dependantResponse = await fetch('/api/plus1/dependant-requests?status=pending');
-          const dependantData = await dependantResponse.json();
-          const dependantCount = dependantData.requests?.length || 0;
-          
-          // Combine all counts
-          setNewApplicationsCount(submittedCount + upgradeCount + dependantCount);
+          setNewApplicationsCount(submittedCount);
         } catch (error) {
           console.error('Failed to fetch applications count:', error);
-        }
-      }
-
-      // Fetch verified upgrades count for operations manager
-      if (isOperationsManager) {
-        try {
-          const upgradeResponse = await fetch('/api/plus1/upgrade-requests');
-          const upgradeData = await upgradeResponse.json();
-          // Count both pending and verified requests
-          const pendingCount = upgradeData.stats?.pending || 0;
-          const verifiedCount = upgradeData.stats?.verified || 0;
-          
-          // Fetch dependant requests count
-          const dependantResponse = await fetch('/api/plus1/dependant-requests');
-          const dependantData = await dependantResponse.json();
-          // Count pending and verified dependant requests
-          const dependantPendingAndVerified = (dependantData.requests || []).filter(
-            (req: any) => req.status === 'pending' || req.status === 'verified'
-          ).length;
-          
-          setVerifiedUpgradesCount(pendingCount + verifiedCount + dependantPendingAndVerified);
-        } catch (error) {
-          console.error('Failed to fetch verified upgrades count:', error);
         }
       }
     };
@@ -127,7 +91,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     const isMarketingManager = userRoles.includes('marketing_manager');
     const isProvider = userRoles.includes('provider');
     const isCallCentreAgent = userRoles.includes('call_centre_agent');
-    const isAmbulanceOperator = userRoles.includes('ambulance_operator');
     const isMember = userRoles.includes('member');
 
     console.log('Role checks:', {
@@ -140,7 +103,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       isMarketingManager,
       isProvider,
       isCallCentreAgent,
-      isAmbulanceOperator,
       isMember
     });
 
@@ -368,7 +330,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         {
           name: 'Call Centre',
           href: '/operations/call-centre',
-          badge: verifiedUpgradesCount,
           glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -463,8 +424,8 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           ),
         },
         {
-          name: 'My Clients',
-          href: '/broker/clients',
+          name: 'Leads',
+          href: '/broker/leads',
           glowColor: '#22c55e', // Green
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -645,8 +606,8 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           ),
         },
         {
-          name: 'Payments',
-          href: '/finance/payments',
+          name: 'Payment Batches',
+          href: '/finance/payment-batches',
           glowColor: '#14b8a6', // Teal
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -848,7 +809,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       return [
         {
           name: 'Dashboard',
-          href: '/compliance',
+          href: '/compliance/dashboard',
           glowColor: '#3b82f6', // Blue
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1066,82 +1027,6 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-          ),
-        },
-      ];
-    }
-
-    // Ambulance Operator navigation
-    if (isAmbulanceOperator) {
-      return [
-        {
-          name: 'Dashboard',
-          href: '/dashboard',
-          glowColor: '#3b82f6', // Blue
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-          ),
-        },
-        {
-          name: 'Verify Eligibility',
-          href: '/ambulance/verify',
-          glowColor: '#22c55e', // Green
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          ),
-        },
-        {
-          name: 'Active Transports',
-          href: '/ambulance/transports',
-          glowColor: '#8b5cf6', // Purple
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          ),
-        },
-        {
-          name: 'Submit Claim',
-          href: '/ambulance/claims',
-          glowColor: '#ec4899', // Pink
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          ),
-        },
-        {
-          name: 'Trip History',
-          href: '/ambulance/history',
-          glowColor: '#f59e0b', // Amber
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          ),
-        },
-        {
-          name: 'Feedback',
-          href: '/admin/feedback',
-          glowColor: '#fb923c', // Orange
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-          ),
-        },
-        {
-          name: 'Profile',
-          href: '/profile',
-          glowColor: '#14b8a6', // Teal
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           ),
         },

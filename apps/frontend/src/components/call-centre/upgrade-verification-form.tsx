@@ -391,13 +391,7 @@ export function UpgradeVerificationForm({ upgradeRequest, onVerify, onReject, us
                   }
                   setProcessing(true);
                   try {
-                    const response = await fetch(`/api/plus1/upgrade-requests/${upgradeRequest.id}`, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ action: 'approve' }),
-                    });
-
-                    if (!response.ok) throw new Error('Failed to approve upgrade');
+                    throw new Error('Legacy upgrade approval workflow is decommissioned');
 
                     addToast({
                       type: 'success',
@@ -434,16 +428,7 @@ export function UpgradeVerificationForm({ upgradeRequest, onVerify, onReject, us
 
                   setProcessing(true);
                   try {
-                    const response = await fetch(`/api/plus1/upgrade-requests/${upgradeRequest.id}`, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ 
-                        action: 'reject',
-                        rejection_reason: reason 
-                      }),
-                    });
-
-                    if (!response.ok) throw new Error('Failed to reject upgrade');
+                    throw new Error('Legacy upgrade rejection workflow is decommissioned');
 
                     addToast({
                       type: 'success',
@@ -745,7 +730,7 @@ export function UpgradeVerificationForm({ upgradeRequest, onVerify, onReject, us
               <iframe
                 src={(() => {
                   const planBrochures: Record<string, string> = {
-                    // Plus1 Upgrade Plans
+                    // Legacy upgrade plan names
                     'Day-to-Day Plan': 'Day-To-Day Single Plan .pdf',
                     'Hospital Value Plus': 'Hospital Value Plus Plan.pdf',
                     'Comprehensive - Value Plus': 'Comprehensive Value Plus Plan.pdf',

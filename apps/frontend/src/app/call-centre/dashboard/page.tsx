@@ -3,14 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
-import { User, ArrowUpCircle, Eye, TrendingUp } from 'lucide-react';
+import { User, Eye } from 'lucide-react';
 
 export default function CallCentreDashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState({
     newMembers: 0,
-    planUpgrades: 0,
-    dependantsAdded: 0,
     totalPending: 0
   });
   const [loading, setLoading] = useState(true);
@@ -28,21 +26,9 @@ export default function CallCentreDashboardPage() {
         app.status === 'submitted' || app.status === 'under_review'
       ).length || 0;
 
-      // Load upgrade requests
-      const upgradeResponse = await fetch('/api/plus1/upgrade-requests?status=pending');
-      const upgradeData = await upgradeResponse.json();
-      const planUpgrades = upgradeData.stats?.pending || 0;
-
-      // Load dependant requests
-      const dependantResponse = await fetch('/api/plus1/dependant-requests?status=pending');
-      const dependantData = await dependantResponse.json();
-      const dependantsAdded = dependantData.requests?.length || 0;
-
       setStats({
         newMembers,
-        planUpgrades,
-        dependantsAdded,
-        totalPending: newMembers + planUpgrades + dependantsAdded
+        totalPending: newMembers
       });
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -60,7 +46,7 @@ export default function CallCentreDashboardPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -77,35 +63,9 @@ export default function CallCentreDashboardPage() {
           <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Plan Upgrades</p>
-                <p className="text-3xl font-bold text-purple-600">{stats.planUpgrades}</p>
-                <p className="text-xs text-gray-500 mt-1">Pending verification</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <ArrowUpCircle className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Dependants Added</p>
-                <p className="text-3xl font-bold text-green-600">{stats.dependantsAdded}</p>
-                <p className="text-xs text-gray-500 mt-1">Pending verification</p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
                 <p className="text-sm text-gray-600">Total Pending</p>
                 <p className="text-3xl font-bold text-orange-600">{stats.totalPending}</p>
-                <p className="text-xs text-gray-500 mt-1">All requests</p>
+                <p className="text-xs text-gray-500 mt-1">Applications</p>
               </div>
               <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                 <Eye className="w-6 h-6 text-orange-600" />

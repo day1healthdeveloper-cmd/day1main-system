@@ -23,22 +23,10 @@ export default function OperationsDashboardPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const [upgradeRequestsCount, setUpgradeRequestsCount] = useState(0);
 
   useEffect(() => {
     setMounted(true);
-    loadUpgradeRequests();
   }, []);
-
-  const loadUpgradeRequests = async () => {
-    try {
-      const response = await fetch('/api/plus1/upgrade-requests?status=pending');
-      const data = await response.json();
-      setUpgradeRequestsCount(data.stats?.pending || 0);
-    } catch (error) {
-      console.error('Error loading upgrade requests:', error);
-    }
-  };
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
