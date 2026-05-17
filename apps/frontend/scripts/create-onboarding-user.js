@@ -9,7 +9,10 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
-
+const onboardingTestPassword = process.env.ONBOARDING_TEST_PASSWORD
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY || !onboardingTestPassword) {
+  throw new Error('Missing required environment variable: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or ONBOARDING_TEST_PASSWORD')
+}
 async function createOnboardingUser() {
   try {
     console.log('🔍 Checking if onboarding role exists...')
@@ -61,7 +64,7 @@ async function createOnboardingUser() {
     // Create user in Supabase Auth
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email: 'onboarding@day1main.com',
-      password: 'onboarding123',
+      password: onboardingTestPassword,
       email_confirm: true,
       user_metadata: {
         first_name: 'Onboarding',

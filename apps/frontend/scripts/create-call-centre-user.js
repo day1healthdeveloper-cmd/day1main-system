@@ -3,9 +3,10 @@ require('dotenv').config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const callCentreTestPassword = process.env.CALL_CENTRE_TEST_PASSWORD;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('❌ Missing environment variables');
+if (!supabaseUrl || !supabaseServiceKey || !callCentreTestPassword) {
+  console.error('Missing required environment variable: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or CALL_CENTRE_TEST_PASSWORD');
   process.exit(1);
 }
 
@@ -18,7 +19,7 @@ async function createCallCentreUser() {
     // 1. Create auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: 'callcentre@day1main.com',
-      password: 'callcentre123',
+      password: callCentreTestPassword,
       email_confirm: true,
     });
 
@@ -78,7 +79,7 @@ async function createCallCentreUser() {
 
     console.log('✅ Call centre user created successfully!');
     console.log('📧 Email: callcentre@day1main.com');
-    console.log('🔑 Password: callcentre123');
+    console.log('Password: set via CALL_CENTRE_TEST_PASSWORD');
 
   } catch (error) {
     console.error('❌ Error:', error);

@@ -24,6 +24,9 @@ out/
 **/google-vision-key.json
 **/*-service-account.json
 
+# Development test credentials
+DEV_TEST_USERS.md
+
 # Logs
 logs/
 *.log
@@ -56,3 +59,6 @@ prisma/migrations/
 
 # Feedback files (optional - remove if you want to track feedback in Git)
 # .kiro/feedback/
+**/*service-account*.json
+**/*credentials*.json
+

@@ -80,7 +80,7 @@ export default function MarketingLoginPage() {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder="********"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -111,13 +111,12 @@ export default function MarketingLoginPage() {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-
           <div className="mt-4 text-center text-sm text-gray-600">
-            <p>Demo credentials:</p>
-            <p className="font-mono text-xs mt-1">marketing@day1main.com / marketing123</p>
+            <p>Ask the project administrator for test credentials.</p>
           </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+

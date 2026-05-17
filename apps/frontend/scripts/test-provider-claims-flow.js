@@ -35,7 +35,7 @@ async function testFlow() {
   
   if (providerError || !provider) {
     console.log('❌ Provider not found');
-    console.log('   Create provider with: login_email=nxamalo1@gmail.com, login_password=223344');
+    console.log('   Create provider with: login_email=nxamalo1@gmail.com, login password set via PROVIDER_TEST_PASSWORD');
     return;
   }
   
