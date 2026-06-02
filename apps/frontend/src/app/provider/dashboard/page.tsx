@@ -49,12 +49,6 @@ export default function ProviderDashboardPage() {
         approvedClaims: apiStats.approvedClaims ?? apiStats.approved ?? 0,
         totalApproved: apiStats.totalApproved ?? apiStats.total_approved ?? 0,
         totalPending: apiStats.totalPending ?? apiStats.total_pending ?? 0
-      } || {
-        totalClaims: 0,
-        pendingClaims: 0,
-        approvedClaims: 0,
-        totalApproved: 0,
-        totalPending: 0
       });
       setRecentClaims(data.claims || []);
     } catch (error) {
