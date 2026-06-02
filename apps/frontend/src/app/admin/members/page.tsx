@@ -72,7 +72,7 @@ export default function AdminMembersPage() {
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(true);
 
   // Sync top and bottom scrollbars
   useEffect(() => {
@@ -120,6 +120,7 @@ export default function AdminMembersPage() {
   useEffect(() => {
     fetchStats();
     fetchFilterOptions();
+    setHasSearched(true);
   }, []);
 
   const fetchStats = async () => {
@@ -200,8 +201,7 @@ export default function AdminMembersPage() {
     setPlanFilter('');
     setPaymentMethodFilter('');
     setCurrentPage(1);
-    setHasSearched(false);
-    setMembers([]);
+    setHasSearched(true);
   };
 
   const handleSearch = () => {
