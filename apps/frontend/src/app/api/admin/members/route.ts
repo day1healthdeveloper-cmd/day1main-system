@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAuthenticatedSupabaseClient, requireAnyRole } from '@/lib/auth-server'
+import { buildBrokerMemberFilter, resolveBrokerIdentity, type BrokerRecord } from '@/lib/broker-identity'
 
 export const dynamic = 'force-dynamic'
 
@@ -7,6 +8,11 @@ export async function GET(request: NextRequest) {
   try {
     await requireAnyRole(request, ['admin', 'system_admin', 'operations_manager', 'call_centre_agent']);
     const supabase = createAuthenticatedSupabaseClient(request)
+    const { data: brokers } = await supabase
+      .from('brokers')
+      .select('code, name, policy_prefix')
+      .order('name')
+    const brokerRecords = (brokers || []) as BrokerRecord[]
     
     // Get query parameters for filtering
     const searchParams = request.nextUrl.searchParams
@@ -21,11 +27,6 @@ export async function GET(request: NextRequest) {
     
     // If only filters are requested, return them quickly
     if (filtersOnly) {
-      const { data: brokers } = await supabase
-        .from('brokers')
-        .select('code, name')
-        .order('name')
-      
       // Get ALL unique plan names using a more efficient query
       const { data: plans, error: plansError } = await supabase
         .rpc('get_unique_plan_names')
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ 
         filters: {
-          brokers: brokers || [],
+          brokers: brokerRecords,
           plans: uniquePlans,
           paymentMethods: ['A - MAG TAPE', 'B - BANK CASH'],
           statuses: ['active', 'pending', 'suspended', 'in_waiting']
@@ -99,7 +100,7 @@ export async function GET(request: NextRequest) {
     }
     
     if (broker && broker !== 'all') {
-      query = query.eq('broker_code', broker)
+      query = query.or(buildBrokerMemberFilter(broker))
     }
     
     if (plan && plan !== 'all') {
@@ -165,6 +166,13 @@ export async function GET(request: NextRequest) {
 
     // Transform members and fetch dependants if requested
     const transformedMembers = await Promise.all((allMembers || []).map(async (member) => {
+      const brokerIdentity = resolveBrokerIdentity(
+        member.member_number,
+        member.broker_code,
+        Array.isArray(member.brokers) ? member.brokers[0]?.name : member.brokers?.name,
+        brokerRecords
+      )
+
       const transformedMember: any = {
         id: member.id,
         memberNumber: member.member_number,
@@ -174,8 +182,8 @@ export async function GET(request: NextRequest) {
         email: member.email || 'N/A',
         phone: member.mobile || 'N/A',
         status: member.status,
-        brokerCode: member.broker_code,
-        brokerName: (Array.isArray(member.brokers) ? member.brokers[0]?.name : member.brokers?.name) || 'N/A',
+        brokerCode: brokerIdentity.code,
+        brokerName: brokerIdentity.name,
         policyNumber: member.member_number,
         product: member.plan_name || 'No Plan Assigned',
         planId: member.plan_id,
@@ -204,8 +212,8 @@ export async function GET(request: NextRequest) {
             email: 'N/A',
             phone: 'N/A',
             status: dep.status,
-            brokerCode: member.broker_code,
-            brokerName: (Array.isArray(member.brokers) ? member.brokers[0]?.name : member.brokers?.name) || 'N/A',
+            brokerCode: brokerIdentity.code,
+            brokerName: brokerIdentity.name,
             policyNumber: dep.member_number,
             product: member.plan_name || 'No Plan Assigned',
             planId: member.plan_id,
@@ -264,12 +272,6 @@ export async function GET(request: NextRequest) {
       suspended: (suspendedMembersCount || 0) + (suspendedDependantsCount || 0),
     }
 
-    // Get filter options
-    const { data: brokers } = await supabase
-      .from('brokers')
-      .select('code, name')
-      .order('name')
-    
     const { data: plans } = await supabase
       .from('members')
       .select('plan_name')
@@ -282,7 +284,7 @@ export async function GET(request: NextRequest) {
       stats,
       count: transformedMembers.length,
       filters: {
-        brokers: brokers || [],
+        brokers: brokerRecords,
         plans: uniquePlans.sort(),
         paymentMethods: ['A - MAG TAPE', 'B - BANK CASH'],
         statuses: ['active', 'pending', 'suspended', 'in_waiting']

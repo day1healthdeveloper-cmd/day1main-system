@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createAuthenticatedSupabaseClient, requireAnyRole } from '@/lib/auth-server'
+import { buildBrokerMemberFilter, resolveBrokerIdentity, type BrokerRecord } from '@/lib/broker-identity'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,11 @@ export async function GET(request: NextRequest) {
   try {
     await requireAnyRole(request, ['operations_manager', 'system_admin', 'admin', 'finance_manager'])
     const supabase = createAuthenticatedSupabaseClient(request)
+    const { data: brokers } = await supabase
+      .from('brokers')
+      .select('code, name, policy_prefix')
+      .order('name')
+    const brokerRecords = (brokers || []) as BrokerRecord[]
 
     const searchParams = request.nextUrl.searchParams
     const statsOnly = searchParams.get('stats_only') === 'true'
@@ -34,11 +40,6 @@ export async function GET(request: NextRequest) {
     const shouldPaginate = !search && (!status || status === 'all') && (!broker || broker === 'all') && (!plan || plan === 'all') && (!paymentMethod || paymentMethod === 'all')
 
     if (filtersOnly) {
-      const { data: brokers } = await supabase
-        .from('brokers')
-        .select('code, name')
-        .order('name')
-
       const { data: plans } = await supabase
         .from('members')
         .select('plan_name')
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         filters: {
-          brokers: brokers || [],
+          brokers: brokerRecords,
           plans: uniquePlans.sort(),
           paymentMethods: ['A - MAG TAPE', 'B - BANK CASH'],
           statuses: ['active', 'pending', 'suspended', 'in_waiting'],
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (broker && broker !== 'all') {
-      query = query.or(`broker_code.eq.${broker},member_number.ilike.${broker}%`)
+      query = query.or(buildBrokerMemberFilter(broker))
     }
 
     if (plan && plan !== 'all') {
@@ -179,6 +180,13 @@ export async function GET(request: NextRequest) {
 
     const transformedMembers = await Promise.all(
       allMembers.map(async (member) => {
+        const brokerIdentity = resolveBrokerIdentity(
+          member.member_number,
+          member.broker_code,
+          Array.isArray(member.brokers) ? member.brokers[0]?.name : member.brokers?.name,
+          brokerRecords
+        )
+
         const transformedMember: any = {
           id: member.id,
           memberNumber: member.member_number,
@@ -188,8 +196,8 @@ export async function GET(request: NextRequest) {
           email: member.email || 'N/A',
           phone: member.mobile || 'N/A',
           status: member.status,
-          brokerCode: member.broker_code,
-          brokerName: (Array.isArray(member.brokers) ? member.brokers[0]?.name : member.brokers?.name) || 'N/A',
+          brokerCode: brokerIdentity.code,
+          brokerName: brokerIdentity.name,
           policyNumber: member.member_number,
           product: member.plan_name || 'No Plan Assigned',
           planId: member.plan_id,
@@ -217,8 +225,8 @@ export async function GET(request: NextRequest) {
               email: 'N/A',
               phone: 'N/A',
               status: dep.status,
-              brokerCode: member.broker_code,
-              brokerName: (Array.isArray(member.brokers) ? member.brokers[0]?.name : member.brokers?.name) || 'N/A',
+              brokerCode: brokerIdentity.code,
+              brokerName: brokerIdentity.name,
               policyNumber: dep.member_number,
               product: member.plan_name || 'No Plan Assigned',
               planId: member.plan_id,
@@ -270,11 +278,6 @@ export async function GET(request: NextRequest) {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'suspended')
 
-    const { data: brokers } = await supabase
-      .from('brokers')
-      .select('code, name')
-      .order('name')
-
     const { data: plans } = await supabase
       .from('members')
       .select('plan_name')
@@ -297,7 +300,7 @@ export async function GET(request: NextRequest) {
         hasMore: shouldPaginate ? (count ?? 0) > page * pageSize : false,
       },
       filters: {
-        brokers: brokers || [],
+        brokers: brokerRecords,
         plans: uniquePlans.sort(),
         paymentMethods: ['A - MAG TAPE', 'B - BANK CASH'],
         statuses: ['active', 'pending', 'suspended', 'in_waiting'],
