@@ -59,19 +59,26 @@ export function createServiceRoleSupabaseClient() {
   });
 }
 
-export async function getAuthenticatedUser(request: NextRequest): Promise<AuthResult> {
+export async function getAuthenticatedUserFromToken(token: string): Promise<AuthResult> {
   try {
-    const authHeader = request.headers.get('authorization');
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       return {
         user: null,
         error: 'No authorization token provided',
       };
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const supabase = createAuthenticatedSupabaseClient(request);
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     const {
       data: { user: authUser },
@@ -175,6 +182,19 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<AuthRe
       error: error.message || 'Authentication failed',
     };
   }
+}
+
+export async function getAuthenticatedUser(request: NextRequest): Promise<AuthResult> {
+  const authHeader = request.headers.get('authorization');
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return {
+      user: null,
+      error: 'No authorization token provided',
+    };
+  }
+
+  return getAuthenticatedUserFromToken(authHeader.replace('Bearer ', ''));
 }
 
 export async function requireAuth(request: NextRequest): Promise<AuthenticatedUser> {

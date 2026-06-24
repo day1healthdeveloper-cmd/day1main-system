@@ -32,6 +32,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const ACCESS_TOKEN_KEY = 'auth_access_token';
+const REFRESH_TOKEN_KEY = 'auth_refresh_token';
+
+function getStoredAccessToken() {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+function persistAuthSession(session: { access_token: string; refresh_token?: string | null }) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(ACCESS_TOKEN_KEY, session.access_token);
+  if (session.refresh_token) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, session.refresh_token);
+  }
+}
+
+function clearStoredAuthSession() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
 function buildProviderUser(input: {
   id: string;
   email: string;
@@ -87,12 +109,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
+      let accessToken = getStoredAccessToken();
 
-      if (sessionError || !session) {
+      if (!accessToken) {
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (!sessionError && session?.access_token) {
+          accessToken = session.access_token;
+          persistAuthSession({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          });
+        }
+      }
+
+      if (!accessToken) {
         console.log('No active session');
         if (cachedProvider) {
           setUser(cachedProvider);
@@ -104,125 +138,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      console.log('Session found, fetching user data...');
-
-      const providerResponse = await fetch('/api/provider/me', {
+      const authResponse = await fetch('/api/auth/me', {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      if (providerResponse.ok) {
-        const providerData = await providerResponse.json();
-        const provider = providerData.provider;
-
-        if (provider) {
-          const transformedUser = buildProviderUser({
-            id: provider.providerId || provider.id,
-            email: provider.email || session.user.email || '',
-            name: provider.providerName || '',
-            doctorSurname: provider.doctorSurname || '',
-            practiceName: provider.practiceName,
-            providerNumber: provider.providerNumber,
-            authUserId: session.user.id,
-          });
-
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(
-              'provider_session',
-              JSON.stringify({
-                provider: transformedUser,
-                timestamp: Date.now(),
-              })
-            );
-          }
-
-          setUser(transformedUser);
-          setLoading(false);
-          return;
+      if (!authResponse.ok) {
+        clearStoredAuthSession();
+        if (cachedProvider) {
+          setUser(cachedProvider);
+        } else {
+          setUser(null);
         }
+        setLoading(false);
+        return;
       }
 
-      if (session.user.user_metadata?.role === 'provider') {
-        console.log('Provider metadata found, using fallback provider session');
-        const fallbackProvider = buildProviderUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          name:
-            session.user.user_metadata?.firstName ||
-            session.user.user_metadata?.first_name ||
-            '',
-          doctorSurname:
-            session.user.user_metadata?.doctorSurname ||
-            session.user.user_metadata?.doctor_surname ||
-            '',
-          practiceName:
-            session.user.user_metadata?.practiceName ||
-            session.user.user_metadata?.practice_name ||
-            '',
-          providerNumber:
-            session.user.user_metadata?.prno ||
-            session.user.user_metadata?.providerNumber ||
-            session.user.user_metadata?.provider_number ||
-            '',
-          authUserId: session.user.id,
+      const authData = await authResponse.json();
+      const authenticatedUser = authData.user;
+
+      if (authenticatedUser?.isProvider) {
+        const transformedUser = buildProviderUser({
+          id: authenticatedUser.providerId || authenticatedUser.id,
+          email: authenticatedUser.email || '',
+          name: authenticatedUser.providerName || '',
+          doctorSurname: authenticatedUser.doctorSurname || '',
+          practiceName: authenticatedUser.practiceName,
+          providerNumber: authenticatedUser.providerNumber,
+          authUserId: authenticatedUser.id,
         });
 
         if (typeof window !== 'undefined') {
           localStorage.setItem(
             'provider_session',
             JSON.stringify({
-              provider: fallbackProvider,
+              provider: transformedUser,
               timestamp: Date.now(),
             })
           );
         }
 
-        setUser(fallbackProvider);
+        setUser(transformedUser);
         setLoading(false);
         return;
       }
-
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id, email, is_active')
-        .eq('email', session.user.email)
-        .maybeSingle();
-
-      if (userError || !userData) {
-        console.error('Error loading user data:', userError);
-        console.error('Session email:', session.user.email);
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      if (!userData.is_active) {
-        console.error('User is inactive');
-        await supabase.auth.signOut();
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      const { data: userRolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('role_id, roles(name)')
-        .eq('user_id', userData.id);
-
-      if (rolesError) {
-        console.error('Error loading roles:', rolesError);
-      }
-
-      const roles: string[] = userRolesData?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
 
       setUser({
-        id: userData.id,
-        email: userData.email,
+        id: authenticatedUser.id,
+        email: authenticatedUser.email,
         firstName: '',
         lastName: '',
-        roles,
-        permissions: [],
+        roles: authenticatedUser.roles || [],
+        permissions: authenticatedUser.permissions || [],
       });
     } catch (error) {
       console.error('Error loading user:', error);
@@ -235,15 +203,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (authError) {
-        throw new Error('Invalid email or password');
+      const data = await response.json();
+
+      if (!response.ok || !data.session?.access_token) {
+        throw new Error(data.error || 'Invalid email or password');
       }
 
+      persistAuthSession(data.session);
       await loadUser();
     } catch (error: any) {
       console.error('Login error:', error);
@@ -259,11 +231,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('provider_session');
       }
 
-      await supabase.auth.signOut();
+      clearStoredAuthSession();
       setUser(null);
 
+      try {
+        await supabase.auth.signOut();
+      } catch (error) {
+        console.warn('Supabase browser sign-out skipped:', error);
+      }
+
       if (typeof window !== 'undefined') {
-        localStorage.clear();
+        localStorage.removeItem('member_session');
+        localStorage.removeItem('member_data');
         sessionStorage.clear();
       }
     } catch (error) {
