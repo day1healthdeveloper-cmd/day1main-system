@@ -75,11 +75,18 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (loading || !user) {
+      return;
+    }
+
     fetchStats();
     fetchPendingApprovals();
     fetchAlerts();
     fetchRecentActivity();
-  }, []);
+  }, [loading, user]);
 
   const fetchStats = async () => {
     try {

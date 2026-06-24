@@ -44,6 +44,10 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   // Fetch new applications count for admins and call centre
   useEffect(() => {
     const fetchNewApplicationsCount = async () => {
+      if (loading || !user) {
+        return;
+      }
+
       const userRoles = user?.roles || [];
       const isAdmin = userRoles.includes('system_admin');
       const isCallCentre = userRoles.includes('call_centre_agent');
@@ -70,7 +74,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     // Refresh every 30 seconds
     const interval = setInterval(fetchNewApplicationsCount, 30000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [loading, user]);
 
   // Get navigation items based on user role
   const getNavigationForRole = (): NavItem[] => {
