@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+import { getAuthenticatedUserFromToken } from '@/lib/auth-server';
 
 /**
  * Middleware to protect API routes with role-based authentication
@@ -68,57 +65,16 @@ export async function middleware(request: NextRequest) {
   const token = authHeader.replace('Bearer ', '');
 
   try {
-    // Create Supabase client with the user's token
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      },
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
+    const { user, error } = await getAuthenticatedUserFromToken(token);
 
-    // Verify token and get user
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !authUser) {
+    if (!user) {
       return NextResponse.json(
-        { error: 'Invalid or expired token', code: 'INVALID_TOKEN' },
+        { error: error || 'Invalid or expired token', code: 'INVALID_TOKEN' },
         { status: 401 }
       );
     }
 
-    // Get user data from custom users table
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id, email, is_active')
-      .eq('email', authUser.email)
-      .single();
-
-    if (userError || !userData) {
-      return NextResponse.json(
-        { error: 'User not found in database', code: 'USER_NOT_FOUND' },
-        { status: 403 }
-      );
-    }
-
-    if (!userData.is_active) {
-      return NextResponse.json(
-        { error: 'User account is inactive', code: 'USER_INACTIVE' },
-        { status: 403 }
-      );
-    }
-
-    // Get user roles
-    const { data: userRolesData } = await supabase
-      .from('user_roles')
-      .select('role_id, roles(name)')
-      .eq('user_id', userData.id);
-
-    const roles: string[] = userRolesData?.map((ur: any) => ur.roles?.name).filter(Boolean) || [];
+    const roles = user.roles || [];
 
     if (roles.length === 0) {
       return NextResponse.json(
@@ -148,8 +104,8 @@ export async function middleware(request: NextRequest) {
 
     if (!hasRequiredRole) {
       return NextResponse.json(
-        { 
-          error: 'Access denied', 
+        {
+          error: 'Access denied',
           code: 'INSUFFICIENT_PERMISSIONS'
         },
         { status: 403 }
@@ -158,8 +114,8 @@ export async function middleware(request: NextRequest) {
 
     // Add user info to request headers for downstream use
     const response = NextResponse.next();
-    response.headers.set('x-user-id', userData.id);
-    response.headers.set('x-user-email', userData.email);
+    response.headers.set('x-user-id', user.id);
+    response.headers.set('x-user-email', user.email);
     response.headers.set('x-user-roles', roles.join(','));
 
     return response;
