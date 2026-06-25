@@ -1,13 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAnyRole } from '@/lib/auth-server';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    await requireAnyRole(request, ['admin', 'system_admin', 'operations_manager']);
+
     // Fetch pending applications
     const { data: applications, error } = await supabaseAdmin
       .from('applications')
@@ -58,3 +61,4 @@ export async function GET() {
     );
   }
 }
+

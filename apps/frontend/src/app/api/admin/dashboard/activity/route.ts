@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAnyRole } from '@/lib/auth-server';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,8 +16,10 @@ interface Activity {
   user: string;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    await requireAnyRole(request, ['admin', 'system_admin', 'operations_manager']);
+
     const activities: Activity[] = [];
 
     // Fetch recent member registrations
@@ -122,3 +125,4 @@ export async function GET() {
     );
   }
 }
+

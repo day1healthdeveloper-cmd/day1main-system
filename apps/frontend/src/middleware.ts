@@ -52,6 +52,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const routeHandlesOwnAuth =
+    pathname === '/api/admin/applications' ||
+    pathname.startsWith('/api/admin/dashboard/');
+
+  if (routeHandlesOwnAuth) {
+    return NextResponse.next();
+  }
+
   // Get authorization header
   const authHeader = request.headers.get('authorization');
 
@@ -142,3 +150,4 @@ export const config = {
     '/api/marketing/:path*',
   ]
 };
+
