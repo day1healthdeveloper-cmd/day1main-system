@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAnyRole } from '@/lib/auth-server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseAdmin = createClient(
@@ -17,6 +18,8 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    await requireAnyRole(request, ['claims', 'admin', 'system_admin']);
+
     const { id } = params;
     const body = await request.json();
     const { action, notes, fraud_review_status } = body;

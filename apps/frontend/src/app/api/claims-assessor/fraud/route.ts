@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAnyRole } from '@/lib/auth-server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseAdmin = createClient(
@@ -14,6 +15,8 @@ const supabaseAdmin = createClient(
 
 export async function GET(request: NextRequest) {
   try {
+    await requireAnyRole(request, ['claims', 'admin', 'system_admin']);
+
     // Fetch claims with fraud alerts
     const { data: claims, error } = await supabaseAdmin
       .from('claims')

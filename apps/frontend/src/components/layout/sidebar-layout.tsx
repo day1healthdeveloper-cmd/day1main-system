@@ -99,6 +99,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     const isProvider = userRoles.includes('provider');
     const isCallCentreAgent = userRoles.includes('call_centre_agent');
     const isMember = userRoles.includes('member');
+    const feedbackHref = isClaimsAssessor ? '/claims/feedback' : isOperationsManager ? '/operations/feedback' : '/admin/feedback';
 
     console.log('Role checks:', {
       isAdmin,
@@ -431,7 +432,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
         },
         {
           name: 'Feedback',
-          href: '/admin/feedback',
+          href: feedbackHref,
           glowColor: '#fb923c', // Orange
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAnyRole } from '@/lib/auth-server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -9,6 +10,8 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    await requireAnyRole(request, ['claims', 'admin', 'system_admin']);
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const body = await request.json();
     const { id } = params;
